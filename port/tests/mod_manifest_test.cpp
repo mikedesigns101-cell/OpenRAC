@@ -375,6 +375,16 @@ void checks() {
         Target newer = rac1_pal();
         newer.api_minor = 4;
         CHECK(plan_all({candidate(manifest("a", "1.0.0", "", "1.3"))}, newer)[0].load);
+        // OpenRAC Commando (1.100 on): OpenRAC's minors past 1.40 are another table, refused; its own
+        // and the shared ones load.
+        Target commando = rac1_pal();
+        commando.api_minor = 101;
+        CHECK(plan_all({candidate(manifest("a", "1.0.0", "", "1.40"))}, commando)[0].load);
+        CHECK(plan_all({candidate(manifest("a", "1.0.0", "", "1.100"))}, commando)[0].load);
+        d = plan_all({candidate(manifest("a", "1.0.0", "", "1.41"))}, commando);
+        CHECK(!d[0].load && d[0].reason.find("does not share") != std::string::npos);
+        CHECK(!plan_all({candidate(manifest("a", "1.0.0", "", "1.99"))}, commando)[0].load);
+        CHECK(!plan_all({candidate(manifest("a", "1.0.0", "", "1.102"))}, commando)[0].load);
         Target amiga = rac1_pal();
         amiga.platform = "amiga-68k";
         d = plan_all({candidate(manifest("a"))}, amiga);

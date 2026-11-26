@@ -548,6 +548,16 @@ def area_page(sdk: Path) -> str:
     return "".join(out).rstrip() + "\n"
 
 
+def commando_block(header_text: str) -> tuple[int, int]:
+    """OpenRAC Commando's first minor and the last it shares with OpenRAC (openrac_mod.h), or none:
+    the minors between them are OpenRAC's own, of another table, and are left out."""
+    first = re.search(r"^#define OPENRAC_MOD_API_COMMANDO_FIRST (\d+)$", header_text, re.M)
+    last = re.search(r"^#define OPENRAC_MOD_API_SHARED_LAST (\d+)$", header_text, re.M)
+    if not first or not last:
+        return 0, 0
+    return int(first.group(1)), int(last.group(1))
+
+
 def minor_history(header_text: str) -> dict[int, str]:
     """The header's history of the minor, "1.N what it added", split by minor."""
     start = header_text.index("/* The interface's minor version")
@@ -557,8 +567,13 @@ def minor_history(header_text: str) -> dict[int, str]:
     pos = 0
     n = 1
     places = []
+    first, last = commando_block(header_text)
     while True:
         m = re.compile(rf"\b1\.{n}\b").search(body, pos)
+        if not m and last < n <= first:
+            # OpenRAC Commando's minors go on from its first, past OpenRAC's own (openrac_mod.h).
+            n = first
+            m = re.compile(rf"\b1\.{n}\b").search(body, pos)
         if not m:
             break
         places.append((n, m.start(), m.end()))
@@ -583,7 +598,10 @@ def changelog_page(sdk: Path) -> str:
     out = [HEADER.format(source="sdk/include/openrac/openrac_mod.h and sdk/api/members.tsv"),
            "# What each interface minor added\n\n",
            "Newest first. A mod built for a minor loads on every port with that minor or a newer one.\n\n"]
+    first, last = commando_block(header)
     for n in range(minor, -1, -1):
+        if last < n < first:
+            continue
         out.append(f"## 1.{n}\n\n")
         if n == 0:
             out.append("The first table.\n\n")

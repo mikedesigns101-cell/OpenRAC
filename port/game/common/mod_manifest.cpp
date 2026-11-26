@@ -936,6 +936,13 @@ std::vector<Decision> plan(const std::vector<Candidate>& enabled, const Target& 
         } else if (m.api_minor > target.api_minor) {
             refuse(d, std::format("needs interface {}.{}; this OpenRAC has {}.{}: update OpenRAC", m.api_major,
                                   m.api_minor, target.api_major, target.api_minor));
+        } else if (target.api_minor >= OPENRAC_MOD_API_COMMANDO_FIRST && m.api_minor > OPENRAC_MOD_API_SHARED_LAST
+                   && m.api_minor < OPENRAC_MOD_API_COMMANDO_FIRST) {
+            // OpenRAC's own minors past the ones OpenRAC Commando shares: another table than this port's.
+            refuse(d, std::format("needs OpenRAC's interface {}.{}, which OpenRAC Commando does not share (its "
+                                  "own go on from {}.{}): build the mod for {}.{} or less, or for {}.{} or more",
+                                  m.api_major, m.api_minor, m.api_major, OPENRAC_MOD_API_COMMANDO_FIRST, m.api_major,
+                                  OPENRAC_MOD_API_SHARED_LAST, m.api_major, OPENRAC_MOD_API_COMMANDO_FIRST));
         } else if (m.script) {
             for (const std::string& s : m.scripts) {
                 if (!has_file(m.id, s)) {

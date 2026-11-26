@@ -1091,10 +1091,10 @@ public:
       return has_moby_copy() && m_api->api_minor >= 26;
     }
 
-    // Since 1.41: whether moby_copy() copies the enemies an arena draws its waves from (Going
+    // Since 1.100: whether moby_copy() copies the enemies an arena draws its waves from (Going
     // Commando: Maktar's), which go in with their originals (a 1.40 port calls them scripted).
     bool has_arena_copies() const {
-      return has_moby_copy() && m_api->api_minor >= 41;
+      return has_moby_copy() && m_api->api_minor >= 100;
     }
 
     // Since 1.25: whether moby_copy() may copy the moby in `slot`: OPENRAC_COPY_OK, or

@@ -12,7 +12,8 @@
  * Versions. OPENRAC_MOD_API_MAJOR changes when anything in the table changes or goes: a mod built
  * for another major is refused. OPENRAC_MOD_API_MINOR grows when something is added at the end of
  * the table: a mod built for a minor above the port's is refused, one built for a lower minor loads
- * (and checks api->api_minor before it uses anything newer than what it was built for).
+ * (and checks api->api_minor before it uses anything newer than what it was built for). OpenRAC
+ * Commando's minors go on from 1.100 (OPENRAC_MOD_API_COMMANDO_FIRST): see the history below.
  *
  * Everything runs on the game's thread: load, the hooks, the callbacks, unload.
  *
@@ -127,12 +128,23 @@ extern "C" {
  * (OPENRAC_MOBY_MATERIAL_PAINT_ACCENT_AT), and 1.39 paint that draws the effects
  * a moby makes in its colour, and paint in weapon_look
  * (OPENRAC_MOBY_MATERIAL_PAINT_EFFECTS), 1.40 synchronous gameplay decision
- * queries (on_play_query), and 1.41 copies of the enemies an arena draws its
- * waves from (Going Commando: Maktar's), which go in with their originals and
- * hold the wave until they are beaten (the table is unchanged: a 1.40 port
- * calls them scripted, so a mod asks for 1.41 before it copies them).
+ * queries (on_play_query), and 1.100 the first minor of OpenRAC Commando's own
+ * block (OPENRAC_MOD_API_COMMANDO_FIRST, below): copies of the enemies an arena
+ * draws its waves from (Going Commando: Maktar's), which go in with their
+ * originals and hold the wave until they are beaten (the table is unchanged: an
+ * older port calls them scripted, so a mod asks for this minor before it copies
+ * them; OpenRAC's pull request 962 numbers it otherwise).
  */
-#define OPENRAC_MOD_API_MINOR 41
+#define OPENRAC_MOD_API_MINOR 100
+
+/* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
+ * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
+ * to 1.40 and numbers what it adds from 1.100 on, so that a minor of OpenRAC's own past 1.40 (another
+ * table) is never taken for one of its own: a Commando port refuses a mod built for 1.41 to 1.99,
+ * and OpenRAC's port refuses one built for 1.100 or more as a newer minor than its own. Since
+ * 1.100. */
+#define OPENRAC_MOD_API_SHARED_LAST 40
+#define OPENRAC_MOD_API_COMMANDO_FIRST 100
 
 /* What collision_line tests (openrac_api.collision_line): the level's walls and
  * ground, the mobys (their collision meshes, and creatures' shapes on their
@@ -1859,7 +1871,7 @@ typedef struct openrac_moby_visual {
 /* Not one the level placed (the game made it), or one that gives no reward when it dies. */
 #define OPENRAC_COPY_NOT_PLACED 2
 /* The level's own data needs it alone: one of a set piece's group (a wave, an arena, a door that
- * opens when its group is defeated; Going Commando's squads of one class are not, nor since 1.41
+ * opens when its group is defeated; Going Commando's squads of one class are not, nor since 1.100
  * the enemies Maktar's arena draws its waves from), named by the level's scripts or by another
  * moby, or naming another itself. */
 #define OPENRAC_COPY_SCRIPTED 3
@@ -2942,7 +2954,7 @@ typedef struct openrac_api {
      * port's copies of a squad's enemies never woke), and it dies once. A moby whose pvars hold
      * spawned mobys of its own (its parts: a trooper's torso and arms) gets copies of them, which
      * its copy drives; one whose pvars hold a spawned moby other mobys share is not copied.
-     * Since 1.41 an enemy an arena draws its waves from (Going Commando: Maktar's, classes
+     * Since 1.100 an enemy an arena draws its waves from (Going Commando: Maktar's, classes
      * 2850, 2506, 3131 and 3134) is copied while it waits for its wave, as
      * the level loads: the copy joins the arena's list and, each time its original is sent in,
      * goes in with the original's drop when a pod of it has room. It fights in that wave, which
