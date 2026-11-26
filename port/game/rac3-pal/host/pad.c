@@ -7,6 +7,7 @@
  * Configuration completes synchronously. Multitaps are absent. Motors: SetActAlign maps each
  * SetActDirect byte to motor 0 (small, on/off) or 1 (large, speed).
  */
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -14,8 +15,9 @@
 #include "openrac/game_lib.h"
 #include "openrac/guest.h"
 
-/* mp_ui.c: the first pad button word (active low) with the presses the port takes left out. */
-uint16_t rac3_mp_ui_pad_filter(uint16_t word);
+/* The multiplayer program's filter of the first pad's button word (active low): the presses the port takes
+ * (mp_ui.c) are left out. The single-player program has none. */
+uint16_t (*rac3_pad_filter)(uint16_t word);
 
 static struct {
     unsigned char open, analog, pressure;
@@ -74,7 +76,9 @@ int func_0012F3F8(int port, int slot, int data) { /* scePadRead */
         /* Up Your Arsenal's staging screen: a READY the port takes (mp_ui.c). The word is active low. */
         uint16_t word;
         memcpy(&word, out + 2, sizeof word);
-        word = rac3_mp_ui_pad_filter(word);
+        if (rac3_pad_filter != NULL) {
+            word = rac3_pad_filter(word);
+        }
         memcpy(out + 2, &word, sizeof word);
     }
     if (!pads[port].analog) {
