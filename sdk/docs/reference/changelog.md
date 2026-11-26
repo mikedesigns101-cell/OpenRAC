@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.103
+
+Pictures of a mod's own for its overlay, drawn turned, tinted and kept in shape, and a call of the overlay under the game's 2D (overlay_image_create, overlay_image_destroy, openrac_overlay.image, image_quad, layer, aspect, OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request 865, by Henning Berge).
+
+Members: `overlay_image_create`, `overlay_image_destroy`.
+
 ## 1.102
 
 The Lancer's and the Heavy Lancer's bullets as the hero's shots, told, fired again, ended and made live (the table is unchanged).
