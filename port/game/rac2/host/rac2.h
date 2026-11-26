@@ -62,6 +62,10 @@ int rac2_mod_pause_label_text(int index);
 int rac2_mod_pause_help_text(int index);
 void rac2_mod_pause_page(int index, uint32_t page);
 uint32_t rac2_mod_pause_title(void);
+/* One of the game's own particle effects for a mod (openrac_api.particle_spawn_ex; particles.c): 1
+ * made, 0 the pool full, -1 refused. */
+struct openrac_game_particle_spawn;
+int rac2_particle_spawn_ex(const struct openrac_game_particle_spawn* spawn);
 
 /* The level's collision triangles in a box (collision_triangles.c, openrac_api.collision_triangles). */
 int rac2_collision_triangles(const float lo[3], const float hi[3], void* out, int max);

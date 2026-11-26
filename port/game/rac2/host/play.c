@@ -858,6 +858,7 @@ static openrac_game_play play = {
     .moby_pool_status = rac2_pool_status,
     .post_hit = rac2_post_hit,
     .weapon_refire = rac2_shot_refire,
+    .particle_spawn_ex = rac2_particle_spawn_ex,
     .moby_spawn_live = rac2_shot_spawn_live,
     .moby_status = rac2_moby_status,
     .weapon_record = rac2_weapon_record,
