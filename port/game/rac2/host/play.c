@@ -783,6 +783,25 @@ static uint32_t save_capture(uint8_t* out, uint32_t size) {
     return RAC2_SAVE_SIZE;
 }
 
+/* The slot the game in progress saves into (openrac_api.save_slot_current, which the mods' data
+ * kept with the saves follows: mods.cpp follow_saves): the save it was loaded from or last saved to
+ * (lib/mc.c), as long as it is still that game, as rac1/host/play.c's. A new game started after has
+ * played fewer seconds than that save (the play time, chunk 3 of the game's own save image, which
+ * SavePack writes from the running game); at the title or while a level loads there is no game to
+ * compare, and none is said. */
+static int save_slot_current(void) {
+    static uint8_t now[RAC2_SAVE_SIZE];
+    int32_t level = -1, b, gold, seconds = 0;
+    if (openrac_game_save_in_use < 0 || phase(&level) == OPENRAC_GAME_PHASE_FRONT_END) {
+        return -1;
+    }
+    const uint32_t size = save_capture(now, sizeof now);
+    if (size == 0 || !save_info(now, size, &level, &b, &gold, &seconds)) {
+        return -1;
+    }
+    return seconds >= openrac_game_save_in_use_seconds ? openrac_game_save_in_use : -1;
+}
+
 /* The card's folder (the game forms it from the disc's serial: "B" + the region's letter + the
  * serial, then "RATCHET"), and the world a game's discs belong to. */
 static char save_folder[32];
@@ -818,6 +837,7 @@ static openrac_game_play play = {
     .save_slots = 4,
     .save_info = save_info,
     .save_check = save_check,
+    .save_slot_current = save_slot_current,
     .mobys = mobys,
     .moby_slot = moby_slot,
     .moby_at = moby_at,

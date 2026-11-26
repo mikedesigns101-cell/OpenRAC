@@ -873,6 +873,16 @@ void a_mods_data_goes_with_the_saves(const fs::path& plugins, const fs::path& di
     g_records.clear();
     mods::frame();
     CHECK(seen(13103) == 0);
+    // Written again before the game plays it (Going Commando writes the save it loads as the level
+    // comes up): the data read beside it stays, not the data of the game before.
+    openrac_game_save_written(save3.string().c_str(), 1);
+    {
+        std::ifstream again(save3.string() + ".moddata", std::ios::binary);
+        const std::string kept(
+            (std::istreambuf_iterator<char>(again)), std::istreambuf_iterator<char>()
+        );
+        CHECK(kept.find("\"data\": \"eHl6\"") != std::string::npos);
+    }
     g_save_slot = 3;
     mods::frame();
     mods::frame();

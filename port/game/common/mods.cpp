@@ -761,6 +761,7 @@ std::vector<SaveDataCallback> g_save_data_callbacks;
 std::map<std::string, std::vector<std::uint8_t>, std::less<>> g_save_data;
 std::map<std::string, std::vector<std::uint8_t>, std::less<>> g_save_read_data;
 int g_save_read_slot = -1;
+fs::path g_save_read_path;  // the save read whole last
 std::uint32_t g_save_reads = 0;
 std::uint32_t g_save_taken = 0;
 // The slot of the save the game in progress plays, -1 for a new game (or none).
@@ -820,13 +821,19 @@ fs::path save_data_path(const char* save) {
 
 // lib/mc.c: the game has just written the save at `path`. Every loaded mod's data goes beside it,
 // written whole (a hidden file renamed over it); a save with none, or a blank slot, keeps none.
+// The save the game read whole last, written again before the game in progress took its data
+// (Going Commando writes the save it loads as the level comes up, before a tick of play), keeps
+// the data read beside it: the game's to come, not the empty data of no game yet.
 void save_written(const char* path, int players) {
     const fs::path file = save_data_path(path);
     std::error_code e;
+    const bool pending = g_save_reads != g_save_taken && !g_save_read_path.empty()
+                         && fs::equivalent(fs::path(path), g_save_read_path, e);
+    const auto& source = pending ? g_save_read_data : g_save_data;
     std::string members;
     for (const auto& loaded : g_loaded) {
-        const auto data = g_save_data.find(loaded->id);
-        if (data == g_save_data.end() || data->second.empty()) {
+        const auto data = source.find(loaded->id);
+        if (data == source.end() || data->second.empty()) {
             continue;
         }
         members += std::format(
@@ -863,6 +870,7 @@ void save_written(const char* path, int players) {
 void save_read(const char* path, int slot) {
     g_save_read_data.clear();
     g_save_read_slot = slot;
+    g_save_read_path = path;
     ++g_save_reads;
     std::string text;
     const fs::path file = save_data_path(path);
@@ -943,6 +951,7 @@ void reset_save_data() {
     g_save_data.clear();
     g_save_read_data.clear();
     g_save_read_slot = -1;
+    g_save_read_path.clear();
     g_save_reads = 0;
     g_save_taken = 0;
     g_save_playing = -1;
