@@ -211,6 +211,7 @@ struct Prop {
     // Fixed to a moby's joint (1.18): the moby, its joint; `matrix` is the offset then.
     gaddr attached_moby = 0;
     int attached_joint = -1;
+    bool attached_scaled = false;  // OPENRAC_ATTACH_SCALED (1.101): at the joint's own scale
     // Where the renderer drew it on that joint last (prop_frame), once it has.
     std::array<float, 16> placed{};
     bool was_placed = false;

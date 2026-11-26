@@ -2340,6 +2340,13 @@ int main() {
             g_18 == "2 3 5 0");
       CHECK(mod.prop_attach(2, 3, 1, OPENRAC_ATTACH_HELD, offset) &&
             g_18 == "2 3 1 1 offset");
+      // Interface 1.101: at the joint's own scale, which a port of 1.100 ignores.
+      CHECK(mod.has_prop_attach_scaled() &&
+            mod.prop_attach(2, 3, 5, OPENRAC_ATTACH_SCALED) &&
+            g_18 == "2 3 5 2");
+      api.api_minor = 100;
+      CHECK(mod.has_prop_attach() && !mod.has_prop_attach_scaled());
+      api.api_minor = OPENRAC_MOD_API_MINOR;
       CHECK(!mod.prop_attach(2, -1, 5));
       float frame[16] = {};
       CHECK(mod.prop_frame(2, frame) && frame[12] == 12.0f);

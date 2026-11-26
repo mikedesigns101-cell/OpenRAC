@@ -405,9 +405,33 @@ void test_attached_effects_allow_singular_parents() {
     CHECK(point[2] == 3);
 }
 
+// A prop on a joint (prop_attach): the moby's scale (0.25) always out; the joint's own (0.5, or
+// the 0.001 the game hides a part with) out as 1.18 draws it, kept with OPENRAC_ATTACH_SCALED, and
+// a hidden joint not drawn at all.
+void test_attached_frames_keep_the_joint_scale_when_asked() {
+    using openrac::frontend::attached_frame;
+    Mat4 moby = openrac::renderer::scale(0.25f);
+    moby[12] = 10.0f;
+    Mat4 joint = openrac::renderer::scale(0.5f);
+    joint[13] = 4.0f;
+    Mat4 out{};
+    CHECK(attached_frame(moby, joint, false, out));
+    CHECK(std::fabs(out[0] - 1.0f) < 1e-6f && std::fabs(out[5] - 1.0f) < 1e-6f);
+    CHECK(std::fabs(out[12] - 10.0f) < 1e-6f && std::fabs(out[13] - 1.0f) < 1e-6f);
+    CHECK(attached_frame(moby, joint, true, out));
+    CHECK(std::fabs(out[0] - 0.5f) < 1e-6f && std::fabs(out[10] - 0.5f) < 1e-6f);
+    CHECK(std::fabs(out[13] - 1.0f) < 1e-6f);
+    const Mat4 hidden = openrac::renderer::scale(0.001f);
+    CHECK(attached_frame(moby, hidden, false, out) && std::fabs(out[0] - 1.0f) < 1e-5f);
+    out = openrac::renderer::identity();
+    CHECK(!attached_frame(moby, hidden, true, out) && out[0] == 1.0f);
+    CHECK(!attached_frame(moby, openrac::renderer::scale(0.0f), true, out));
+}
+
 }  // namespace
 
 int main() {
+    test_attached_frames_keep_the_joint_scale_when_asked();
     test_attached_effects_agree_across_source_ticks();
     test_attached_effects_follow_rotating_parents();
     test_attached_effects_allow_singular_parents();

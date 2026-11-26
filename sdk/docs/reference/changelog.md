@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.101
+
+Props drawn at their joint's own scale, so a mod's piece hides with a part the game hides by shrinking its joint (OPENRAC_ATTACH_SCALED, a prop_attach flag; the table is unchanged).
+
+No new members (the table is unchanged).
+
 ## 1.100
 
 The first minor of OpenRAC Commando's own block (OPENRAC_MOD_API_COMMANDO_FIRST, below): copies of the enemies an arena draws its waves from (Going Commando: Maktar's), which go in with their originals and hold the wave until they are beaten (the table is unchanged: an older port calls them scripted, so a mod asks for this minor before it copies them; OpenRAC's pull request 962 numbers it otherwise).

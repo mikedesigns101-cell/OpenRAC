@@ -353,7 +353,9 @@ static void motion_frame(void) {
             const int held = s_api->prop_create(s_mod, "board.glb");
             s_record(9660 + -s_api->prop_attach(s_mod, held, 3, 5, 0, offset));
             s_record(9660 + -s_api->prop_attach(s_mod, held, 4, 5, 0, NULL));
-            s_record(9670 + -s_api->prop_attach(s_mod, held, 3, 1, OPENRAC_ATTACH_HELD, offset));
+            s_record(9670 + -s_api->prop_attach(
+                s_mod, held, 3, 1, OPENRAC_ATTACH_HELD | OPENRAC_ATTACH_SCALED, offset
+            ));
             s_record(9670 + -s_api->prop_attach(s_mod, held, 3, 2, OPENRAC_ATTACH_HELD, NULL));
             {
                 /* Where they were drawn: the posed one at its pose; the fixed one not drawn on

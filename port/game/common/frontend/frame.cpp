@@ -52,6 +52,7 @@
 #include "game/common/frontend/draw_coverage.h"
 #include "game/common/frontend/effects_dump.h"
 #include "game/common/frontend/energy_effects.h"
+#include "game/common/frontend/geometry.h"
 #include "game/common/frontend/hero_shadows.h"
 #include "game/common/frontend/input_latency.h"
 #include "game/common/frontend/menu_layers.h"
@@ -2972,19 +2973,13 @@ TickMobys pose_mobys(
                     f[3][2] / 1024.0f,
                     1.0f,
                 };
-                // The joint's frame in the world, its axes made unit again: the moby's own scale
-                // (Ratchet's is about 0.15) stays out, so the offset and the prop's mesh are in the
-                // game's units.
-                renderer::Mat4 frame = renderer::multiply(moby->matrix, joint);
-                for (int c = 0; c < 3; ++c) {
-                    const float* axis = &frame[static_cast<std::size_t>(4 * c)];
-                    const float length =
-                        std::sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
-                    if (length > 1e-6f) {
-                        for (int r = 0; r < 3; ++r) {
-                            frame[static_cast<std::size_t>(4 * c + r)] /= length;
-                        }
-                    }
+                // The joint's frame in the world, the moby's own scale (Ratchet's is about 0.15)
+                // out, so the offset and the prop's mesh are in the game's units: its axes made
+                // unit again, or with OPENRAC_ATTACH_SCALED the joint's own scale kept, so a part
+                // the game hides by shrinking its joint goes with it (geometry.h attached_frame).
+                renderer::Mat4 frame{};
+                if (!attached_frame(moby->matrix, joint, props[i].attached_scaled, frame)) {
+                    continue;
                 }
                 place = renderer::multiply(frame, props[i].matrix);
                 mods::prop_placed(props[i].id, place);  // where the mod's prop_frame finds it

@@ -68,6 +68,18 @@ renderer::Mat4 blend_turning(const renderer::Mat4& from, const renderer::Mat4& t
 // Singular source axes fall back to translation, preserving the point's finite position.
 void follow_moby(const renderer::Mat4& source, const renderer::Mat4& drawn, float point[3]);
 
+// The frame a prop fixed to a moby's joint is drawn in (interface 1.18, prop_attach): `moby`, the
+// moby's matrix as it is drawn, times `joint`, the joint's frame in the moby's model (its axes, then
+// its place). The moby's own scale stays out, so a prop's mesh and offset are in the game's units.
+// With `joint_scale` false each axis is made unit again, as 1.18 draws every prop. With it true
+// (OPENRAC_ATTACH_SCALED) the axes keep the joint's own scale: only the moby's (the length of its
+// matrix's first axis) is taken out, so a joint the game shrinks to hide a part (0, or 0.001)
+// shrinks the prop with it. Returns false, and leaves `out`, for a frame too small to draw (a
+// joint shrunk under 1/1000 of the moby's scale) or one that is not a number.
+bool attached_frame(
+    const renderer::Mat4& moby, const renderer::Mat4& joint, bool joint_scale, renderer::Mat4& out
+);
+
 // A moby's matrix part way from the last tick's to this one's, or this one's when it moved too far
 // or turned too much in a tick to be the same thing moving (a moby slot used again, a teleport).
 // `t`: how far, from 0 (`from`) to 1 (`to`). `pace`: as same_moby's.

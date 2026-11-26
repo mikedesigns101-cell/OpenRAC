@@ -329,6 +329,7 @@ int api_prop_pose(openrac_mod* mod, int id, const openrac_prop_pose* pose) {
     p->posed = true;
     p->attached_moby = 0;
     p->attached_joint = -1;
+    p->attached_scaled = false;
     return OPENRAC_HOOK_OK;
 }
 
@@ -369,6 +370,7 @@ int api_prop_attach(
     }
     p->attached_moby = moby;
     p->attached_joint = joint;
+    p->attached_scaled = (flags & OPENRAC_ATTACH_SCALED) != 0;
     p->posed = true;
     return OPENRAC_HOOK_OK;
 }

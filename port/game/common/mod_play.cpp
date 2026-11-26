@@ -745,6 +745,7 @@ std::vector<PropDraw> props_drawn() {
                  p.blend,
                  p.attached_moby,
                  p.attached_joint,
+                 p.attached_scaled,
                  p.skin,
                  p.animation,
                  p.seconds,

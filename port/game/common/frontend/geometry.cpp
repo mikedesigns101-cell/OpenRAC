@@ -109,6 +109,40 @@ bool same_moby(const renderer::Mat4& from, const renderer::Mat4& to, const rende
     return la > 0.0f && lb > 0.0f && dot >= kSameTurnCosine * std::sqrt(la * lb);
 }
 
+bool attached_frame(
+    const renderer::Mat4& moby, const renderer::Mat4& joint, bool joint_scale, renderer::Mat4& out
+) {
+    // The smallest joint scale, against the moby's, still drawn: a joint the game hides is at 0 or
+    // 0.001, and a frame that small would give the lighting a normal matrix of nothing.
+    constexpr float kSmallestJointScale = 1.0e-3f + 1.0e-5f;
+    const auto length = [](const float* axis) {
+        return std::sqrt(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+    };
+    renderer::Mat4 frame = renderer::multiply(moby, joint);
+    const float moby_scale = length(&moby[0]);
+    for (std::size_t c = 0; c < 3; ++c) {
+        const float axis = length(&frame[4 * c]);
+        const float by = joint_scale ? moby_scale : axis;
+        if (!std::isfinite(axis) || !(by > 1e-6f)) {
+            if (joint_scale) {
+                return false;
+            }
+            continue;  // as 1.18: an axis of nothing is left as it is
+        }
+        if (joint_scale && !(axis / by >= kSmallestJointScale)) {
+            return false;
+        }
+        for (std::size_t r = 0; r < 3; ++r) {
+            frame[4 * c + r] /= by;
+        }
+    }
+    if (!std::all_of(frame.begin(), frame.end(), [](float f) { return std::isfinite(f); })) {
+        return false;
+    }
+    out = frame;
+    return true;
+}
+
 void follow_moby(const renderer::Mat4& now, const renderer::Mat4& drawn, float point[3]) {
     // The axes' inverse by cofactors: column c of `now` is axis c (elements c * 4 .. c * 4 + 2).
     const float a = now[0], b = now[4], c = now[8];

@@ -2268,6 +2268,8 @@ void motion_reaches_the_game(const fs::path& plugins, const fs::path& dir) {
         drawn.size() == 2 && drawn[1].attached_moby == 0x2000 && drawn[1].attached_joint == 12
         && drawn[1].matrix[12] == 0.5f && drawn[1].matrix[0] == 1.0f
     );
+    // Drawn at its joint's own scale (OPENRAC_ATTACH_SCALED, interface 1.101); the posed one not.
+    CHECK(drawn.size() == 2 && drawn[1].attached_scaled && !drawn[0].attached_scaled);
     // The renderer tells where it drew the fixed one (prop_frame answers it from then on); a prop
     // that is not fixed keeps its pose.
     {

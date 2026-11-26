@@ -310,6 +310,9 @@ struct PropDraw {
     // none), its joint, and `matrix` is then the offset in the joint's frame.
     std::uint32_t attached_moby = 0;
     int attached_joint = -1;
+    // OPENRAC_ATTACH_SCALED (interface 1.101): drawn at the joint's own scale, so a part the game
+    // hides by shrinking its joint goes with it (geometry.h attached_frame).
+    bool attached_scaled = false;
     // Its joint matrices (interface 1.33, openrac_api.prop_set_skin): 16 floats each, column-major,
     // the mesh's bind-pose vertex to where the joint puts it; null for a prop in its bind pose.
     std::shared_ptr<const std::vector<std::array<float, 16>>> skin;

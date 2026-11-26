@@ -980,6 +980,12 @@ public:
                  OPENRAC_HOOK_OK;
     }
 
+    // Since 1.101: whether prop_attach takes OPENRAC_ATTACH_SCALED: a prop drawn at its joint's own
+    // scale, which hides with a part the game hides by shrinking that joint.
+    bool has_prop_attach_scaled() const {
+      return has_prop_attach() && m_api->api_minor >= 101;
+    }
+
     // Since 1.18: where the mod's prop `id` was drawn last, into `out`
     // (column-major, its mesh's coordinates to the world's; for a prop fixed
     // to a joint, the joint's frame then times its offset). Returns false for

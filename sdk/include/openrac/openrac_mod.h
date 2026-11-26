@@ -128,14 +128,17 @@ extern "C" {
  * (OPENRAC_MOBY_MATERIAL_PAINT_ACCENT_AT), and 1.39 paint that draws the effects
  * a moby makes in its colour, and paint in weapon_look
  * (OPENRAC_MOBY_MATERIAL_PAINT_EFFECTS), 1.40 synchronous gameplay decision
- * queries (on_play_query), and 1.100 the first minor of OpenRAC Commando's own
+ * queries (on_play_query), 1.100 the first minor of OpenRAC Commando's own
  * block (OPENRAC_MOD_API_COMMANDO_FIRST, below): copies of the enemies an arena
  * draws its waves from (Going Commando: Maktar's), which go in with their
  * originals and hold the wave until they are beaten (the table is unchanged: an
  * older port calls them scripted, so a mod asks for this minor before it copies
- * them; OpenRAC's pull request 962 numbers it otherwise).
+ * them; OpenRAC's pull request 962 numbers it otherwise), and 1.101 props drawn
+ * at their joint's own scale, so a mod's piece hides with a part the game hides
+ * by shrinking its joint (OPENRAC_ATTACH_SCALED, a prop_attach flag; the table
+ * is unchanged).
  */
-#define OPENRAC_MOD_API_MINOR 100
+#define OPENRAC_MOD_API_MINOR 101
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -174,6 +177,12 @@ typedef struct openrac_line_hit {
 /* prop_attach's flags: `joint` is one of the hero's attach points
  * (openrac_held_piece.joint), not a joint of his skeleton. Since 1.18. */
 #define OPENRAC_ATTACH_HELD 0x1u
+/* prop_attach's flags: the prop is drawn at the joint's own scale, not made unit
+ * again: a part of the moby the game hides by shrinking its joint (to 0, or to
+ * 0.001, as Going Commando's creatures do in their attacks) hides the prop with
+ * it, and a joint shrunk to under 1/1000 is not drawn. A port before 1.101
+ * ignores it. Since 1.101. */
+#define OPENRAC_ATTACH_SCALED 0x2u
 
 /* The most bytes of a mod's data kept with a save (openrac_api.save_data_set). Since 1.16. */
 #define OPENRAC_SAVE_DATA_MAX 65536u
@@ -2839,7 +2848,9 @@ typedef struct openrac_api {
      * weapon model's grip, in the hero's hand). It is not drawn while the moby
      * is not (hidden, culled, gone), nor for a joint the moby's class does not
      * have. Its tint and blend stay as prop_pose last gave them. prop_pose
-     * takes it off the joint again. Returns OPENRAC_HOOK_OK, or
+     * takes it off the joint again. Since 1.101 OPENRAC_ATTACH_SCALED in
+     * `flags` draws it at the joint's own scale, so it hides with a part the
+     * game hides by shrinking that joint. Returns OPENRAC_HOOK_OK, or
      * OPENRAC_HOOK_UNKNOWN for a prop that is not the mod's, no moby in the
      * slot, a joint below 0, an attach point the game does not have or an
      * offset that is not numbers. */
