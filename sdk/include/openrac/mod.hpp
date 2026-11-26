@@ -1244,6 +1244,13 @@ public:
                  offsetof(openrac_api, weapon_record) + sizeof(void *);
     }
 
+    // Since 1.102: whether the Lancer's and the Heavy Lancer's bullets (classes 3070 and 3209) are
+    // shots: told by on_weapon_fire with a serial, fired again by weapon_refire, ended by
+    // on_shot_end and made by moby_spawn_live (before, only the rounds they spent were told).
+    bool has_lancer_shots() const {
+      return has_weapon_shots() && m_api->api_minor >= 102;
+    }
+
     // Since 1.29: `fn(user, shot)` for each shot the hero's weapon fires, after
     // the tick that made it. A plain function (the port keeps no state for a
     // lambda's capture). Only during load; false when refused or the port or

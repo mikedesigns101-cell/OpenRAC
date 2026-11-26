@@ -869,7 +869,7 @@ the game's own spawn for its class, turned, at no ammo; the copy is the game's s
 told to `on_weapon_fire`. `on_shot_end` tells each such shot's end (an impact, its time out, gone,
 the level left) and where. `moby_spawn_live` makes a shot of one of the nine classes the port knows
 (the Minirocket Tube's and RYNO II's rockets, a seeker, a hoverbomb, a bomb, a gravity bomb, a
-bomblet, a decoy, a miniturret) through the same spawns, so the game runs it; one of the rockets
+bomblet, a decoy, a miniturret; since 1.102 the Lancers' bullets too) through the same spawns, so the game runs it; one of the rockets
 can go off where it is made. `weapon_look(item, material, rgb)` draws a weapon's shots, what their
 updates make (their blasts, debris and particles, detached ones too) and the gun's muzzle effects
 with a moby material. `moby_status` freezes a moby (its update and animation left out but for one
@@ -1014,6 +1014,17 @@ creatures hide parts by shrinking a joint to 0 or 0.001 in their animations (the
 `_post` joints 17 and 18 in its attacks): a mod's piece on such a joint now hides with it, where
 before it was drawn whole. The math is `frontend/geometry.h`'s `attached_frame`. No new member: a
 port of 1.100 ignores the flag.
+
+1.102 (SDK 1.102.0) the Lancer's and the Heavy Lancer's bullets as shots (Going Commando, every
+disc; the C++ layer's `has_lancer_shots()`). Each bullet is a moby, class 3070 for the Lancer
+(CreateTargetedMovingEffect) and 3209 for the Heavy Lancer (SpawnAimedShot), with the gun as its
+owner (+0xB8). `on_weapon_fire` now tells each one with its slot, serial, direction and speed (units
+a tick), where before only the rounds were told; `weapon_refire` fires it again through the same
+spawn, its velocity (pvars +0x20) turned, and a copy turned by any yaw or pitch homes on nothing, so
+a fan stays open; `on_shot_end` tells its end when its flight ends (an impact, or its time out) where
+it was then, though the moby fades for 6 more ticks; `moby_spawn_live` makes either class. Their
+trail is one of 16 histories of the gun's: past 16 bullets of one gun alive, two share a trail. No
+new member: a port of 1.101 still tells only the rounds.
 
 The port's own readers of the pad (the movie player) and its Start skip take the
 report the mods leave, so a key a mod binds to Start skips as the pad's

@@ -19,7 +19,12 @@
  *                    bouncer_spawn_debris_object); it sets the bomblet's +0xB8 to the gun itself
  *   Decoy Glove      decoy_create_projectile, func_L00_00398810 (203): it retires the oldest of six
  *   Miniturret Glove miniturret_spawn_shot, func_L00_00387CA8 (4966)
- * Every caller but the Bouncer's writes the gun into the new moby's +0xB8 after the spawn returns,
+ *   Lancer           CreateTargetedMovingEffect, func_L00_003E2180 (3070), from lancer_update
+ *                    (func_L00_003A6C30) for the Lancer (gun class 1490); it sets +0xB8 itself
+ *   Heavy Lancer     SpawnAimedShot, func_L00_0041EB38 (3209), from the same update for the Heavy
+ *                    Lancer (gun class 3077); it sets +0xB8 itself
+ * Every caller but the Bouncer's and the Lancers' writes the gun into the new moby's +0xB8 after the
+ * spawn returns,
  * so a spawn is noted where it happens and told at the tick's end (rac2_shots_frame): a shot is the
  * hero's when its +0xB8, or the gun its spawn names, is the moby in his hand (his item slot 0,
  * +0x1220 of his record). The other callers (the Megarocket Cannon's sequenced_child_spawn through
@@ -27,8 +32,21 @@
  * Left out: the Chopper (guided_rocket_create keeps a per-level slot for each blade), the Spiderbot
  * Glove (spider_bot_spawn keeps one bot in globals), the Visibomb (its missile takes the hero and
  * the camera), the Synthenoid (SpawnCB2Moby spends ammo itself). A weapon of those, or one with no
- * shot moby of its own (the Blitz Gun's pellets, the Lancer, the Lava Gun, the Pulse Rifle's beam,
- * the Plasma Coil), is told once a tick it spends rounds (its ammo at 0x139688 + item * 4 down).
+ * shot moby of its own (the Blitz Gun's pellets, the Lava Gun, the Pulse Rifle's beam, the Plasma
+ * Coil), is told once a tick it spends rounds (its ammo at 0x139688 + item * 4 down).
+ *
+ * The Lancers' bullets keep their flight in their pvars, not in their matrix: +0x14 and +0x18 the
+ * gun's save id and class (their update and trail check them each tick: the bullet dies when they
+ * are not the gun's), +0x1C the moby they home on, +0x20 their velocity (units a tick), +0x2C its
+ * length, +0x38 the ticks left (an int). Each tick their update (UpdateHomingMissile,
+ * homing_l00_shot_update_4, which their spawn puts in the game's callback list: it runs after the
+ * moby loop) steers +0x20 at the target, moves the bullet by it and tests the line walked: a hit or
+ * the ticks run out turns +0x20 of the moby from 0 to 1 and the count to 6, the fade the bullet dies
+ * after. So a bullet fired again is turned in +0x20, and a turned one homes on nothing (it would
+ * turn back onto the first's target: a fan would close up). Its end is the turn to 1, seen once a
+ * tick (rac2_shots_frame) and told where it was then: an impact, or with the count at 1 the tick
+ * before its time run out. Their trail is one of 16 histories of the gun's (pvars +0, round robin, the gun's slot
+ * body): past 16 bullets of one gun alive, two draw one trail.
  *
  * A shot fired again (rac2_shot_refire) is its spawn called again with what the first call was
  * given (vectors copied, as the caller's were on its stack), turned: the velocity argument where
@@ -137,25 +155,38 @@ enum {
 #define FLAG_NO_ANIMATION 0x40u
 
 /* What each kind is (the spawns above): its class, its weapon, whether its spawn takes the
- * velocity (else the matrix is turned), its own timer in its pvars (an s16, -1 none), the moby it
- * homes on in its pvars (-1 none). */
+ * velocity (else the matrix is turned), its own timer in its pvars (an s16, -1 none; the Lancers'
+ * an int), the moby it homes on in its pvars (-1 none), and its velocity in its pvars (-1 none: the
+ * Lancers' flight, which a refire turns and whose end is the turn of +0x20 to 1). */
 static const struct {
     int16_t oclass;
     int16_t item;
     int8_t takes_velocity;
     int8_t timer;
     int8_t target;
+    int8_t velocity;
 } KINDS[RAC2_SHOT_KINDS] = {
-    [RAC2_SHOT_MINIROCKET] = {1498, 27, 0, 0x24, 0x10},
-    [RAC2_SHOT_RYNO] = {3799, 44, 0, 0x24, 0x10},
-    [RAC2_SHOT_SEEKER] = {3329, 24, 1, 0x18, 0x14},
-    [RAC2_SHOT_HOVERBOMB] = {1496, 25, 1, -1, -1},
-    [RAC2_SHOT_BOMB] = {121, 12, 1, -1, -1},
-    [RAC2_SHOT_GRAVITY_BOMB] = {3300, 42, 1, -1, -1},
-    [RAC2_SHOT_BOUNCER] = {3684, 37, 1, -1, -1},
-    [RAC2_SHOT_DECOY] = {203, 17, 1, -1, -1},
-    [RAC2_SHOT_MINITURRET] = {4966, 41, 1, -1, -1},
+    [RAC2_SHOT_MINIROCKET] = {1498, 27, 0, 0x24, 0x10, -1},
+    [RAC2_SHOT_RYNO] = {3799, 44, 0, 0x24, 0x10, -1},
+    [RAC2_SHOT_SEEKER] = {3329, 24, 1, 0x18, 0x14, -1},
+    [RAC2_SHOT_HOVERBOMB] = {1496, 25, 1, -1, -1, -1},
+    [RAC2_SHOT_BOMB] = {121, 12, 1, -1, -1, -1},
+    [RAC2_SHOT_GRAVITY_BOMB] = {3300, 42, 1, -1, -1, -1},
+    [RAC2_SHOT_BOUNCER] = {3684, 37, 1, -1, -1, -1},
+    [RAC2_SHOT_DECOY] = {203, 17, 1, -1, -1, -1},
+    [RAC2_SHOT_MINITURRET] = {4966, 41, 1, -1, -1, -1},
+    [RAC2_SHOT_LANCER] = {3070, 30, 0, 0x38, 0x1C, 0x20},
+    [RAC2_SHOT_HEAVY_LANCER] = {3209, 30, 0, 0x38, 0x1C, 0x20},
 };
+
+/* The Lancers' pvars: the length of the velocity, the range 3070's spawn is given. */
+#define LANCER_SPEED 0x2Cu
+#define LANCER_RANGE 20.0f /* lancer_update's for the Lancer (30 for the Heavy Lancer) */
+
+/* Whether `kind` flies by a velocity in its pvars (the Lancers'). */
+static int flies(int kind) {
+    return KINDS[kind].velocity >= 0;
+}
 
 int rac2_shot_class(int kind) {
     return kind >= 0 && kind < RAC2_SHOT_KINDS ? KINDS[kind].oclass : -1;
@@ -302,6 +333,7 @@ typedef struct {
     gaddr target;
     int32_t reason;
     float last[3];
+    int32_t flight_ticks; /* a Lancer's bullet: its ticks left when last seen flying */
 } Shot;
 
 #define SHOTS_MAX 1024
@@ -580,6 +612,26 @@ gaddr func_L00_00387CA8(gaddr pos, gaddr velocity) {
     return m;
 }
 
+gaddr func_L00_003E2180(gaddr pos, gaddr parent, gaddr target, float range) {
+    const gaddr m = func_L00_003E2180__game(pos, parent, target, range);
+    if (m != 0 && !own_spawn) {
+        Call c = {RAC2_SHOT_LANCER, m, parent, target, {0}, {0}, {range, 0, 0, 0}, 0};
+        copy4(c.v0, pos);
+        note_call(&c);
+    }
+    return m;
+}
+
+gaddr func_L00_0041EB38(gaddr origin, gaddr owner, gaddr target) {
+    const gaddr m = func_L00_0041EB38__game(origin, owner, target);
+    if (m != 0 && !own_spawn) {
+        Call c = {RAC2_SHOT_HEAVY_LANCER, m, owner, target, {0}, {0}, {0}, 0};
+        copy4(c.v0, origin);
+        note_call(&c);
+    }
+    return m;
+}
+
 /* CreateMoby: what a moby's update makes takes that moby's look (its blast, its debris). */
 gaddr func_0029EFD0(int oclass) {
     const gaddr m = func_0029EFD0__game(oclass);
@@ -737,6 +789,23 @@ static Shot* shot_of(gaddr moby) {
     return NULL;
 }
 
+/* A Lancer's bullet, once a tick: still flying (its ticks left noted), or its flight ended since
+ * (+0x20 turned to 1): an impact, or its time run out when it had one tick left the tick before;
+ * where it is now (it stays there through its fade). */
+static void shot_flight(Shot* s) {
+    const gaddr pvars = rac2_moby_pvars(s->moby, 1);
+    if (pvars == 0) {
+        return;
+    }
+    if (GREF(uint8_t, s->moby + MOBY_STATE) == 0) {
+        s->flight_ticks = GREF(int32_t, pvars + (gaddr)KINDS[s->kind].timer);
+        return;
+    }
+    s->ended = 1;
+    read3(s->last, s->moby + MOBY_POS);
+    s->reason = s->flight_ticks <= 1 ? OPENRAC_SHOT_END_EXPIRED : OPENRAC_SHOT_END_IMPACT;
+}
+
 /* A shot's moby died: why, and where. */
 static void shot_died(Shot* s, int made) {
     s->ended = 1;
@@ -756,7 +825,7 @@ static void shot_died(Shot* s, int made) {
         || ((kind == RAC2_SHOT_MINIROCKET || kind == RAC2_SHOT_RYNO) && same
             && GREF(uint8_t, s->moby + MOBY_HIT) != 0)) {
         s->reason = OPENRAC_SHOT_END_IMPACT;
-    } else if (KINDS[kind].timer >= 0 && pvars != 0
+    } else if (KINDS[kind].timer >= 0 && !flies(kind) && pvars != 0
                && GREF(int16_t, pvars + (gaddr)KINDS[kind].timer) <= 0) {
         s->reason = OPENRAC_SHOT_END_EXPIRED;
     } else {
@@ -895,6 +964,12 @@ static gaddr spawn(const Call* c) {
         case RAC2_SHOT_MINITURRET:
             m = func_L00_00387CA8__game(a0, a1);
             break;
+        case RAC2_SHOT_LANCER:
+            m = func_L00_003E2180__game(a0, c->owner, c->target, c->f[0]);
+            break;
+        case RAC2_SHOT_HEAVY_LANCER:
+            m = func_L00_0041EB38__game(a0, c->owner, c->target);
+            break;
         default:
             break;
     }
@@ -927,6 +1002,35 @@ static void turn_matrix(gaddr m, float yaw, float pitch) {
         rac2_shot_turn(v, forward, yaw, pitch);
         write3(pvars + 0x30u, v);
     }
+}
+
+/* A Lancer's bullet turned by yaw and pitch in its pvars' velocity; a turned one homes on nothing.
+ */
+static void turn_flight(gaddr m, int kind, float yaw, float pitch) {
+    const gaddr pvars = rac2_moby_pvars(m, 1);
+    if (pvars == 0) {
+        return;
+    }
+    const gaddr at = pvars + (gaddr)KINDS[kind].velocity;
+    float v[3];
+    read3(v, at);
+    rac2_shot_turn(v, v, yaw, pitch);
+    write3(at, v);
+    if (yaw != 0.0f || pitch != 0.0f) {
+        GREF(gaddr, pvars + (gaddr)KINDS[kind].target) = 0;
+    }
+}
+
+/* A Lancer's bullet flying along `velocity`, its length the speed (pvars +0x2C); none left as it
+ * is. */
+static void aim_flight(gaddr m, int kind, const float velocity[3]) {
+    const gaddr pvars = rac2_moby_pvars(m, 1);
+    const float speed = length3(velocity);
+    if (pvars == 0 || speed < 1e-6f) {
+        return;
+    }
+    write3(pvars + (gaddr)KINDS[kind].velocity, velocity);
+    GREF(float, pvars + LANCER_SPEED) = speed;
 }
 
 /* A new shot's matrix and pvars' direction along `velocity`, and its speed (pvars +0x18) its
@@ -990,6 +1094,10 @@ static Shot* track(gaddr m, int kind, int32_t item, uint32_t flags, gaddr owner,
     s->flags = flags;
     s->owner = owner;
     s->target = target;
+    if (flies(kind)) {
+        const gaddr pvars = rac2_moby_pvars(m, 1);
+        s->flight_ticks = pvars != 0 ? GREF(int32_t, pvars + (gaddr)KINDS[kind].timer) : 0;
+    }
     return s;
 }
 
@@ -1005,11 +1113,17 @@ int32_t rac2_shot_refire(uint32_t serial, float yaw, float pitch) {
     if (m == 0) {
         return -1;
     }
-    if (!KINDS[c.kind].takes_velocity) {
+    gaddr target = c.target;
+    if (flies(c.kind)) {
+        turn_flight(m, c.kind, yaw, pitch);
+        if (yaw != 0.0f || pitch != 0.0f) {
+            target = 0;
+        }
+    } else if (!KINDS[c.kind].takes_velocity) {
         turn_matrix(m, yaw, pitch);
     }
     GREF(gaddr, m + MOBY_OWNER) = firing_shot->owner;
-    track(m, c.kind, firing_shot->item, OPENRAC_WEAPON_SHOT_REFIRED, firing_shot->owner, c.target);
+    track(m, c.kind, firing_shot->item, OPENRAC_WEAPON_SHOT_REFIRED, firing_shot->owner, target);
     give_look(m, firing_shot->item);
     return slot_of(m);
 }
@@ -1087,6 +1201,8 @@ int32_t rac2_shot_spawn_live(const openrac_game_spawn_live* in) {
             const gaddr record = rac2_weapon_record(KINDS[kind].item);
             c.f[1] = record != 0 ? GREF(float, record + 0x70u) : 1.0f;
             c.f[2] = 1.0f;
+        } else if (kind == RAC2_SHOT_LANCER) {
+            c.f[0] = LANCER_RANGE;
         }
     }
     c.moby = 0;
@@ -1106,7 +1222,11 @@ int32_t rac2_shot_spawn_live(const openrac_game_spawn_live* in) {
     if (m == 0) {
         return -1;
     }
-    if (!KINDS[kind].takes_velocity) {
+    if (flies(kind)) {
+        /* Where the mod asked, along its velocity (homing on its target, when it gave one). */
+        write3(m + MOBY_POS, in->position);
+        aim_flight(m, kind, in->velocity);
+    } else if (!KINDS[kind].takes_velocity) {
         aim_matrix(m, in->velocity);
         /* The rockets' spawn tests a line from the gun to the place and, blocked, puts the rocket at
          * the hero to go off there: a rocket made away from the gun (a split, a burst) is where the
@@ -1219,8 +1339,11 @@ static void tell_fire(const Shot* s, const Call* c, const float direction[3], fl
 /* A shot's direction (a unit vector) and speed (units a tick), as its spawn left it. */
 static void heading(const Call* c, gaddr m, float direction[3], float* speed) {
     float v[3];
+    const gaddr flight = flies(c->kind) ? rac2_moby_pvars(m, 1) : 0;
     if (KINDS[c->kind].takes_velocity) {
         memcpy(v, c->v1, sizeof v);
+    } else if (flight != 0) {
+        read3(v, flight + (gaddr)KINDS[c->kind].velocity);
     } else {
         read3(v, m + MOBY_FORWARD);
     }
@@ -1228,8 +1351,8 @@ static void heading(const Call* c, gaddr m, float direction[3], float* speed) {
     for (int i = 0; i < 3; ++i) {
         direction[i] = length > 1e-6f ? v[i] / length : 0.0f;
     }
-    *speed = KINDS[c->kind].takes_velocity ? length : 0.0f;
-    if (!KINDS[c->kind].takes_velocity) {
+    *speed = KINDS[c->kind].takes_velocity || flies(c->kind) ? length : 0.0f;
+    if (!KINDS[c->kind].takes_velocity && !flies(c->kind)) {
         const gaddr pvars = rac2_moby_pvars(m, 1);
         *speed = pvars != 0 ? GREF(float, pvars + 0x18u) : 0.0f;
     }
@@ -1275,6 +1398,8 @@ void rac2_shots_frame(void) {
         Shot* s = &shots[i];
         if (!s->ended && !alive(s->moby, s->oclass)) {
             shot_died(s, 0);
+        } else if (!s->ended && flies(s->kind)) {
+            shot_flight(s);
         }
         if (s->ended) {
             tell_end(s);

@@ -8,7 +8,9 @@
  * made live, and one that goes off at once; a weapon with no shot moby told by its rounds; the moby
  * loop's statuses (a frozen moby runs only for a new hit, a slowed one one tick in two) and the
  * mods' gate; the looks given to what a shot's update makes; a hit posted as the game posts one;
- * and no word of a moby followed unless it is memory, nor anything read or told outside play. */
+ * the Lancer's bullets (told with a serial, fired again turned in their pvars' velocity and homing
+ * on nothing, their end the turn of +0x20 to 1, made live); and no word of a moby followed unless
+ * it is memory, nor anything read or told outside play. */
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,6 +97,7 @@ int rac2_pool_status(int32_t out[5]) {
 #define OTHER_GUN_SLOT 3u
 #define UPDATE_ENEMY 0x00900000u
 #define UPDATE_SHOT 0x00900100u
+#define UPDATE_LANCER 0x00900200u
 
 static void put32(gaddr a, uint32_t v) {
     memcpy(G(a), &v, 4);
@@ -299,6 +302,38 @@ gaddr func_L00_00387CA8__game(gaddr a0, gaddr a1) {
     return 0;
 }
 
+/* The Lancers' spawns, as the game's leave a bullet: its gun at +0xB8 (set by the spawn), its
+ * target at pvars +0x1C, its velocity at +0x20 (1.5 a tick along +x), its speed at +0x2C, 13 ticks
+ * at +0x38. */
+static int lancer_calls;
+static float lancer_range;
+
+static gaddr lancer_bullet(int oclass, gaddr pos, gaddr parent, gaddr target) {
+    const gaddr m = func_0029EFD0(oclass);
+    if (m != 0) {
+        memcpy(G(m + MOBY_POS), G(pos), 16);
+        put32(m + MOBY_OWNER, parent);
+        put32(m + MOBY_UPDATE, UPDATE_LANCER);
+        const gaddr pvars = GREF(gaddr, m + MOBY_PVARS);
+        put32(pvars + 0x1Cu, target);
+        putf(pvars + 0x20u, 1.5f);
+        putf(pvars + 0x2Cu, 1.5f);
+        put32(pvars + 0x38u, 13);
+    }
+    return m;
+}
+
+gaddr func_L00_003E2180__game(gaddr pos, gaddr parent, gaddr target, float range) {
+    ++lancer_calls;
+    lancer_range = range;
+    return lancer_bullet(3070, pos, parent, target);
+}
+
+gaddr func_L00_0041EB38__game(gaddr origin, gaddr owner, gaddr target) {
+    ++lancer_calls;
+    return lancer_bullet(3209, origin, owner, target);
+}
+
 static uint32_t particle_next;
 
 gaddr func_002B9030__game(int tag) {
@@ -321,9 +356,12 @@ void func_002A8E20(gaddr victim, gaddr request) {
     hit_request = request;
 }
 
-/* An update: the enemy's counts its runs; a shot's dies when told, making a blast first. */
+/* An update: the enemy's counts its runs; a shot's dies when told, making a blast first; a Lancer's
+ * bullet flies along its velocity and, on the moby told to hit or with its ticks run out, turns
+ * +0x20 to 1 and its count to 6 (its fade), as UpdateHomingMissile does. */
 static int enemy_runs;
 static int shot_dies, shot_blasts;
+static gaddr lancer_hit;
 
 uint64_t openrac_guest_call_regs(
     gaddr address, const uint64_t* ints, const float* floats, float* result, int float_result
@@ -338,6 +376,16 @@ uint64_t openrac_guest_call_regs(
         }
         func_002B9030(0);
         GREF(uint8_t, object + MOBY_STATE) = 0xFD;
+    } else if (address == UPDATE_LANCER && GREF(uint8_t, object + MOBY_STATE) == 0) {
+        const gaddr pvars = GREF(gaddr, object + MOBY_PVARS);
+        int32_t left;
+        memcpy(&left, G(pvars + 0x38u), 4);
+        putf(object + MOBY_POS, getf(object + MOBY_POS) + getf(pvars + 0x20u));
+        if (object == lancer_hit || --left <= 0) {
+            GREF(uint8_t, object + MOBY_STATE) = 1;
+            left = 6;
+        }
+        put32(pvars + 0x38u, (uint32_t)left);
     }
     return 0;
 }
@@ -668,7 +716,7 @@ static void unchecked_words(void) {
 static void rounds(void) {
     level();
     openrac_game_weapon_fired = fired;
-    put32(HERO_ITEM_ID, 30); /* the Lancer: no shot moby */
+    put32(HERO_ITEM_ID, 30); /* the Lancer, no bullet of it made: its rounds told */
     put32(AMMO + 30u * 4u, 50);
     rac2_shots_frame();
     told_count = 0;
@@ -783,6 +831,76 @@ static void posts_hits(void) {
     CHECK(rac2_weapon_record(64) == 0);
 }
 
+static void lancer(void) {
+    level();
+    openrac_game_weapon_fired = fired;
+    openrac_game_shot_ended = ended;
+    put32(HERO_ITEM_ID, 30);
+    put32(AMMO + 30u * 4u, 50);
+    rac2_shots_frame();
+    told_count = 0;
+    end_count = 0;
+    refire_in_tell = 1;
+    lancer_calls = 0;
+    lancer_hit = 0;
+    /* The Lancer fires at the enemy (lancer_update: CreateTargetedMovingEffect), spending a round:
+     * the bullet is told, with its serial, not the rounds. */
+    const gaddr pos = 0x00700000u;
+    const float at[4] = {10.0f, 20.0f, 3.0f, 1.0f};
+    memcpy(G(pos), at, 16);
+    const gaddr m = func_L00_003E2180(pos, moby(GUN_SLOT), moby(ENEMY_SLOT), 20.0f);
+    put32(AMMO + 30u * 4u, 49);
+    rac2_shots_frame();
+    CHECK(told_count == 1 && told[0].oclass == 3070 && told[0].item == 30 && told[0].serial != 0);
+    CHECK(told[0].slot == slot_of(m) && told[0].target == (int32_t)ENEMY_SLOT);
+    CHECK(told[0].owner == (int32_t)GUN_SLOT && told[0].flags == 0);
+    CHECK(fabsf(told[0].direction[0] - 1.0f) < 1e-5f && fabsf(told[0].speed - 1.5f) < 1e-5f);
+    /* Fired again a quarter turn from the tell: the spawn again with its range, the copy's velocity
+     * turned in its pvars, homing on nothing; the first still homes on the enemy. */
+    CHECK(lancer_calls == 2 && lancer_range == 20.0f && refired_slot >= 0);
+    const gaddr copy = moby((uint32_t)refired_slot);
+    const gaddr cp = GREF(gaddr, copy + MOBY_PVARS);
+    CHECK(fabsf(getf(cp + 0x20u)) < 1e-5f && fabsf(getf(cp + 0x24u) - 1.5f) < 1e-5f);
+    CHECK(GREF(gaddr, cp + 0x1Cu) == 0 && GREF(gaddr, copy + MOBY_OWNER) == moby(GUN_SLOT));
+    CHECK(GREF(gaddr, GREF(gaddr, m + MOBY_PVARS) + 0x1Cu) == moby(ENEMY_SLOT));
+    refire_in_tell = 0;
+    /* The first hits in the next update: an impact, where it was then (it lives on in its fade). As
+     * in the game, a tick runs the update, then the shots are seen. */
+    lancer_hit = m;
+    func_L00_0032CF60();
+    lancer_hit = 0;
+    rac2_shots_frame();
+    CHECK(end_count == 1 && ends[0].reason == OPENRAC_SHOT_END_IMPACT);
+    CHECK(ends[0].serial == told[0].serial && fabsf(ends[0].position[0] - 11.5f) < 1e-5f);
+    CHECK(GREF(uint8_t, m + MOBY_STATE) == 1);
+    /* The copy flies on until its ticks run out: its time, told once. */
+    end_count = 0;
+    for (int i = 0; i < 11; ++i) {
+        func_L00_0032CF60();
+        rac2_shots_frame();
+    }
+    CHECK(end_count == 0);
+    func_L00_0032CF60();
+    rac2_shots_frame();
+    CHECK(end_count == 1 && ends[0].reason == OPENRAC_SHOT_END_EXPIRED);
+    CHECK(ends[0].flags == OPENRAC_WEAPON_SHOT_REFIRED);
+    func_L00_0032CF60();
+    rac2_shots_frame();
+    CHECK(end_count == 1);
+    /* A Heavy Lancer bullet made live: where the mod asked, along its velocity, its length the
+     * speed. */
+    const openrac_game_spawn_live bullet =
+        {3209, 30, -1, -1, 0, {1.0f, 2.0f, 3.0f}, {0.0f, 2.0f, 0.0f}};
+    const int32_t s = rac2_shot_spawn_live(&bullet);
+    CHECK(s >= 0 && GREF(int16_t, moby((uint32_t)s) + MOBY_OCLASS) == 3209);
+    const gaddr sp = GREF(gaddr, moby((uint32_t)s) + MOBY_PVARS);
+    CHECK(getf(sp + 0x24u) == 2.0f && getf(sp + 0x2Cu) == 2.0f && getf(sp + 0x20u) == 0.0f);
+    CHECK(getf(moby((uint32_t)s) + MOBY_POS + 4u) == 2.0f);
+    CHECK(rac2_shot_kind(3070) == RAC2_SHOT_LANCER && rac2_shot_class(RAC2_SHOT_HEAVY_LANCER) == 3209);
+    openrac_game_weapon_fired = NULL;
+    openrac_game_shot_ended = NULL;
+}
+
 int main(void) {
     openrac_guest_base = calloc(1, openrac_guest_ram_size);
     CHECK(openrac_guest_base != NULL);
@@ -795,6 +913,7 @@ int main(void) {
     statuses_and_gate();
     looks();
     posts_hits();
+    lancer();
     puts("RAC2 weapon shots: OK");
     return 0;
 }

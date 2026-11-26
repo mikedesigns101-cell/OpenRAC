@@ -280,6 +280,8 @@ func_L00_003F3090	weapon	GravityBombSpawnProjectile	wrap	the Gravity Bomb's bomb
 func_L00_00402B58	weapon	BouncerSpawnDebris	wrap	the Bouncer's bomblet made (class 3684): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
 func_L00_0039BB90	weapon	DecoyCreateProjectile	wrap	the Decoy Glove's decoy made (class 203): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
 func_L00_0038ACC8	weapon	MiniturretSpawnShot	wrap	the Miniturret Glove's turret made (class 4966): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
+func_L00_003E6400	weapon	CreateTargetedMovingEffect	wrap	the Lancer's bullet made (class 3070): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
+func_L00_00423E08	weapon	SpawnAimedShot	wrap	the Heavy Lancer's bullet made (class 3209): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
 func_L00_0032F058	moby	UpdateLiveMobys	wrap	the moby loop, as the game's, with the mods' gate around each update, their statuses (frozen, slowed) and the moby that runs now for the weapons' looks (host/weapon_shots.c)
 func_0029F968	moby	CreateMoby	wrap	a moby made: one a weapon's shot or gun makes in its update takes the weapon's look (host/weapon_shots.c)
 func_002B9BE8	effect	PartAlloc	wrap	a particle made: one a weapon's shot or gun makes in its update takes the weapon's look (host/weapon_shots.c)

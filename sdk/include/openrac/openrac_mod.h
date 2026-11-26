@@ -133,12 +133,14 @@ extern "C" {
  * draws its waves from (Going Commando: Maktar's), which go in with their
  * originals and hold the wave until they are beaten (the table is unchanged: an
  * older port calls them scripted, so a mod asks for this minor before it copies
- * them; OpenRAC's pull request 962 numbers it otherwise), and 1.101 props drawn
- * at their joint's own scale, so a mod's piece hides with a part the game hides
- * by shrinking its joint (OPENRAC_ATTACH_SCALED, a prop_attach flag; the table
- * is unchanged).
+ * them; OpenRAC's pull request 962 numbers it otherwise), 1.101 props drawn at
+ * their joint's own scale, so a mod's piece hides with a part the game hides by
+ * shrinking its joint (OPENRAC_ATTACH_SCALED, a prop_attach flag; the table is
+ * unchanged), and 1.102 the Lancer's and the Heavy Lancer's bullets as the
+ * hero's shots, told, fired again, ended and made live (the table is
+ * unchanged).
  */
-#define OPENRAC_MOD_API_MINOR 101
+#define OPENRAC_MOD_API_MINOR 102
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1002,8 +1004,9 @@ typedef int (*openrac_hit_fn)(void* user, const openrac_hit* hit);
 
 /* openrac_weapon_shot.flags and openrac_shot_end.flags: a shot weapon_refire
  * made (never told to on_weapon_fire), one moby_spawn_live made, and a weapon
- * with no shot moby of its own (the Blitz Gun's pellets, the Lancer, the Lava
- * Gun: its rounds were spent, slot is -1). Since 1.29. */
+ * with no shot moby of its own (the Blitz Gun's pellets, the Lava Gun: its
+ * rounds were spent, slot is -1; the Lancer's too before 1.102, whose bullets
+ * are told as shots since). Since 1.29. */
 #define OPENRAC_WEAPON_SHOT_REFIRED 0x1u
 #define OPENRAC_WEAPON_SHOT_LIVE 0x2u
 #define OPENRAC_WEAPON_SHOT_ROUNDS 0x4u
@@ -3023,7 +3026,8 @@ typedef struct openrac_api {
      * `serial`, fires that shot again through the game's own spawn for its
      * class, `yaw` radians turned about the up axis and `pitch` radians up from
      * it, at no ammo: the copy is the game's shot, run, aimed, hitting and
-     * exploding as the first does. The copy is told to no mod's on_weapon_fire
+     * exploding as the first does (since 1.102 a Lancer's bullet turned by any
+     * yaw or pitch homes on nothing, so a fan stays open). The copy is told to no mod's on_weapon_fire
      * (no recursion), and on_shot_end tells its end with
      * OPENRAC_WEAPON_SHOT_REFIRED. At most OPENRAC_SHOTS_PER_TICK_MAX a tick
      * with moby_spawn_live, and none while the level's pool keeps fewer than 32
@@ -3042,8 +3046,10 @@ typedef struct openrac_api {
      * explodes by its own update): 1498 the Minirocket Tube's homing rocket,
      * 3799 the RYNO II's rocket, 3329 the Seeker Gun's seeker, 1496 the
      * hoverbomb, 121 the Bomb Glove's bomb (a mini bomb), 3300 the gravity
-     * bomb, 3684 the Bouncer's bomblet, 203 a decoy, 4966 a miniturret.
-     * on_shot_end tells its end (OPENRAC_WEAPON_SHOT_LIVE). Counts toward
+     * bomb, 3684 the Bouncer's bomblet, 203 a decoy, 4966 a miniturret, and
+     * since 1.102 3070 the Lancer's bullet and 3209 the Heavy Lancer's (their
+     * gun the moby in `owner`, or the hero's in hand: a gun of another weapon
+     * may make none). on_shot_end tells its end (OPENRAC_WEAPON_SHOT_LIVE). Counts toward
      * OPENRAC_SHOTS_PER_TICK_MAX. Returns its slot, or OPENRAC_HOOK_UNKNOWN
      * (another class, outside a level, the cap, the pool, the spawn made none).
      * From the mod's tick callbacks, on_weapon_fire or on_shot_end. */

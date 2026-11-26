@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.102
+
+The Lancer's and the Heavy Lancer's bullets as the hero's shots, told, fired again, ended and made live (the table is unchanged).
+
+No new members (the table is unchanged).
+
 ## 1.101
 
 Props drawn at their joint's own scale, so a mod's piece hides with a part the game hides by shrinking its joint (OPENRAC_ATTACH_SCALED, a prop_attach flag; the table is unchanged).

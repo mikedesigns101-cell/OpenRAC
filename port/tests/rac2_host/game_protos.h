@@ -35,6 +35,8 @@ gaddr func_L00_003EED10__game(int a0, gaddr a1, gaddr a2);
 int func_L00_003FE2D0__game(int a0, int a1, int a2);
 gaddr func_L00_00398810__game(gaddr a0, gaddr a1);
 gaddr func_L00_00387CA8__game(gaddr a0, gaddr a1);
+gaddr func_L00_003E2180__game(gaddr a0, gaddr a1, gaddr a2, float a3);
+gaddr func_L00_0041EB38__game(gaddr a0, gaddr a1, gaddr a2);
 
 /* weapon_culling.c */
 gaddr func_002AF580__game(

@@ -2447,6 +2447,13 @@ int main() {
       CHECK(mod.has_moby_copy() && !mod.has_squad_copies());
       api.api_minor = OPENRAC_MOD_API_MINOR;
     }
+    // Interface 1.102: the Lancers' bullets are shots; a port of 1.101 tells only their rounds.
+    {
+      CHECK(mod.has_lancer_shots());
+      api.api_minor = 101;
+      CHECK(!mod.has_lancer_shots());
+      api.api_minor = OPENRAC_MOD_API_MINOR;
+    }
     // Interface 1.100: copies of an arena's enemies; a port of 1.40 has squad copies but not them.
     {
       CHECK(mod.has_arena_copies());
