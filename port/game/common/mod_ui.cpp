@@ -2128,6 +2128,7 @@ int openrac_mod_pages_view_of(openrac_mod_pages_view* out) {
         return 0;
     }
     std::memset(out, 0, sizeof *out);
+    out->mod_drawn = (p->flags & OPENRAC_UI_MOD_DRAWN) != 0 ? 1 : 0;
     put(out->title, sizeof out->title, p->title);
     const int rows = std::min<int>(static_cast<int>(p->items.size()), OPENRAC_MOD_PAGES_ROWS);
     out->rows = rows;

@@ -246,7 +246,7 @@ int api_ui_page(openrac_mod* mod, uint32_t flags, openrac_ui_fn fn, void* user) 
         return OPENRAC_HOOK_UNKNOWN;
     }
     UiPageCallback page{UiPage{}, fn, user, mod};
-    page.page.flags = flags & OPENRAC_UI_OWN_BACK;
+    page.page.flags = flags & (OPENRAC_UI_OWN_BACK | OPENRAC_UI_MOD_DRAWN);
     g_ui_pages.push_back(std::move(page));
     return static_cast<int>(g_ui_pages.size()) - 1;
 }

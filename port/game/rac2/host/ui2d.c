@@ -161,7 +161,8 @@ static void record_quad(const openrac_game_ui_rect* q) {
 
 /* A GUI sprite element (func_00336320, GuiSpriteElementDraw): its place (+0, a pointer to its
  * centre x, y), scale (+4), frame (+0x38, to it), colour (+12, to it), scale (+16, to it; 0 hides it) and texture (+64; 0
- * hides it). Its box is recorded (the menus' frames and highlights), then the game draws it. */
+ * hides it). Its box is recorded (the menus' frames and highlights), then the game draws it, or a
+ * mod's replacement does (rac2.gui.draw_element, func_00336320__hooked). */
 void func_00336320(gaddr o) {
     const gaddr place = (gaddr)GREF(int32_t, o);
     const int tex = GREF(int32_t, o + 64);
@@ -178,7 +179,7 @@ void func_00336320(gaddr o) {
         r->element = o;
         r->frame = GREF(float, (gaddr)GREF(int32_t, o + 0x38));
     }
-    func_00336320__game(o);
+    func_00336320__hooked(o);
 }
 
 /* A quad to the window as a record (else the game's packet goes out): recorded first. */

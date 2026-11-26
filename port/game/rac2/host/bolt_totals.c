@@ -38,12 +38,12 @@ void func_0034CEA0(gaddr hud) {
 
 void func_0034DB98(gaddr panel) {
     if (!compact_shown) {
-        func_0034DB98__game(panel);
+        func_0034DB98__hooked(panel); /* rac2.hud.bolts */
         return;
     }
     int32_t* bolts = (int32_t*)G(OPENRAC_DATA(PLAYER_BOLTS));
     const int32_t saved = *bolts;
     *bolts = 0;
-    func_0034DB98__game(panel);
+    func_0034DB98__hooked(panel);
     *bolts = saved;
 }

@@ -137,14 +137,16 @@ extern "C" {
  * their joint's own scale, so a mod's piece hides with a part the game hides by
  * shrinking its joint (OPENRAC_ATTACH_SCALED, a prop_attach flag; the table is
  * unchanged), 1.102 the Lancer's and the Heavy Lancer's bullets as the hero's
- * shots, told, fired again, ended and made live (the table is unchanged), and
- * 1.103 pictures of a mod's own for its overlay, drawn turned, tinted and kept
- * in shape, and a call of the overlay under the game's 2D
- * (overlay_image_create, overlay_image_destroy, openrac_overlay.image,
- * image_quad, layer, aspect, OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request
- * 865, by Henning Berge).
+ * shots, told, fired again, ended and made live (the table is unchanged), 1.103
+ * pictures of a mod's own for its overlay, drawn turned, tinted and kept in
+ * shape, and a call of the overlay under the game's 2D (overlay_image_create,
+ * overlay_image_destroy, openrac_overlay.image, image_quad, layer, aspect,
+ * OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request 865, by Henning Berge), and
+ * 1.104 pages a mod draws itself (OPENRAC_UI_MOD_DRAWN, the table is
+ * unchanged), with Going Commando's HUD parts, quick select, 2D elements and
+ * the vendor's opening as hook points.
  */
-#define OPENRAC_MOD_API_MINOR 103
+#define OPENRAC_MOD_API_MINOR 104
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -663,6 +665,15 @@ typedef int (*openrac_menu_fn)(void* user, const openrac_menu_frame* frame);
 /* Triangle comes to the mod as OPENRAC_UI_BACK instead of going back: the mod goes back itself
  * (openrac_api.ui_open with OPENRAC_UI_GO_BACK), for one that asks first. */
 #define OPENRAC_UI_OWN_BACK 0x1u
+/* The port draws nothing of the page: no title, list, footer or question, only what is under it
+ * (in Going Commando's pause menu the panel the page sits in, which a mod may leave out with
+ * rac2.gui.draw_element). The mod draws the page itself, in its overlay (on_overlay_phases with
+ * OPENRAC_OVERLAY_MENU, overlay_image_create), from the page's events: its items still take
+ * the pad as on any page (Up and Down move the cursor over them, Cross chooses, Left and Right
+ * step a choice, Triangle goes back), and ui_cursor says where the cursor is. A port before 1.104
+ * draws the page as any other. Going Commando's pause items (ui_pause_item) and main-menu items
+ * (ui_main_item) open such pages. Since 1.104. */
+#define OPENRAC_UI_MOD_DRAWN 0x2u
 
 /* One item of a page (openrac_ui_content.items). The mod's; read during openrac_api.ui_set.
  * Since 1.7. */
@@ -3494,6 +3505,7 @@ typedef struct openrac_api {
      * Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for an id that is not one of the mod's. Any
      * thread. Since 1.103. */
     int (*overlay_image_destroy)(openrac_mod* mod, int image);
+
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

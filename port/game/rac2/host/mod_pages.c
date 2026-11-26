@@ -329,6 +329,13 @@ int rac2_mod_pages_draw(char* title, unsigned title_bytes) {
         /* Flying in before the port has made it the page shown: the title only. */
         return 1;
     }
+    /* A page the mod draws itself (OPENRAC_UI_MOD_DRAWN): nothing of it here, not even its title. */
+    if (view.mod_drawn) {
+        if (title_bytes > 0) {
+            title[0] = 0;
+        }
+        return 1;
+    }
     snprintf(title, title_bytes, "%s", view.title);
     if (view.asking) {
         print(PAGE_MIDDLE, ROW_TOP + 2 * ROW_STEP, ROW_CHOSEN, view.question, 0);

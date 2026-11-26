@@ -122,7 +122,7 @@ void func_0034E4F8(gaddr object) {
     const int side = openrac_game_hud_side();
     widgets_side = side;
     side_marker(side);
-    func_0034E4F8__game(object);
+    func_0034E4F8__hooked(object); /* rac2.hud.draw */
     if (side != 0) {
         hud_side(0, 0);
     }
@@ -140,7 +140,7 @@ void func_0034AD10(gaddr panel) {
     if (side != 0) {
         hud_side(0, 0);
     }
-    func_0034AD10__game(panel);
+    func_0034AD10__hooked(panel); /* rac2.hud.nanotech */
     side_marker(side);
 }
 

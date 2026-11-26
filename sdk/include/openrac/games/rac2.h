@@ -282,6 +282,110 @@ typedef void (*openrac_rac2_Moby_Update)(uint32_t moby);
 /* Hook points added since this header was last written by hand, from the binding table.
  * As the others: on a port that lacks one, openrac_api.hook returns OPENRAC_HOOK_UNKNOWN. */
 
+/* Gui_DrawElement: Draws one sprite element of the game's 2D (GuiSpriteElementDraw, under the
+ * port's own wrap in host/ui2d.c): the pause menu's frames, panels, highlights and title bars,
+ * the HUD's frames and bars, the vendor's and the menus' art. element is a game address: +0 a
+ * pointer to its centre (x, y floats, the screen's 512 x 416), +4 to its size (w, h), +12 to
+ * its colour (0xAABBGGRR), +16 to its scale (0 hides it), +0x38 to its frame, +64 its texture
+ * (0 hides it). A replacement that does not call the original leaves the element out, and may
+ * draw its own in its place (the overlay, openrac_overlay.image); one that changes the words
+ * those pointers name for the call puts them back after. Called for every element every frame:
+ * keep it cheap. */
+#define OPENRAC_RAC2_HOOK_Gui_DrawElement "Gui_DrawElement"
+#define OPENRAC_RAC2_SIG_Gui_DrawElement "void(u32)"
+typedef void (*openrac_rac2_Gui_DrawElement)(uint32_t element);
+
+/* Gui_DrawIcon: Draws one icon element of the game's 2D (func_00336828): the icons of the pause
+ * menu's lists, the quick select's and the weapons screen's item icons. element is a game
+ * address laid out as rac2.gui.draw_element's (+0 its place, +4 its size, +12 its colour, the
+ * sheet and cell func_00336920 set). A replacement that does not call the original leaves the
+ * icon out. */
+#define OPENRAC_RAC2_HOOK_Gui_DrawIcon "Gui_DrawIcon"
+#define OPENRAC_RAC2_SIG_Gui_DrawIcon "void(u32)"
+typedef void (*openrac_rac2_Gui_DrawIcon)(uint32_t element);
+
+/* Hud_Draw: Draws the level's HUD (hud_item_bolt_draw, under the port's own wrap in host/hud.c:
+ * the HUD's edges and the mods' lines of text): the weapon slots (rac2.hud.weapon_slots), the
+ * bolt counter (rac2.hud.bolts), the text panel (rac2.hud.text_panel) and the bolts' gains
+ * (rac2.hud.bolt_deltas), each a hook point of its own; the top panel (rac2.hud.nanotech) is
+ * drawn from the HUD's widgets. hud is the HUD's object (the front end's block + 0x36F28). A
+ * replacement that does not call the original draws no HUD at all. */
+#define OPENRAC_RAC2_HOOK_Hud_Draw "Hud_Draw"
+#define OPENRAC_RAC2_SIG_Hud_Draw "void(u32)"
+typedef void (*openrac_rac2_Hud_Draw)(uint32_t hud);
+
+/* Hud_Weapon: Draws the HUD slot of the weapon in hand (weapon_wheel_draw, HUD slot 0x23's
+ * draw): the selected weapon's slot lit, its ammunition and its name. slot is the HUD slot's
+ * record. A replacement that does not call the original (and returns 0) leaves it out. */
+#define OPENRAC_RAC2_HOOK_Hud_Weapon "Hud_Weapon"
+#define OPENRAC_RAC2_SIG_Hud_Weapon "i32(u32)"
+typedef int32_t (*openrac_rac2_Hud_Weapon)(uint32_t slot);
+
+/* Hud_WeaponSelector: Draws the other look of the same HUD slot (DrawRadialSelectorPanel, put
+ * in its place in some levels and modes). slot is the HUD slot's record. A replacement that
+ * does not call the original (and returns 0) leaves it out. */
+#define OPENRAC_RAC2_HOOK_Hud_WeaponSelector "Hud_WeaponSelector"
+#define OPENRAC_RAC2_SIG_Hud_WeaponSelector "i32(u32)"
+typedef int32_t (*openrac_rac2_Hud_WeaponSelector)(uint32_t slot);
+
+/* Hud_WeaponSlots: Places the eight weapon slots of the HUD on their circle
+ * (radial_menu_layout_items: the selected one lifted), at x, y on the screen's 512 x 416, alpha
+ * their opacity; the HUD (hud_item_bolt_draw) and the quick select (radial_menu_draw) call it.
+ * A replacement that does not call the original leaves the slots where they were last placed:
+ * leave out rac2.hud.draw or rac2.quick_select.draw to hide them. */
+#define OPENRAC_RAC2_HOOK_Hud_WeaponSlots "Hud_WeaponSlots"
+#define OPENRAC_RAC2_SIG_Hud_WeaponSlots "void(u32,i32,i32,i32)"
+typedef void (*openrac_rac2_Hud_WeaponSlots)(uint32_t hud, int32_t x, int32_t y, int32_t alpha);
+
+/* Hud_Bolts: Draws the HUD's bolt counter (DrawBoltCounterPanel: the bolts, the multiplier;
+ * under the port's own wrap in host/bolt_totals.c, the compact totals). panel is the HUD's
+ * object + 0x7A0. A replacement that does not call the original leaves the counter out. */
+#define OPENRAC_RAC2_HOOK_Hud_Bolts "Hud_Bolts"
+#define OPENRAC_RAC2_SIG_Hud_Bolts "void(u32)"
+typedef void (*openrac_rac2_Hud_Bolts)(uint32_t panel);
+
+/* Hud_BoltDeltas: Draws the bolts just picked up, rising by the counter
+ * (DrawBoltCounterDeltas). A replacement that does not call the original leaves them out. */
+#define OPENRAC_RAC2_HOOK_Hud_BoltDeltas "Hud_BoltDeltas"
+#define OPENRAC_RAC2_SIG_Hud_BoltDeltas "void()"
+typedef void (*openrac_rac2_Hud_BoltDeltas)(void);
+
+/* Hud_TextPanel: Draws one of the game's text panels at the HUD's scale
+ * (text_panel_draw_scaled): the HUD's own (its object + 0x1FBC) and others of the menus'. panel
+ * is the panel's object. A replacement that does not call the original leaves it out. */
+#define OPENRAC_RAC2_HOOK_Hud_TextPanel "Hud_TextPanel"
+#define OPENRAC_RAC2_SIG_Hud_TextPanel "void(u32)"
+typedef void (*openrac_rac2_Hud_TextPanel)(uint32_t panel);
+
+/* Hud_Nanotech: Draws the HUD's segmented ring meter, the top panel among the HUD's widgets
+ * (DrawSegmentedRingMeter, under the port's own wrap in host/hud.c: the HUD's edges): its frame
+ * (+0x5C, +0xA8), its bar (+0xF4) and a tile for each of its segments (+4 their count). A
+ * replacement that does not call the original leaves it out. */
+#define OPENRAC_RAC2_HOOK_Hud_Nanotech "Hud_Nanotech"
+#define OPENRAC_RAC2_SIG_Hud_Nanotech "void(u32)"
+typedef void (*openrac_rac2_Hud_Nanotech)(uint32_t meter);
+
+/* QuickSelect_Draw: Draws the quick select (radial_menu_draw, while Triangle holds it open:
+ * +0xA58 set): its backdrop and frames (gfx elements at +0, +0x4C, +0xE4, +0x130, +0x214,
+ * +0x2A8, +0x2F4), its labels (+0x828 to +0x990), the item's information, its eight slots
+ * (+0x340, 0x4C each) and eight icons (+0x5EC, 0x3C each), the cursor (+0x5A0), then the weapon
+ * slots (rac2.hud.weapon_slots). A replacement that does not call the original draws none of
+ * it; the game still reads the pad for it. */
+#define OPENRAC_RAC2_HOOK_QuickSelect_Draw "QuickSelect_Draw"
+#define OPENRAC_RAC2_SIG_QuickSelect_Draw "void(u32)"
+typedef void (*openrac_rac2_QuickSelect_Draw)(uint32_t menu);
+
+/* Vendor_Open: Opens a vendor's menu (OpenVendorMenu), as the game's mode changes to the
+ * vendor's, before its first frame and its opening animation: clears the menu's state
+ * (g_vendor_menu_state, 0x760 bytes), sets its mode (0 the weapons, 1 the ammunition, 2 the
+ * ship's parts, 3 the armour, by the vendor moby's or the number passed under 4) and builds its
+ * list. moby is the vendor's moby, or 0 to 3 for a menu opened without one. A replacement that
+ * calls the original and then reads the mode knows which menu opens, a frame before the game
+ * draws it. */
+#define OPENRAC_RAC2_HOOK_Vendor_Open "Vendor_Open"
+#define OPENRAC_RAC2_SIG_Vendor_Open "void(u32)"
+typedef void (*openrac_rac2_Vendor_Open)(uint32_t moby);
+
 /* Moby_NanotechBall_Update: The nanotech orb's update (class 0x326, the orb in a nanotech
  * crate): flies its pieces to the hero, who gains health as each lands (+0x24CC of the hero, at
  * most his max health), 1 a piece or 4 for the special orb. Rac1's nanotech_ball update. */

@@ -328,6 +328,18 @@ func_002F71B8	vendor	ArmorVendor_BuildList	hook	Fills the armour vendor's list (
 func_L00_00373D40	vendor	ArmorVendor_Buy	hook	The armour vendor's purchase dialog (mode 3), each level's copy: asks, then pays the row's price and closes the menu, which then wears the row's armour. A hook point for mods; the game's C with none.
 func_002FB1A0	vendor	Vendor_Preview	hook	Sets up the vendor's preview of the row under the cursor (PrepareVendorSelectionPreview): the armour vendor loads the row's armour over Ratchet and makes the preview objects. A hook point for mods; the game's C with none.
 func_00288FB8	text	Text_ById	hook	The game's text of an id, under the port's own (host/options.c): the vendor's upgrade label (0x325F) and every name it prints ask it; ids 0x7F10 to 0x7F17 are the port's slots for a mod's own texts. A hook point for mods; the game's C with none.
+func_00336320	draw	Gui_DrawElement	hook	A sprite element of the game's 2D (the pause menu's frames and panels, the HUD's frames and bars): a hook point for mods, under the port's own wrap (GuiSpriteElementDraw): the mod's replacement or the game's C runs where the wrap calls the game's.
+func_00336828	draw	Gui_DrawIcon	hook	An icon element of the game's 2D (the pause lists', the quick select's and the weapons screen's icons). A hook point for mods; the game's C with none.
+func_0034E4F8	hud	Hud_Draw	hook	Draws the level's HUD. A hook point for mods, under the port's own wrap: the mod's replacement or the game's C runs where the wrap calls the game's.
+func_0028C6D0	hud	Hud_Weapon	hook	Draws the HUD slot of the weapon in hand. A hook point for mods; the game's C with none.
+func_0028D1E8	hud	Hud_WeaponSelector	hook	Draws the other look of the same HUD slot. A hook point for mods; the game's C with none.
+func_0034E2E0	hud	Hud_WeaponSlots	hook	Places the eight weapon slots of the HUD on their circle. A hook point for mods; the game's C with none.
+func_0034DB98	hud	Hud_Bolts	hook	Draws the HUD's bolt counter. A hook point for mods, under the port's own wrap: the mod's replacement or the game's C runs where the wrap calls the game's.
+func_0028A670	hud	Hud_BoltDeltas	hook	Draws the bolts just picked up, rising by the counter. A hook point for mods; the game's C with none.
+func_00338F58	hud	Hud_TextPanel	hook	Draws one of the game's text panels at the HUD's scale. A hook point for mods; the game's C with none.
+func_0034AD10	hud	Hud_Nanotech	hook	Draws the HUD's segmented ring meter, the top panel among the HUD's widgets. A hook point for mods, under the port's own wrap: the mod's replacement or the game's C runs where the wrap calls the game's.
+func_00340250	hud	QuickSelect_Draw	hook	Draws the quick select. A hook point for mods; the game's C with none.
+func_002F8178	hud	Vendor_Open	hook	Opens a vendor's menu. A hook point for mods; the game's C with none.
 func_002AD7B8	planet	Planet_Unlock	hook	Puts a level on the ship's map (MarkLevelAvailable); every level load calls it for its own level too. A hook point for mods; the game's C with none.
 func_L01_003CEDA0	moby	Moby_DynamoPickup_Update	hook	Oozla's Dynamo pickup outside the Megacorp store (class 2709): plays its scene and gives item 36; tests item 36's owned byte. A hook point for mods; the game's C with none.
 func_L01_003D2E50	moby	Moby_TractorBeamSeller_Update	hook	Oozla's Megacorp scientist (class 2766): sells the Tractor Beam (item 46) for its record's price; tests item 46's owned byte. A hook point for mods; the game's C with none.

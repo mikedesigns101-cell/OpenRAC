@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.104
+
+Pages a mod draws itself (OPENRAC_UI_MOD_DRAWN, the table is unchanged), with Going Commando's HUD parts, quick select, 2D elements and the vendor's opening as hook points.
+
+No new members (the table is unchanged).
+
 ## 1.103
 
 Pictures of a mod's own for its overlay, drawn turned, tinted and kept in shape, and a call of the overlay under the game's 2D (overlay_image_create, overlay_image_destroy, openrac_overlay.image, image_quad, layer, aspect, OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request 865, by Henning Berge).

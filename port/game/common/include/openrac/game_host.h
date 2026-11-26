@@ -407,6 +407,8 @@ typedef struct openrac_mod_pages_view {
     char footer[OPENRAC_MOD_PAGES_FOOTER][OPENRAC_MOD_PAGES_TEXT];
     int asking;
     char question[4 * OPENRAC_MOD_PAGES_TEXT];
+    /* The page is one the mod draws itself (OPENRAC_UI_MOD_DRAWN): the game draws none of it. */
+    int mod_drawn;
 } openrac_mod_pages_view;
 
 /* Fills `out` with the page on the screen; 0 when none of a mod's is. */

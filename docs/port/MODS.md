@@ -1055,6 +1055,32 @@ same textured program. The C++ layer's `has_overlay_images()`, `overlay_image_cr
 `overlay_image_destroy()`, `overlay_has_images()`, `overlay_image()`, `overlay_image_quad()`,
 `overlay_layer()`.
 
+1.104 (SDK 1.104.0) Going Commando's menus and HUD made over by a mod. `OPENRAC_UI_MOD_DRAWN`, a
+flag of `ui_page`, makes a page the port draws nothing of (no title, rows, footer or question): its
+items still take the pad (the cursor, `OPENRAC_UI_CHOOSE`, `_CHANGE`, `_BACK`) and the mod draws the
+page itself in its overlay (`on_overlay_phases` with `OPENRAC_OVERLAY_MENU`, its pictures), and may
+leave out the panel under it with `rac2.gui.draw_element`; Going Commando's pause items
+(`ui_pause_item`, on the Options page) open such pages. No new member: a port of 1.103 draws the
+page as any other. The HUD's parts and the game's 2D are hook points (SDK `games/rac2.h`), each left out by a replacement that does not call the original:
+
+| Hook point | The game's function | What it draws (seen in the game: Oozla, each left out in turn) |
+|---|---|---|
+| `rac2.hud.draw` | `hud_item_bolt_draw` (`func_0034E4F8`) | the HUD Triangle brings up: the ring of eight weapon slots, the top bar and the icon at the top right, all of it |
+| `rac2.hud.bolts` | `DrawBoltCounterPanel` (`func_0034DB98`) | that HUD's panels: the ring's frames, the top bar's frame, the icon (left out, only the slots' small meters stay) |
+| `rac2.hud.nanotech` | `DrawSegmentedRingMeter` (`func_0034AD10`) | the top bar (the segmented meter) |
+| `rac2.hud.weapon_slots` | `radial_menu_layout_items` (`func_0034E2E0`) | places the eight slots on their ring (left out, they stay where they were placed last) |
+| `rac2.hud.bolt_deltas` | `DrawBoltCounterDeltas` (`func_0028A670`) | the bolts just picked up (no change seen without a pickup) |
+| `rac2.hud.text_panel` | `text_panel_draw_scaled` (`func_00338F58`) | a text panel at the HUD's scale (no change seen) |
+| `rac2.hud.weapon`, `rac2.hud.weapon_selector` | `weapon_wheel_draw` (`func_0028C6D0`), `DrawRadialSelectorPanel` (`func_0028D1E8`) | HUD slot 0x23's two draws (no change seen: they are not the box of the weapon in hand at the top left) |
+| `rac2.quick_select.draw` | `radial_menu_draw` (`func_00340250`) | not called in play or under Triangle (another menu's) |
+| `rac2.gui.draw_element` | `GuiSpriteElementDraw` (`func_00336320`) | any sprite element of the 2D: frames, panels, bars (left out while a mod's page was shown, the Options page's panel went) |
+| `rac2.gui.draw_icon` | `func_00336828` | the lists', quick select's and weapons screen's icons |
+| `rac2.vendor.open` | `OpenVendorMenu` (`func_002F8178`) | not a draw: the vendor's menu opening (seen 12 ticks before the vendor's list is first drawn) |
+
+The box of the weapon in hand at the top left (its icon, name and ammunition) is drawn by none of
+these; its frame may be among the sprites of `rac2.gui.draw_element`, told apart by their place
+(the element's +0 points to its x and y on the 512 x 416 screen), which is not tried yet. The addresses are v1.01's; `sdk/bindings/rac2.json` has each disc's.
+
 The port's own readers of the pad (the movie player) and its Start skip take the
 report the mods leave, so a key a mod binds to Start skips as the pad's
 does. The port keeps every hook point it has had, with its

@@ -8,7 +8,7 @@
 
 #include "openrac/script_binding.h"
 
-static const openrac_script_point k_points[55];
+static const openrac_script_point k_points[67];
 
 /* Shape S0: void(i32) (amount). */
 typedef void (*S0_fn)(int32_t);
@@ -301,158 +301,150 @@ static void S14_call(void* original, const openrac_script_value* v, openrac_scri
 }
 #define S14_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S14_THUNK(N, I, 0) S14_THUNK(N, I, 1) S14_THUNK(N, I, 2) S14_THUNK(N, I, 3) S14_THUNK(N, I, 4) S14_THUNK(N, I, 5) S14_THUNK(N, I, 6) S14_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S15: void(i32) (level). */
-typedef void (*S15_fn)(int32_t);
-static const uint8_t k_S15_kinds[] = {OPENRAC_SV_I32};
-static const char* const k_S15_names[] = {"level"};
+/* Shape S15: void(u32) (element). */
+typedef void (*S15_fn)(uint32_t);
+static const uint8_t k_S15_kinds[] = {OPENRAC_SV_U32};
+static const char* const k_S15_names[] = {"element"};
 static void S15_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
     (void)r;
-    ((S15_fn)original)((int32_t)v[0].i);
+    ((S15_fn)original)((uint32_t)v[0].i);
 }
-#define S15_THUNK(N, I, K) static void N##_##K(int32_t level) { \
+#define S15_THUNK(N, I, K) static void N##_##K(uint32_t element) { \
     openrac_script_value v[1] = {{0, 0.0}}; \
-    v[0].i = (int64_t)level; \
+    v[0].i = (int64_t)element; \
     openrac_script_value r = {0, 0.0}; \
     if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        ((S15_fn)k_##N##_links[K].original)(level); \
+        ((S15_fn)k_##N##_links[K].original)(element); \
         return; \
     } \
 }
 #define S15_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S15_THUNK(N, I, 0) S15_THUNK(N, I, 1) S15_THUNK(N, I, 2) S15_THUNK(N, I, 3) S15_THUNK(N, I, 4) S15_THUNK(N, I, 5) S15_THUNK(N, I, 6) S15_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S16: void(u32) (moby). */
+/* Shape S16: void(u32) (hud). */
 typedef void (*S16_fn)(uint32_t);
 static const uint8_t k_S16_kinds[] = {OPENRAC_SV_U32};
-static const char* const k_S16_names[] = {"moby"};
+static const char* const k_S16_names[] = {"hud"};
 static void S16_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
     (void)r;
     ((S16_fn)original)((uint32_t)v[0].i);
 }
-#define S16_THUNK(N, I, K) static void N##_##K(uint32_t moby) { \
+#define S16_THUNK(N, I, K) static void N##_##K(uint32_t hud) { \
     openrac_script_value v[1] = {{0, 0.0}}; \
-    v[0].i = (int64_t)moby; \
+    v[0].i = (int64_t)hud; \
     openrac_script_value r = {0, 0.0}; \
     if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        ((S16_fn)k_##N##_links[K].original)(moby); \
+        ((S16_fn)k_##N##_links[K].original)(hud); \
         return; \
     } \
 }
 #define S16_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S16_THUNK(N, I, 0) S16_THUNK(N, I, 1) S16_THUNK(N, I, 2) S16_THUNK(N, I, 3) S16_THUNK(N, I, 4) S16_THUNK(N, I, 5) S16_THUNK(N, I, 6) S16_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S17: void(u32,i32,i32,i32,i32,i32,f32) (moby, low, high, flags, surface, maximum, height). */
-typedef void (*S17_fn)(uint32_t, int32_t, int32_t, int32_t, int32_t, int32_t, float);
-static const uint8_t k_S17_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_F32};
-static const char* const k_S17_names[] = {"moby", "low", "high", "flags", "surface", "maximum", "height"};
+/* Shape S17: i32(u32) (slot). */
+typedef int32_t (*S17_fn)(uint32_t);
+static const uint8_t k_S17_kinds[] = {OPENRAC_SV_U32};
+static const char* const k_S17_names[] = {"slot"};
 static void S17_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
-    (void)r;
-    ((S17_fn)original)((uint32_t)v[0].i, (int32_t)v[1].i, (int32_t)v[2].i, (int32_t)v[3].i, (int32_t)v[4].i, (int32_t)v[5].i, (float)v[6].f);
+    r->i = ((S17_fn)original)((uint32_t)v[0].i);
 }
-#define S17_THUNK(N, I, K) static void N##_##K(uint32_t moby, int32_t low, int32_t high, int32_t flags, int32_t surface, int32_t maximum, float height) { \
-    openrac_script_value v[7] = {{0, 0.0}}; \
-    v[0].i = (int64_t)moby; \
-    v[1].i = (int64_t)low; \
-    v[2].i = (int64_t)high; \
-    v[3].i = (int64_t)flags; \
-    v[4].i = (int64_t)surface; \
-    v[5].i = (int64_t)maximum; \
-    v[6].f = (double)height; \
-    openrac_script_value r = {0, 0.0}; \
-    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        ((S17_fn)k_##N##_links[K].original)(moby, low, high, flags, surface, maximum, height); \
-        return; \
-    } \
-}
-#define S17_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S17_THUNK(N, I, 0) S17_THUNK(N, I, 1) S17_THUNK(N, I, 2) S17_THUNK(N, I, 3) S17_THUNK(N, I, 4) S17_THUNK(N, I, 5) S17_THUNK(N, I, 6) S17_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
-
-/* Shape S18: u32(u32,u32,u32,u32,i32,i32) (source, position, velocity, flags, value, counted). */
-typedef uint32_t (*S18_fn)(uint32_t, uint32_t, uint32_t, uint32_t, int32_t, int32_t);
-static const uint8_t k_S18_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_U32, OPENRAC_SV_U32, OPENRAC_SV_U32, OPENRAC_SV_I32, OPENRAC_SV_I32};
-static const char* const k_S18_names[] = {"source", "position", "velocity", "flags", "value", "counted"};
-static void S18_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
-    r->i = ((S18_fn)original)((uint32_t)v[0].i, (uint32_t)v[1].i, (uint32_t)v[2].i, (uint32_t)v[3].i, (int32_t)v[4].i, (int32_t)v[5].i);
-}
-#define S18_THUNK(N, I, K) static uint32_t N##_##K(uint32_t source, uint32_t position, uint32_t velocity, uint32_t flags, int32_t value, int32_t counted) { \
-    openrac_script_value v[6] = {{0, 0.0}}; \
-    v[0].i = (int64_t)source; \
-    v[1].i = (int64_t)position; \
-    v[2].i = (int64_t)velocity; \
-    v[3].i = (int64_t)flags; \
-    v[4].i = (int64_t)value; \
-    v[5].i = (int64_t)counted; \
-    openrac_script_value r = {0, 0.0}; \
-    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        return ((S18_fn)k_##N##_links[K].original)(source, position, velocity, flags, value, counted); \
-    } \
-    return (uint32_t)r.i; \
-}
-#define S18_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S18_THUNK(N, I, 0) S18_THUNK(N, I, 1) S18_THUNK(N, I, 2) S18_THUNK(N, I, 3) S18_THUNK(N, I, 4) S18_THUNK(N, I, 5) S18_THUNK(N, I, 6) S18_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
-
-/* Shape S19: i32(i32) (challenge). */
-typedef int32_t (*S19_fn)(int32_t);
-static const uint8_t k_S19_kinds[] = {OPENRAC_SV_I32};
-static const char* const k_S19_names[] = {"challenge"};
-static void S19_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
-    r->i = ((S19_fn)original)((int32_t)v[0].i);
-}
-#define S19_THUNK(N, I, K) static int32_t N##_##K(int32_t challenge) { \
+#define S17_THUNK(N, I, K) static int32_t N##_##K(uint32_t slot) { \
     openrac_script_value v[1] = {{0, 0.0}}; \
-    v[0].i = (int64_t)challenge; \
+    v[0].i = (int64_t)slot; \
     openrac_script_value r = {0, 0.0}; \
     if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        return ((S19_fn)k_##N##_links[K].original)(challenge); \
+        return ((S17_fn)k_##N##_links[K].original)(slot); \
     } \
     return (int32_t)r.i; \
 }
-#define S19_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S19_THUNK(N, I, 0) S19_THUNK(N, I, 1) S19_THUNK(N, I, 2) S19_THUNK(N, I, 3) S19_THUNK(N, I, 4) S19_THUNK(N, I, 5) S19_THUNK(N, I, 6) S19_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+#define S17_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S17_THUNK(N, I, 0) S17_THUNK(N, I, 1) S17_THUNK(N, I, 2) S17_THUNK(N, I, 3) S17_THUNK(N, I, 4) S17_THUNK(N, I, 5) S17_THUNK(N, I, 6) S17_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S20: void(u32,u32) (answer, unused). */
-typedef void (*S20_fn)(uint32_t, uint32_t);
-static const uint8_t k_S20_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_U32};
-static const char* const k_S20_names[] = {"answer", "unused"};
-static void S20_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+/* Shape S18: void(u32,i32,i32,i32) (hud, x, y, alpha). */
+typedef void (*S18_fn)(uint32_t, int32_t, int32_t, int32_t);
+static const uint8_t k_S18_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32};
+static const char* const k_S18_names[] = {"hud", "x", "y", "alpha"};
+static void S18_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
     (void)r;
-    ((S20_fn)original)((uint32_t)v[0].i, (uint32_t)v[1].i);
+    ((S18_fn)original)((uint32_t)v[0].i, (int32_t)v[1].i, (int32_t)v[2].i, (int32_t)v[3].i);
 }
-#define S20_THUNK(N, I, K) static void N##_##K(uint32_t answer, uint32_t unused) { \
-    openrac_script_value v[2] = {{0, 0.0}}; \
-    v[0].i = (int64_t)answer; \
-    v[1].i = (int64_t)unused; \
+#define S18_THUNK(N, I, K) static void N##_##K(uint32_t hud, int32_t x, int32_t y, int32_t alpha) { \
+    openrac_script_value v[4] = {{0, 0.0}}; \
+    v[0].i = (int64_t)hud; \
+    v[1].i = (int64_t)x; \
+    v[2].i = (int64_t)y; \
+    v[3].i = (int64_t)alpha; \
     openrac_script_value r = {0, 0.0}; \
     if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        ((S20_fn)k_##N##_links[K].original)(answer, unused); \
+        ((S18_fn)k_##N##_links[K].original)(hud, x, y, alpha); \
+        return; \
+    } \
+}
+#define S18_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S18_THUNK(N, I, 0) S18_THUNK(N, I, 1) S18_THUNK(N, I, 2) S18_THUNK(N, I, 3) S18_THUNK(N, I, 4) S18_THUNK(N, I, 5) S18_THUNK(N, I, 6) S18_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S19: void(u32) (panel). */
+typedef void (*S19_fn)(uint32_t);
+static const uint8_t k_S19_kinds[] = {OPENRAC_SV_U32};
+static const char* const k_S19_names[] = {"panel"};
+static void S19_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S19_fn)original)((uint32_t)v[0].i);
+}
+#define S19_THUNK(N, I, K) static void N##_##K(uint32_t panel) { \
+    openrac_script_value v[1] = {{0, 0.0}}; \
+    v[0].i = (int64_t)panel; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S19_fn)k_##N##_links[K].original)(panel); \
+        return; \
+    } \
+}
+#define S19_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S19_THUNK(N, I, 0) S19_THUNK(N, I, 1) S19_THUNK(N, I, 2) S19_THUNK(N, I, 3) S19_THUNK(N, I, 4) S19_THUNK(N, I, 5) S19_THUNK(N, I, 6) S19_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S20: void(u32) (meter). */
+typedef void (*S20_fn)(uint32_t);
+static const uint8_t k_S20_kinds[] = {OPENRAC_SV_U32};
+static const char* const k_S20_names[] = {"meter"};
+static void S20_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S20_fn)original)((uint32_t)v[0].i);
+}
+#define S20_THUNK(N, I, K) static void N##_##K(uint32_t meter) { \
+    openrac_script_value v[1] = {{0, 0.0}}; \
+    v[0].i = (int64_t)meter; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S20_fn)k_##N##_links[K].original)(meter); \
         return; \
     } \
 }
 #define S20_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S20_THUNK(N, I, 0) S20_THUNK(N, I, 1) S20_THUNK(N, I, 2) S20_THUNK(N, I, 3) S20_THUNK(N, I, 4) S20_THUNK(N, I, 5) S20_THUNK(N, I, 6) S20_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S21: void(u32) (output). */
+/* Shape S21: void(u32) (menu). */
 typedef void (*S21_fn)(uint32_t);
 static const uint8_t k_S21_kinds[] = {OPENRAC_SV_U32};
-static const char* const k_S21_names[] = {"output"};
+static const char* const k_S21_names[] = {"menu"};
 static void S21_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
     (void)r;
     ((S21_fn)original)((uint32_t)v[0].i);
 }
-#define S21_THUNK(N, I, K) static void N##_##K(uint32_t output) { \
+#define S21_THUNK(N, I, K) static void N##_##K(uint32_t menu) { \
     openrac_script_value v[1] = {{0, 0.0}}; \
-    v[0].i = (int64_t)output; \
+    v[0].i = (int64_t)menu; \
     openrac_script_value r = {0, 0.0}; \
     if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        ((S21_fn)k_##N##_links[K].original)(output); \
+        ((S21_fn)k_##N##_links[K].original)(menu); \
         return; \
     } \
 }
 #define S21_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S21_THUNK(N, I, 0) S21_THUNK(N, I, 1) S21_THUNK(N, I, 2) S21_THUNK(N, I, 3) S21_THUNK(N, I, 4) S21_THUNK(N, I, 5) S21_THUNK(N, I, 6) S21_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S22: void(i32) (moby). */
-typedef void (*S22_fn)(int32_t);
-static const uint8_t k_S22_kinds[] = {OPENRAC_SV_I32};
+/* Shape S22: void(u32) (moby). */
+typedef void (*S22_fn)(uint32_t);
+static const uint8_t k_S22_kinds[] = {OPENRAC_SV_U32};
 static const char* const k_S22_names[] = {"moby"};
 static void S22_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
     (void)r;
-    ((S22_fn)original)((int32_t)v[0].i);
+    ((S22_fn)original)((uint32_t)v[0].i);
 }
-#define S22_THUNK(N, I, K) static void N##_##K(int32_t moby) { \
+#define S22_THUNK(N, I, K) static void N##_##K(uint32_t moby) { \
     openrac_script_value v[1] = {{0, 0.0}}; \
     v[0].i = (int64_t)moby; \
     openrac_script_value r = {0, 0.0}; \
@@ -463,25 +455,168 @@ static void S22_call(void* original, const openrac_script_value* v, openrac_scri
 }
 #define S22_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S22_THUNK(N, I, 0) S22_THUNK(N, I, 1) S22_THUNK(N, I, 2) S22_THUNK(N, I, 3) S22_THUNK(N, I, 4) S22_THUNK(N, I, 5) S22_THUNK(N, I, 6) S22_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
-/* Shape S23: void(u32,i32) (moby, type). */
-typedef void (*S23_fn)(uint32_t, int32_t);
-static const uint8_t k_S23_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_I32};
-static const char* const k_S23_names[] = {"moby", "type"};
+/* Shape S23: void(i32) (level). */
+typedef void (*S23_fn)(int32_t);
+static const uint8_t k_S23_kinds[] = {OPENRAC_SV_I32};
+static const char* const k_S23_names[] = {"level"};
 static void S23_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
     (void)r;
-    ((S23_fn)original)((uint32_t)v[0].i, (int32_t)v[1].i);
+    ((S23_fn)original)((int32_t)v[0].i);
 }
-#define S23_THUNK(N, I, K) static void N##_##K(uint32_t moby, int32_t type) { \
+#define S23_THUNK(N, I, K) static void N##_##K(int32_t level) { \
+    openrac_script_value v[1] = {{0, 0.0}}; \
+    v[0].i = (int64_t)level; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S23_fn)k_##N##_links[K].original)(level); \
+        return; \
+    } \
+}
+#define S23_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S23_THUNK(N, I, 0) S23_THUNK(N, I, 1) S23_THUNK(N, I, 2) S23_THUNK(N, I, 3) S23_THUNK(N, I, 4) S23_THUNK(N, I, 5) S23_THUNK(N, I, 6) S23_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S24: void(u32,i32,i32,i32,i32,i32,f32) (moby, low, high, flags, surface, maximum, height). */
+typedef void (*S24_fn)(uint32_t, int32_t, int32_t, int32_t, int32_t, int32_t, float);
+static const uint8_t k_S24_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_I32, OPENRAC_SV_F32};
+static const char* const k_S24_names[] = {"moby", "low", "high", "flags", "surface", "maximum", "height"};
+static void S24_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S24_fn)original)((uint32_t)v[0].i, (int32_t)v[1].i, (int32_t)v[2].i, (int32_t)v[3].i, (int32_t)v[4].i, (int32_t)v[5].i, (float)v[6].f);
+}
+#define S24_THUNK(N, I, K) static void N##_##K(uint32_t moby, int32_t low, int32_t high, int32_t flags, int32_t surface, int32_t maximum, float height) { \
+    openrac_script_value v[7] = {{0, 0.0}}; \
+    v[0].i = (int64_t)moby; \
+    v[1].i = (int64_t)low; \
+    v[2].i = (int64_t)high; \
+    v[3].i = (int64_t)flags; \
+    v[4].i = (int64_t)surface; \
+    v[5].i = (int64_t)maximum; \
+    v[6].f = (double)height; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S24_fn)k_##N##_links[K].original)(moby, low, high, flags, surface, maximum, height); \
+        return; \
+    } \
+}
+#define S24_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S24_THUNK(N, I, 0) S24_THUNK(N, I, 1) S24_THUNK(N, I, 2) S24_THUNK(N, I, 3) S24_THUNK(N, I, 4) S24_THUNK(N, I, 5) S24_THUNK(N, I, 6) S24_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S25: u32(u32,u32,u32,u32,i32,i32) (source, position, velocity, flags, value, counted). */
+typedef uint32_t (*S25_fn)(uint32_t, uint32_t, uint32_t, uint32_t, int32_t, int32_t);
+static const uint8_t k_S25_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_U32, OPENRAC_SV_U32, OPENRAC_SV_U32, OPENRAC_SV_I32, OPENRAC_SV_I32};
+static const char* const k_S25_names[] = {"source", "position", "velocity", "flags", "value", "counted"};
+static void S25_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    r->i = ((S25_fn)original)((uint32_t)v[0].i, (uint32_t)v[1].i, (uint32_t)v[2].i, (uint32_t)v[3].i, (int32_t)v[4].i, (int32_t)v[5].i);
+}
+#define S25_THUNK(N, I, K) static uint32_t N##_##K(uint32_t source, uint32_t position, uint32_t velocity, uint32_t flags, int32_t value, int32_t counted) { \
+    openrac_script_value v[6] = {{0, 0.0}}; \
+    v[0].i = (int64_t)source; \
+    v[1].i = (int64_t)position; \
+    v[2].i = (int64_t)velocity; \
+    v[3].i = (int64_t)flags; \
+    v[4].i = (int64_t)value; \
+    v[5].i = (int64_t)counted; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        return ((S25_fn)k_##N##_links[K].original)(source, position, velocity, flags, value, counted); \
+    } \
+    return (uint32_t)r.i; \
+}
+#define S25_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S25_THUNK(N, I, 0) S25_THUNK(N, I, 1) S25_THUNK(N, I, 2) S25_THUNK(N, I, 3) S25_THUNK(N, I, 4) S25_THUNK(N, I, 5) S25_THUNK(N, I, 6) S25_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S26: i32(i32) (challenge). */
+typedef int32_t (*S26_fn)(int32_t);
+static const uint8_t k_S26_kinds[] = {OPENRAC_SV_I32};
+static const char* const k_S26_names[] = {"challenge"};
+static void S26_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    r->i = ((S26_fn)original)((int32_t)v[0].i);
+}
+#define S26_THUNK(N, I, K) static int32_t N##_##K(int32_t challenge) { \
+    openrac_script_value v[1] = {{0, 0.0}}; \
+    v[0].i = (int64_t)challenge; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        return ((S26_fn)k_##N##_links[K].original)(challenge); \
+    } \
+    return (int32_t)r.i; \
+}
+#define S26_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S26_THUNK(N, I, 0) S26_THUNK(N, I, 1) S26_THUNK(N, I, 2) S26_THUNK(N, I, 3) S26_THUNK(N, I, 4) S26_THUNK(N, I, 5) S26_THUNK(N, I, 6) S26_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S27: void(u32,u32) (answer, unused). */
+typedef void (*S27_fn)(uint32_t, uint32_t);
+static const uint8_t k_S27_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_U32};
+static const char* const k_S27_names[] = {"answer", "unused"};
+static void S27_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S27_fn)original)((uint32_t)v[0].i, (uint32_t)v[1].i);
+}
+#define S27_THUNK(N, I, K) static void N##_##K(uint32_t answer, uint32_t unused) { \
+    openrac_script_value v[2] = {{0, 0.0}}; \
+    v[0].i = (int64_t)answer; \
+    v[1].i = (int64_t)unused; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S27_fn)k_##N##_links[K].original)(answer, unused); \
+        return; \
+    } \
+}
+#define S27_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S27_THUNK(N, I, 0) S27_THUNK(N, I, 1) S27_THUNK(N, I, 2) S27_THUNK(N, I, 3) S27_THUNK(N, I, 4) S27_THUNK(N, I, 5) S27_THUNK(N, I, 6) S27_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S28: void(u32) (output). */
+typedef void (*S28_fn)(uint32_t);
+static const uint8_t k_S28_kinds[] = {OPENRAC_SV_U32};
+static const char* const k_S28_names[] = {"output"};
+static void S28_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S28_fn)original)((uint32_t)v[0].i);
+}
+#define S28_THUNK(N, I, K) static void N##_##K(uint32_t output) { \
+    openrac_script_value v[1] = {{0, 0.0}}; \
+    v[0].i = (int64_t)output; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S28_fn)k_##N##_links[K].original)(output); \
+        return; \
+    } \
+}
+#define S28_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S28_THUNK(N, I, 0) S28_THUNK(N, I, 1) S28_THUNK(N, I, 2) S28_THUNK(N, I, 3) S28_THUNK(N, I, 4) S28_THUNK(N, I, 5) S28_THUNK(N, I, 6) S28_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S29: void(i32) (moby). */
+typedef void (*S29_fn)(int32_t);
+static const uint8_t k_S29_kinds[] = {OPENRAC_SV_I32};
+static const char* const k_S29_names[] = {"moby"};
+static void S29_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S29_fn)original)((int32_t)v[0].i);
+}
+#define S29_THUNK(N, I, K) static void N##_##K(int32_t moby) { \
+    openrac_script_value v[1] = {{0, 0.0}}; \
+    v[0].i = (int64_t)moby; \
+    openrac_script_value r = {0, 0.0}; \
+    if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
+        ((S29_fn)k_##N##_links[K].original)(moby); \
+        return; \
+    } \
+}
+#define S29_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S29_THUNK(N, I, 0) S29_THUNK(N, I, 1) S29_THUNK(N, I, 2) S29_THUNK(N, I, 3) S29_THUNK(N, I, 4) S29_THUNK(N, I, 5) S29_THUNK(N, I, 6) S29_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+
+/* Shape S30: void(u32,i32) (moby, type). */
+typedef void (*S30_fn)(uint32_t, int32_t);
+static const uint8_t k_S30_kinds[] = {OPENRAC_SV_U32, OPENRAC_SV_I32};
+static const char* const k_S30_names[] = {"moby", "type"};
+static void S30_call(void* original, const openrac_script_value* v, openrac_script_value* r) {
+    (void)r;
+    ((S30_fn)original)((uint32_t)v[0].i, (int32_t)v[1].i);
+}
+#define S30_THUNK(N, I, K) static void N##_##K(uint32_t moby, int32_t type) { \
     openrac_script_value v[2] = {{0, 0.0}}; \
     v[0].i = (int64_t)moby; \
     v[1].i = (int64_t)type; \
     openrac_script_value r = {0, 0.0}; \
     if (!openrac_script_dispatch(&k_points[I], &k_##N##_links[K], v, &r)) { \
-        ((S23_fn)k_##N##_links[K].original)(moby, type); \
+        ((S30_fn)k_##N##_links[K].original)(moby, type); \
         return; \
     } \
 }
-#define S23_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S23_THUNK(N, I, 0) S23_THUNK(N, I, 1) S23_THUNK(N, I, 2) S23_THUNK(N, I, 3) S23_THUNK(N, I, 4) S23_THUNK(N, I, 5) S23_THUNK(N, I, 6) S23_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
+#define S30_POINT(N, I) static openrac_script_link k_##N##_links[OPENRAC_SCRIPT_LINKS]; S30_THUNK(N, I, 0) S30_THUNK(N, I, 1) S30_THUNK(N, I, 2) S30_THUNK(N, I, 3) S30_THUNK(N, I, 4) S30_THUNK(N, I, 5) S30_THUNK(N, I, 6) S30_THUNK(N, I, 7) static void* const k_##N##_thunks[OPENRAC_SCRIPT_LINKS] = {(void*)N##_0, (void*)N##_1, (void*)N##_2, (void*)N##_3, (void*)N##_4, (void*)N##_5, (void*)N##_6, (void*)N##_7};
 
 S0_POINT(Hero_TakeDamage, 0) /* rac2.player.take_damage */
 S1_POINT(Moby_GetHitMessage, 1) /* rac2.combat.get_hit */
@@ -501,45 +636,57 @@ S12_POINT(Item_Colors, 14) /* rac2.item.colors */
 S13_POINT(Vendor_DrawList, 15) /* rac2.vendor.draw_list */
 S14_POINT(Item_VersionColor, 16) /* rac2.item.version_color */
 S9_POINT(Text_ById, 17) /* rac2.text.by_id */
-S15_POINT(Planet_Unlock, 18) /* rac2.planet.unlock */
-S16_POINT(Moby_DynamoPickup_Update, 19) /* rac2.moby.dynamo_pickup.update */
-S16_POINT(Moby_TractorBeamSeller_Update, 20) /* rac2.moby.tractor_beam_seller.update */
-S16_POINT(Moby_BoxBreakerPickup_Update, 21) /* rac2.moby.box_breaker_pickup.update */
-S16_POINT(Moby_ThermanatorSeller_Update, 22) /* rac2.moby.thermanator_seller.update */
-S16_POINT(Moby_ThermanatorArea_Update, 23) /* rac2.moby.thermanator_area.update */
-S16_POINT(Moby_SwingshotArea_Update, 24) /* rac2.moby.swingshot_area.update */
-S16_POINT(Moby_GliderPickup_Update, 25) /* rac2.moby.glider_pickup.update */
-S16_POINT(Moby_LevitatorSeller_Update, 26) /* rac2.moby.levitator_seller.update */
-S16_POINT(Moby_ChargeBootsRider_Update, 27) /* rac2.moby.charge_boots_rider.update */
-S16_POINT(Moby_RaceController_Update, 28) /* rac2.moby.race_controller.update */
-S16_POINT(Moby_MapperReturn_Update, 29) /* rac2.moby.mapper_return.update */
-S16_POINT(Moby_HypnomaticMaker_Update, 30) /* rac2.moby.hypnomatic_maker.update */
-S16_POINT(Moby_NanotechBall_Update, 31) /* rac2.moby.nanotech_ball.update */
-S17_POINT(Bolt_SpawnPickups, 32) /* rac2.bolt.spawn_pickups */
-S18_POINT(Bolt_SpawnPickup, 33) /* rac2.bolt.spawn_pickup */
-S16_POINT(Bolt_Collect, 34) /* rac2.bolt.collect */
-S19_POINT(Arena_Prize, 35) /* rac2.arena.prize */
-S13_POINT(ArmorVendor_BuildList, 36) /* rac2.armor_vendor.build_list */
-S20_POINT(ArmorVendor_Buy, 37) /* rac2.armor_vendor.buy */
-S13_POINT(Vendor_Preview, 38) /* rac2.vendor.preview */
-S13_POINT(Hero_Update, 39) /* rac2.player.update */
-S11_POINT(PlatinumBolts_CountTotal, 40) /* rac2.collectibles.platinum_count */
-S13_POINT(Hero_UpdateCollectionProgress, 41) /* rac2.hero.update_collection_progress */
-S21_POINT(Save_Serialize, 42) /* rac2.save.serialize */
-S13_POINT(Save_NewGame, 43) /* rac2.save.new_game */
-S16_POINT(Moby_EndakoRescue_Update, 44) /* rac2.moby.endako_rescue.update */
-S16_POINT(Moby_TaboraWrench_Update, 45) /* rac2.moby.tabora_wrench.update */
-S16_POINT(Moby_PrisonWrench_Init, 46) /* rac2.moby.prison_wrench.init */
-S16_POINT(Moby_TodanoTrader_Update, 47) /* rac2.moby.todano_trader.update */
-S22_POINT(Moby_PrisonPlumber_Update, 48) /* rac2.moby.prison_plumber.update */
-S16_POINT(Moby_PrisonController_Update, 49) /* rac2.moby.prison_controller.update */
-S16_POINT(Moby_SiberiusThief_Update, 50) /* rac2.moby.siberius_thief.update */
-S16_POINT(Moby_BoldanCutscene_Update, 51) /* rac2.moby.boldan_cutscene.update */
-S16_POINT(Moby_HypnomaticPart_Update, 52) /* rac2.moby.hypnomatic_part.update */
-S23_POINT(Moby_CountKill, 53) /* rac2.combat.count_kill */
-S11_POINT(Menu_Extras, 54) /* rac2.menu.extras */
+S15_POINT(Gui_DrawElement, 18) /* rac2.gui.draw_element */
+S15_POINT(Gui_DrawIcon, 19) /* rac2.gui.draw_icon */
+S16_POINT(Hud_Draw, 20) /* rac2.hud.draw */
+S17_POINT(Hud_Weapon, 21) /* rac2.hud.weapon */
+S17_POINT(Hud_WeaponSelector, 22) /* rac2.hud.weapon_selector */
+S18_POINT(Hud_WeaponSlots, 23) /* rac2.hud.weapon_slots */
+S19_POINT(Hud_Bolts, 24) /* rac2.hud.bolts */
+S13_POINT(Hud_BoltDeltas, 25) /* rac2.hud.bolt_deltas */
+S19_POINT(Hud_TextPanel, 26) /* rac2.hud.text_panel */
+S20_POINT(Hud_Nanotech, 27) /* rac2.hud.nanotech */
+S21_POINT(QuickSelect_Draw, 28) /* rac2.quick_select.draw */
+S22_POINT(Vendor_Open, 29) /* rac2.vendor.open */
+S23_POINT(Planet_Unlock, 30) /* rac2.planet.unlock */
+S22_POINT(Moby_DynamoPickup_Update, 31) /* rac2.moby.dynamo_pickup.update */
+S22_POINT(Moby_TractorBeamSeller_Update, 32) /* rac2.moby.tractor_beam_seller.update */
+S22_POINT(Moby_BoxBreakerPickup_Update, 33) /* rac2.moby.box_breaker_pickup.update */
+S22_POINT(Moby_ThermanatorSeller_Update, 34) /* rac2.moby.thermanator_seller.update */
+S22_POINT(Moby_ThermanatorArea_Update, 35) /* rac2.moby.thermanator_area.update */
+S22_POINT(Moby_SwingshotArea_Update, 36) /* rac2.moby.swingshot_area.update */
+S22_POINT(Moby_GliderPickup_Update, 37) /* rac2.moby.glider_pickup.update */
+S22_POINT(Moby_LevitatorSeller_Update, 38) /* rac2.moby.levitator_seller.update */
+S22_POINT(Moby_ChargeBootsRider_Update, 39) /* rac2.moby.charge_boots_rider.update */
+S22_POINT(Moby_RaceController_Update, 40) /* rac2.moby.race_controller.update */
+S22_POINT(Moby_MapperReturn_Update, 41) /* rac2.moby.mapper_return.update */
+S22_POINT(Moby_HypnomaticMaker_Update, 42) /* rac2.moby.hypnomatic_maker.update */
+S22_POINT(Moby_NanotechBall_Update, 43) /* rac2.moby.nanotech_ball.update */
+S24_POINT(Bolt_SpawnPickups, 44) /* rac2.bolt.spawn_pickups */
+S25_POINT(Bolt_SpawnPickup, 45) /* rac2.bolt.spawn_pickup */
+S22_POINT(Bolt_Collect, 46) /* rac2.bolt.collect */
+S26_POINT(Arena_Prize, 47) /* rac2.arena.prize */
+S13_POINT(ArmorVendor_BuildList, 48) /* rac2.armor_vendor.build_list */
+S27_POINT(ArmorVendor_Buy, 49) /* rac2.armor_vendor.buy */
+S13_POINT(Vendor_Preview, 50) /* rac2.vendor.preview */
+S13_POINT(Hero_Update, 51) /* rac2.player.update */
+S11_POINT(PlatinumBolts_CountTotal, 52) /* rac2.collectibles.platinum_count */
+S13_POINT(Hero_UpdateCollectionProgress, 53) /* rac2.hero.update_collection_progress */
+S28_POINT(Save_Serialize, 54) /* rac2.save.serialize */
+S13_POINT(Save_NewGame, 55) /* rac2.save.new_game */
+S22_POINT(Moby_EndakoRescue_Update, 56) /* rac2.moby.endako_rescue.update */
+S22_POINT(Moby_TaboraWrench_Update, 57) /* rac2.moby.tabora_wrench.update */
+S22_POINT(Moby_PrisonWrench_Init, 58) /* rac2.moby.prison_wrench.init */
+S22_POINT(Moby_TodanoTrader_Update, 59) /* rac2.moby.todano_trader.update */
+S29_POINT(Moby_PrisonPlumber_Update, 60) /* rac2.moby.prison_plumber.update */
+S22_POINT(Moby_PrisonController_Update, 61) /* rac2.moby.prison_controller.update */
+S22_POINT(Moby_SiberiusThief_Update, 62) /* rac2.moby.siberius_thief.update */
+S22_POINT(Moby_BoldanCutscene_Update, 63) /* rac2.moby.boldan_cutscene.update */
+S22_POINT(Moby_HypnomaticPart_Update, 64) /* rac2.moby.hypnomatic_part.update */
+S30_POINT(Moby_CountKill, 65) /* rac2.combat.count_kill */
+S11_POINT(Menu_Extras, 66) /* rac2.menu.extras */
 
-static const openrac_script_point k_points[55] = {
+static const openrac_script_point k_points[67] = {
     {"rac2.player.take_damage", "void(i32)", 1, k_S0_kinds, k_S0_names, OPENRAC_SV_VOID, k_Hero_TakeDamage_links, k_Hero_TakeDamage_thunks, S0_call},
     {"rac2.combat.get_hit", "u32(u32,u32,i32)", 3, k_S1_kinds, k_S1_names, OPENRAC_SV_U32, k_Moby_GetHitMessage_links, k_Moby_GetHitMessage_thunks, S1_call},
     {"rac2.combat.post_hit", "void(u32,u32)", 2, k_S2_kinds, k_S2_names, OPENRAC_SV_VOID, k_Moby_PostHit_links, k_Moby_PostHit_thunks, S2_call},
@@ -558,57 +705,79 @@ static const openrac_script_point k_points[55] = {
     {"rac2.vendor.draw_list", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_Vendor_DrawList_links, k_Vendor_DrawList_thunks, S13_call},
     {"rac2.item.version_color", "u32(i32)", 1, k_S14_kinds, k_S14_names, OPENRAC_SV_U32, k_Item_VersionColor_links, k_Item_VersionColor_thunks, S14_call},
     {"rac2.text.by_id", "i32(i32)", 1, k_S9_kinds, k_S9_names, OPENRAC_SV_I32, k_Text_ById_links, k_Text_ById_thunks, S9_call},
-    {"rac2.planet.unlock", "void(i32)", 1, k_S15_kinds, k_S15_names, OPENRAC_SV_VOID, k_Planet_Unlock_links, k_Planet_Unlock_thunks, S15_call},
-    {"rac2.moby.dynamo_pickup.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_DynamoPickup_Update_links, k_Moby_DynamoPickup_Update_thunks, S16_call},
-    {"rac2.moby.tractor_beam_seller.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_TractorBeamSeller_Update_links, k_Moby_TractorBeamSeller_Update_thunks, S16_call},
-    {"rac2.moby.box_breaker_pickup.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_BoxBreakerPickup_Update_links, k_Moby_BoxBreakerPickup_Update_thunks, S16_call},
-    {"rac2.moby.thermanator_seller.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_ThermanatorSeller_Update_links, k_Moby_ThermanatorSeller_Update_thunks, S16_call},
-    {"rac2.moby.thermanator_area.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_ThermanatorArea_Update_links, k_Moby_ThermanatorArea_Update_thunks, S16_call},
-    {"rac2.moby.swingshot_area.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_SwingshotArea_Update_links, k_Moby_SwingshotArea_Update_thunks, S16_call},
-    {"rac2.moby.glider_pickup.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_GliderPickup_Update_links, k_Moby_GliderPickup_Update_thunks, S16_call},
-    {"rac2.moby.levitator_seller.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_LevitatorSeller_Update_links, k_Moby_LevitatorSeller_Update_thunks, S16_call},
-    {"rac2.moby.charge_boots_rider.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_ChargeBootsRider_Update_links, k_Moby_ChargeBootsRider_Update_thunks, S16_call},
-    {"rac2.moby.race_controller.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_RaceController_Update_links, k_Moby_RaceController_Update_thunks, S16_call},
-    {"rac2.moby.mapper_return.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_MapperReturn_Update_links, k_Moby_MapperReturn_Update_thunks, S16_call},
-    {"rac2.moby.hypnomatic_maker.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_HypnomaticMaker_Update_links, k_Moby_HypnomaticMaker_Update_thunks, S16_call},
-    {"rac2.moby.nanotech_ball.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_NanotechBall_Update_links, k_Moby_NanotechBall_Update_thunks, S16_call},
-    {"rac2.bolt.spawn_pickups", "void(u32,i32,i32,i32,i32,i32,f32)", 7, k_S17_kinds, k_S17_names, OPENRAC_SV_VOID, k_Bolt_SpawnPickups_links, k_Bolt_SpawnPickups_thunks, S17_call},
-    {"rac2.bolt.spawn_pickup", "u32(u32,u32,u32,u32,i32,i32)", 6, k_S18_kinds, k_S18_names, OPENRAC_SV_U32, k_Bolt_SpawnPickup_links, k_Bolt_SpawnPickup_thunks, S18_call},
-    {"rac2.bolt.collect", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Bolt_Collect_links, k_Bolt_Collect_thunks, S16_call},
-    {"rac2.arena.prize", "i32(i32)", 1, k_S19_kinds, k_S19_names, OPENRAC_SV_I32, k_Arena_Prize_links, k_Arena_Prize_thunks, S19_call},
+    {"rac2.gui.draw_element", "void(u32)", 1, k_S15_kinds, k_S15_names, OPENRAC_SV_VOID, k_Gui_DrawElement_links, k_Gui_DrawElement_thunks, S15_call},
+    {"rac2.gui.draw_icon", "void(u32)", 1, k_S15_kinds, k_S15_names, OPENRAC_SV_VOID, k_Gui_DrawIcon_links, k_Gui_DrawIcon_thunks, S15_call},
+    {"rac2.hud.draw", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Hud_Draw_links, k_Hud_Draw_thunks, S16_call},
+    {"rac2.hud.weapon", "i32(u32)", 1, k_S17_kinds, k_S17_names, OPENRAC_SV_I32, k_Hud_Weapon_links, k_Hud_Weapon_thunks, S17_call},
+    {"rac2.hud.weapon_selector", "i32(u32)", 1, k_S17_kinds, k_S17_names, OPENRAC_SV_I32, k_Hud_WeaponSelector_links, k_Hud_WeaponSelector_thunks, S17_call},
+    {"rac2.hud.weapon_slots", "void(u32,i32,i32,i32)", 4, k_S18_kinds, k_S18_names, OPENRAC_SV_VOID, k_Hud_WeaponSlots_links, k_Hud_WeaponSlots_thunks, S18_call},
+    {"rac2.hud.bolts", "void(u32)", 1, k_S19_kinds, k_S19_names, OPENRAC_SV_VOID, k_Hud_Bolts_links, k_Hud_Bolts_thunks, S19_call},
+    {"rac2.hud.bolt_deltas", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_Hud_BoltDeltas_links, k_Hud_BoltDeltas_thunks, S13_call},
+    {"rac2.hud.text_panel", "void(u32)", 1, k_S19_kinds, k_S19_names, OPENRAC_SV_VOID, k_Hud_TextPanel_links, k_Hud_TextPanel_thunks, S19_call},
+    {"rac2.hud.nanotech", "void(u32)", 1, k_S20_kinds, k_S20_names, OPENRAC_SV_VOID, k_Hud_Nanotech_links, k_Hud_Nanotech_thunks, S20_call},
+    {"rac2.quick_select.draw", "void(u32)", 1, k_S21_kinds, k_S21_names, OPENRAC_SV_VOID, k_QuickSelect_Draw_links, k_QuickSelect_Draw_thunks, S21_call},
+    {"rac2.vendor.open", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Vendor_Open_links, k_Vendor_Open_thunks, S22_call},
+    {"rac2.planet.unlock", "void(i32)", 1, k_S23_kinds, k_S23_names, OPENRAC_SV_VOID, k_Planet_Unlock_links, k_Planet_Unlock_thunks, S23_call},
+    {"rac2.moby.dynamo_pickup.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_DynamoPickup_Update_links, k_Moby_DynamoPickup_Update_thunks, S22_call},
+    {"rac2.moby.tractor_beam_seller.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_TractorBeamSeller_Update_links, k_Moby_TractorBeamSeller_Update_thunks, S22_call},
+    {"rac2.moby.box_breaker_pickup.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_BoxBreakerPickup_Update_links, k_Moby_BoxBreakerPickup_Update_thunks, S22_call},
+    {"rac2.moby.thermanator_seller.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_ThermanatorSeller_Update_links, k_Moby_ThermanatorSeller_Update_thunks, S22_call},
+    {"rac2.moby.thermanator_area.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_ThermanatorArea_Update_links, k_Moby_ThermanatorArea_Update_thunks, S22_call},
+    {"rac2.moby.swingshot_area.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_SwingshotArea_Update_links, k_Moby_SwingshotArea_Update_thunks, S22_call},
+    {"rac2.moby.glider_pickup.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_GliderPickup_Update_links, k_Moby_GliderPickup_Update_thunks, S22_call},
+    {"rac2.moby.levitator_seller.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_LevitatorSeller_Update_links, k_Moby_LevitatorSeller_Update_thunks, S22_call},
+    {"rac2.moby.charge_boots_rider.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_ChargeBootsRider_Update_links, k_Moby_ChargeBootsRider_Update_thunks, S22_call},
+    {"rac2.moby.race_controller.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_RaceController_Update_links, k_Moby_RaceController_Update_thunks, S22_call},
+    {"rac2.moby.mapper_return.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_MapperReturn_Update_links, k_Moby_MapperReturn_Update_thunks, S22_call},
+    {"rac2.moby.hypnomatic_maker.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_HypnomaticMaker_Update_links, k_Moby_HypnomaticMaker_Update_thunks, S22_call},
+    {"rac2.moby.nanotech_ball.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_NanotechBall_Update_links, k_Moby_NanotechBall_Update_thunks, S22_call},
+    {"rac2.bolt.spawn_pickups", "void(u32,i32,i32,i32,i32,i32,f32)", 7, k_S24_kinds, k_S24_names, OPENRAC_SV_VOID, k_Bolt_SpawnPickups_links, k_Bolt_SpawnPickups_thunks, S24_call},
+    {"rac2.bolt.spawn_pickup", "u32(u32,u32,u32,u32,i32,i32)", 6, k_S25_kinds, k_S25_names, OPENRAC_SV_U32, k_Bolt_SpawnPickup_links, k_Bolt_SpawnPickup_thunks, S25_call},
+    {"rac2.bolt.collect", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Bolt_Collect_links, k_Bolt_Collect_thunks, S22_call},
+    {"rac2.arena.prize", "i32(i32)", 1, k_S26_kinds, k_S26_names, OPENRAC_SV_I32, k_Arena_Prize_links, k_Arena_Prize_thunks, S26_call},
     {"rac2.armor_vendor.build_list", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_ArmorVendor_BuildList_links, k_ArmorVendor_BuildList_thunks, S13_call},
-    {"rac2.armor_vendor.buy", "void(u32,u32)", 2, k_S20_kinds, k_S20_names, OPENRAC_SV_VOID, k_ArmorVendor_Buy_links, k_ArmorVendor_Buy_thunks, S20_call},
+    {"rac2.armor_vendor.buy", "void(u32,u32)", 2, k_S27_kinds, k_S27_names, OPENRAC_SV_VOID, k_ArmorVendor_Buy_links, k_ArmorVendor_Buy_thunks, S27_call},
     {"rac2.vendor.preview", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_Vendor_Preview_links, k_Vendor_Preview_thunks, S13_call},
     {"rac2.player.update", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_Hero_Update_links, k_Hero_Update_thunks, S13_call},
     {"rac2.collectibles.platinum_count", "i32()", 0, k_S11_kinds, k_S11_names, OPENRAC_SV_I32, k_PlatinumBolts_CountTotal_links, k_PlatinumBolts_CountTotal_thunks, S11_call},
     {"rac2.hero.update_collection_progress", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_Hero_UpdateCollectionProgress_links, k_Hero_UpdateCollectionProgress_thunks, S13_call},
-    {"rac2.save.serialize", "void(u32)", 1, k_S21_kinds, k_S21_names, OPENRAC_SV_VOID, k_Save_Serialize_links, k_Save_Serialize_thunks, S21_call},
+    {"rac2.save.serialize", "void(u32)", 1, k_S28_kinds, k_S28_names, OPENRAC_SV_VOID, k_Save_Serialize_links, k_Save_Serialize_thunks, S28_call},
     {"rac2.save.new_game", "void()", 0, k_S13_kinds, k_S13_names, OPENRAC_SV_VOID, k_Save_NewGame_links, k_Save_NewGame_thunks, S13_call},
-    {"rac2.moby.endako_rescue.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_EndakoRescue_Update_links, k_Moby_EndakoRescue_Update_thunks, S16_call},
-    {"rac2.moby.tabora_wrench.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_TaboraWrench_Update_links, k_Moby_TaboraWrench_Update_thunks, S16_call},
-    {"rac2.moby.prison_wrench.init", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_PrisonWrench_Init_links, k_Moby_PrisonWrench_Init_thunks, S16_call},
-    {"rac2.moby.todano_trader.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_TodanoTrader_Update_links, k_Moby_TodanoTrader_Update_thunks, S16_call},
-    {"rac2.moby.prison_plumber.update", "void(i32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_PrisonPlumber_Update_links, k_Moby_PrisonPlumber_Update_thunks, S22_call},
-    {"rac2.moby.prison_controller.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_PrisonController_Update_links, k_Moby_PrisonController_Update_thunks, S16_call},
-    {"rac2.moby.siberius_thief.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_SiberiusThief_Update_links, k_Moby_SiberiusThief_Update_thunks, S16_call},
-    {"rac2.moby.boldan_cutscene.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_BoldanCutscene_Update_links, k_Moby_BoldanCutscene_Update_thunks, S16_call},
-    {"rac2.moby.hypnomatic_part.update", "void(u32)", 1, k_S16_kinds, k_S16_names, OPENRAC_SV_VOID, k_Moby_HypnomaticPart_Update_links, k_Moby_HypnomaticPart_Update_thunks, S16_call},
-    {"rac2.combat.count_kill", "void(u32,i32)", 2, k_S23_kinds, k_S23_names, OPENRAC_SV_VOID, k_Moby_CountKill_links, k_Moby_CountKill_thunks, S23_call},
+    {"rac2.moby.endako_rescue.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_EndakoRescue_Update_links, k_Moby_EndakoRescue_Update_thunks, S22_call},
+    {"rac2.moby.tabora_wrench.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_TaboraWrench_Update_links, k_Moby_TaboraWrench_Update_thunks, S22_call},
+    {"rac2.moby.prison_wrench.init", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_PrisonWrench_Init_links, k_Moby_PrisonWrench_Init_thunks, S22_call},
+    {"rac2.moby.todano_trader.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_TodanoTrader_Update_links, k_Moby_TodanoTrader_Update_thunks, S22_call},
+    {"rac2.moby.prison_plumber.update", "void(i32)", 1, k_S29_kinds, k_S29_names, OPENRAC_SV_VOID, k_Moby_PrisonPlumber_Update_links, k_Moby_PrisonPlumber_Update_thunks, S29_call},
+    {"rac2.moby.prison_controller.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_PrisonController_Update_links, k_Moby_PrisonController_Update_thunks, S22_call},
+    {"rac2.moby.siberius_thief.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_SiberiusThief_Update_links, k_Moby_SiberiusThief_Update_thunks, S22_call},
+    {"rac2.moby.boldan_cutscene.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_BoldanCutscene_Update_links, k_Moby_BoldanCutscene_Update_thunks, S22_call},
+    {"rac2.moby.hypnomatic_part.update", "void(u32)", 1, k_S22_kinds, k_S22_names, OPENRAC_SV_VOID, k_Moby_HypnomaticPart_Update_links, k_Moby_HypnomaticPart_Update_thunks, S22_call},
+    {"rac2.combat.count_kill", "void(u32,i32)", 2, k_S30_kinds, k_S30_names, OPENRAC_SV_VOID, k_Moby_CountKill_links, k_Moby_CountKill_thunks, S30_call},
     {"rac2.menu.extras", "i32()", 0, k_S11_kinds, k_S11_names, OPENRAC_SV_I32, k_Menu_Extras_links, k_Menu_Extras_thunks, S11_call},
 };
 
-static const openrac_script_alias k_aliases[228] = {
+static const openrac_script_alias k_aliases[276] = {
     {"Arena_Prize", "rac2.arena.prize"},
     {"ArmorVendor_BuildList", "rac2.armor_vendor.build_list"},
     {"ArmorVendor_Buy", "rac2.armor_vendor.buy"},
     {"Bolt_Collect", "rac2.bolt.collect"},
     {"Bolt_SpawnPickup", "rac2.bolt.spawn_pickup"},
     {"Bolt_SpawnPickups", "rac2.bolt.spawn_pickups"},
+    {"Gui_DrawElement", "rac2.gui.draw_element"},
+    {"Gui_DrawIcon", "rac2.gui.draw_icon"},
     {"Hero_ApproachSpeed", "rac2.player.approach_speed"},
     {"Hero_NanotechSteps", "rac2.player.nanotech_steps"},
     {"Hero_TakeDamage", "rac2.player.take_damage"},
     {"Hero_Update", "rac2.player.update"},
     {"Hero_UpdateCollectionProgress", "rac2.hero.update_collection_progress"},
+    {"Hud_BoltDeltas", "rac2.hud.bolt_deltas"},
+    {"Hud_Bolts", "rac2.hud.bolts"},
+    {"Hud_Draw", "rac2.hud.draw"},
+    {"Hud_Nanotech", "rac2.hud.nanotech"},
+    {"Hud_TextPanel", "rac2.hud.text_panel"},
+    {"Hud_Weapon", "rac2.hud.weapon"},
+    {"Hud_WeaponSelector", "rac2.hud.weapon_selector"},
+    {"Hud_WeaponSlots", "rac2.hud.weapon_slots"},
     {"Item_Colors", "rac2.item.colors"},
     {"Item_Equip", "rac2.item.equip"},
     {"Item_Give", "rac2.item.give"},
@@ -644,11 +813,13 @@ static const openrac_script_alias k_aliases[228] = {
     {"Moby_TractorBeamSeller_Update", "rac2.moby.tractor_beam_seller.update"},
     {"Planet_Unlock", "rac2.planet.unlock"},
     {"PlatinumBolts_CountTotal", "rac2.collectibles.platinum_count"},
+    {"QuickSelect_Draw", "rac2.quick_select.draw"},
     {"Save_NewGame", "rac2.save.new_game"},
     {"Save_Serialize", "rac2.save.serialize"},
     {"Text_ById", "rac2.text.by_id"},
     {"Vendor_BuildList", "rac2.vendor.build_list"},
     {"Vendor_DrawList", "rac2.vendor.draw_list"},
+    {"Vendor_Open", "rac2.vendor.open"},
     {"Vendor_Preview", "rac2.vendor.preview"},
     {"Vendor_Price", "rac2.vendor.price"},
     {"Weapon_LevelUp", "rac2.weapon.level_up"},
@@ -665,6 +836,15 @@ static const openrac_script_alias k_aliases[228] = {
     {"func_002891D8", "rac2.item.upgrade"},
     {"func_002898E8", "rac2.text.by_id"},
     {"func_002899F8", "rac2.text.by_id"},
+    {"func_0028A670", "rac2.hud.bolt_deltas"},
+    {"func_0028B038", "rac2.hud.bolt_deltas"},
+    {"func_0028B0B0", "rac2.hud.bolt_deltas"},
+    {"func_0028C6D0", "rac2.hud.weapon"},
+    {"func_0028D0C0", "rac2.hud.weapon"},
+    {"func_0028D110", "rac2.hud.weapon"},
+    {"func_0028D1E8", "rac2.hud.weapon_selector"},
+    {"func_0028DC28", "rac2.hud.weapon_selector"},
+    {"func_0028DC40", "rac2.hud.weapon_selector"},
     {"func_00298E08", "rac2.save.new_game"},
     {"func_002997A0", "rac2.save.new_game"},
     {"func_00299BF8", "rac2.save.new_game"},
@@ -707,6 +887,9 @@ static const openrac_script_alias k_aliases[228] = {
     {"func_002F7578", "rac2.vendor.build_list"},
     {"func_002F8038", "rac2.armor_vendor.build_list"},
     {"func_002F8128", "rac2.armor_vendor.build_list"},
+    {"func_002F8178", "rac2.vendor.open"},
+    {"func_002F8FF8", "rac2.vendor.open"},
+    {"func_002F90E8", "rac2.vendor.open"},
     {"func_002F9C80", "rac2.vendor.draw_list"},
     {"func_002FAB0C", "rac2.vendor.draw_list"},
     {"func_002FACD0", "rac2.vendor.draw_list"},
@@ -722,12 +905,36 @@ static const openrac_script_alias k_aliases[228] = {
     {"func_003136D0", "rac2.moby.nanotech_ball.update"},
     {"func_003144C8", "rac2.moby.nanotech_ball.update"},
     {"func_00314B5C", "rac2.moby.nanotech_ball.update"},
+    {"func_00336320", "rac2.gui.draw_element"},
+    {"func_00336828", "rac2.gui.draw_icon"},
     {"func_00336EF8", "rac2.item.version_color"},
     {"func_00336F20", "rac2.item.colors"},
+    {"func_00337128", "rac2.gui.draw_element"},
+    {"func_00337630", "rac2.gui.draw_icon"},
     {"func_00337DA0", "rac2.item.version_color"},
     {"func_00337DC8", "rac2.item.colors"},
+    {"func_00338000", "rac2.gui.draw_element"},
+    {"func_00338508", "rac2.gui.draw_icon"},
     {"func_00338C50", "rac2.item.version_color"},
     {"func_00338C78", "rac2.item.colors"},
+    {"func_00338F58", "rac2.hud.text_panel"},
+    {"func_00339F98", "rac2.hud.text_panel"},
+    {"func_0033AE48", "rac2.hud.text_panel"},
+    {"func_00340250", "rac2.quick_select.draw"},
+    {"func_00341160", "rac2.quick_select.draw"},
+    {"func_003422D0", "rac2.quick_select.draw"},
+    {"func_0034AD10", "rac2.hud.nanotech"},
+    {"func_0034BA50", "rac2.hud.nanotech"},
+    {"func_0034CED8", "rac2.hud.nanotech"},
+    {"func_0034DB98", "rac2.hud.bolts"},
+    {"func_0034E2E0", "rac2.hud.weapon_slots"},
+    {"func_0034E4F8", "rac2.hud.draw"},
+    {"func_0034E8D8", "rac2.hud.bolts"},
+    {"func_0034F028", "rac2.hud.weapon_slots"},
+    {"func_0034F240", "rac2.hud.draw"},
+    {"func_0034FD60", "rac2.hud.bolts"},
+    {"func_003504C8", "rac2.hud.weapon_slots"},
+    {"func_003506E0", "rac2.hud.draw"},
     {"func_L00_002A4D58", "rac2.player.take_damage"},
     {"func_L00_002A4EF8", "rac2.player.take_damage"},
     {"func_L00_002A6CB8", "rac2.player.update"},
@@ -834,8 +1041,8 @@ static const openrac_script_field k_fields[1] = {
 };
 
 static const openrac_script_binding k_binding = {
-    "rac2", 3, k_discs, 55, k_points, 0, k_fields, NULL,
-    228, k_aliases,
+    "rac2", 3, k_discs, 67, k_points, 0, k_fields, NULL,
+    276, k_aliases,
 };
 
 const openrac_script_binding* openrac_game_script_binding(void) {

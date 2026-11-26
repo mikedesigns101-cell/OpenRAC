@@ -155,6 +155,102 @@ struct Text_ById {
     using fn = int32_t (*)(int32_t);
 };
 
+// Draws one sprite element of the game's 2D (GuiSpriteElementDraw, under the port's own wrap in host/ui2d.c): the pause menu's frames, panels, highlights and title bars, the HUD's frames and bars, the vendor's and the menus' art. element is a game address: +0 a pointer to its centre (x, y floats, the screen's 512 x 416), +4 to its size (w, h), +12 to its colour (0xAABBGGRR), +16 to its scale (0 hides it), +0x38 to its frame, +64 its texture (0 hides it). A replacement that does not call the original leaves the element out, and may draw its own in its place (the overlay, openrac_overlay.image); one that changes the words those pointers name for the call puts them back after. Called for every element every frame: keep it cheap.
+struct Gui_DrawElement {
+    static constexpr const char* id = "rac2.gui.draw_element";
+    static constexpr const char* name = "Gui_DrawElement";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Draws one icon element of the game's 2D (func_00336828): the icons of the pause menu's lists, the quick select's and the weapons screen's item icons. element is a game address laid out as rac2.gui.draw_element's (+0 its place, +4 its size, +12 its colour, the sheet and cell func_00336920 set). A replacement that does not call the original leaves the icon out.
+struct Gui_DrawIcon {
+    static constexpr const char* id = "rac2.gui.draw_icon";
+    static constexpr const char* name = "Gui_DrawIcon";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Draws the level's HUD (hud_item_bolt_draw, under the port's own wrap in host/hud.c: the HUD's edges and the mods' lines of text): the weapon slots (rac2.hud.weapon_slots), the bolt counter (rac2.hud.bolts), the text panel (rac2.hud.text_panel) and the bolts' gains (rac2.hud.bolt_deltas), each a hook point of its own; the top panel (rac2.hud.nanotech) is drawn from the HUD's widgets. hud is the HUD's object (the front end's block + 0x36F28). A replacement that does not call the original draws no HUD at all.
+struct Hud_Draw {
+    static constexpr const char* id = "rac2.hud.draw";
+    static constexpr const char* name = "Hud_Draw";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Draws the HUD slot of the weapon in hand (weapon_wheel_draw, HUD slot 0x23's draw): the selected weapon's slot lit, its ammunition and its name. slot is the HUD slot's record. A replacement that does not call the original (and returns 0) leaves it out.
+struct Hud_Weapon {
+    static constexpr const char* id = "rac2.hud.weapon";
+    static constexpr const char* name = "Hud_Weapon";
+    static constexpr const char* signature = "i32(u32)";
+    using fn = int32_t (*)(uint32_t);
+};
+
+// Draws the other look of the same HUD slot (DrawRadialSelectorPanel, put in its place in some levels and modes). slot is the HUD slot's record. A replacement that does not call the original (and returns 0) leaves it out.
+struct Hud_WeaponSelector {
+    static constexpr const char* id = "rac2.hud.weapon_selector";
+    static constexpr const char* name = "Hud_WeaponSelector";
+    static constexpr const char* signature = "i32(u32)";
+    using fn = int32_t (*)(uint32_t);
+};
+
+// Places the eight weapon slots of the HUD on their circle (radial_menu_layout_items: the selected one lifted), at x, y on the screen's 512 x 416, alpha their opacity; the HUD (hud_item_bolt_draw) and the quick select (radial_menu_draw) call it. A replacement that does not call the original leaves the slots where they were last placed: leave out rac2.hud.draw or rac2.quick_select.draw to hide them.
+struct Hud_WeaponSlots {
+    static constexpr const char* id = "rac2.hud.weapon_slots";
+    static constexpr const char* name = "Hud_WeaponSlots";
+    static constexpr const char* signature = "void(u32,i32,i32,i32)";
+    using fn = void (*)(uint32_t, int32_t, int32_t, int32_t);
+};
+
+// Draws the HUD's bolt counter (DrawBoltCounterPanel: the bolts, the multiplier; under the port's own wrap in host/bolt_totals.c, the compact totals). panel is the HUD's object + 0x7A0. A replacement that does not call the original leaves the counter out.
+struct Hud_Bolts {
+    static constexpr const char* id = "rac2.hud.bolts";
+    static constexpr const char* name = "Hud_Bolts";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Draws the bolts just picked up, rising by the counter (DrawBoltCounterDeltas). A replacement that does not call the original leaves them out.
+struct Hud_BoltDeltas {
+    static constexpr const char* id = "rac2.hud.bolt_deltas";
+    static constexpr const char* name = "Hud_BoltDeltas";
+    static constexpr const char* signature = "void()";
+    using fn = void (*)();
+};
+
+// Draws one of the game's text panels at the HUD's scale (text_panel_draw_scaled): the HUD's own (its object + 0x1FBC) and others of the menus'. panel is the panel's object. A replacement that does not call the original leaves it out.
+struct Hud_TextPanel {
+    static constexpr const char* id = "rac2.hud.text_panel";
+    static constexpr const char* name = "Hud_TextPanel";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Draws the HUD's segmented ring meter, the top panel among the HUD's widgets (DrawSegmentedRingMeter, under the port's own wrap in host/hud.c: the HUD's edges): its frame (+0x5C, +0xA8), its bar (+0xF4) and a tile for each of its segments (+4 their count). A replacement that does not call the original leaves it out.
+struct Hud_Nanotech {
+    static constexpr const char* id = "rac2.hud.nanotech";
+    static constexpr const char* name = "Hud_Nanotech";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Draws the quick select (radial_menu_draw, while Triangle holds it open: +0xA58 set): its backdrop and frames (gfx elements at +0, +0x4C, +0xE4, +0x130, +0x214, +0x2A8, +0x2F4), its labels (+0x828 to +0x990), the item's information, its eight slots (+0x340, 0x4C each) and eight icons (+0x5EC, 0x3C each), the cursor (+0x5A0), then the weapon slots (rac2.hud.weapon_slots). A replacement that does not call the original draws none of it; the game still reads the pad for it.
+struct QuickSelect_Draw {
+    static constexpr const char* id = "rac2.quick_select.draw";
+    static constexpr const char* name = "QuickSelect_Draw";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
+// Opens a vendor's menu (OpenVendorMenu), as the game's mode changes to the vendor's, before its first frame and its opening animation: clears the menu's state (g_vendor_menu_state, 0x760 bytes), sets its mode (0 the weapons, 1 the ammunition, 2 the ship's parts, 3 the armour, by the vendor moby's or the number passed under 4) and builds its list. moby is the vendor's moby, or 0 to 3 for a menu opened without one. A replacement that calls the original and then reads the mode knows which menu opens, a frame before the game draws it.
+struct Vendor_Open {
+    static constexpr const char* id = "rac2.vendor.open";
+    static constexpr const char* name = "Vendor_Open";
+    static constexpr const char* signature = "void(u32)";
+    using fn = void (*)(uint32_t);
+};
+
 // Puts a level on the ship's map (MarkLevelAvailable): its byte at 0x1A7BC8 and its place in the map's order (0x139948, on NTSC-U v1.01). Coordinate sellers, story scenes and ship challenges call it, and every level load calls it for the level loaded. Rac1's UnlockPlanet.
 struct Planet_Unlock {
     static constexpr const char* id = "rac2.planet.unlock";
@@ -472,9 +568,23 @@ namespace hooks {
         using get_hit = rac2::Moby_GetHitMessage;
         using post_hit = rac2::Moby_PostHit;
     }  // namespace combat
+    namespace gui {
+        using draw_element = rac2::Gui_DrawElement;
+        using draw_icon = rac2::Gui_DrawIcon;
+    }  // namespace gui
     namespace hero {
         using update_collection_progress = rac2::Hero_UpdateCollectionProgress;
     }  // namespace hero
+    namespace hud {
+        using bolt_deltas = rac2::Hud_BoltDeltas;
+        using bolts = rac2::Hud_Bolts;
+        using draw = rac2::Hud_Draw;
+        using nanotech = rac2::Hud_Nanotech;
+        using text_panel = rac2::Hud_TextPanel;
+        using weapon = rac2::Hud_Weapon;
+        using weapon_selector = rac2::Hud_WeaponSelector;
+        using weapon_slots = rac2::Hud_WeaponSlots;
+    }  // namespace hud
     namespace item {
         using colors = rac2::Item_Colors;
         using equip = rac2::Item_Equip;
@@ -566,6 +676,9 @@ namespace hooks {
         using take_damage = rac2::Hero_TakeDamage;
         using update = rac2::Hero_Update;
     }  // namespace player
+    namespace quick_select {
+        using draw = rac2::QuickSelect_Draw;
+    }  // namespace quick_select
     namespace save {
         using new_game = rac2::Save_NewGame;
         using serialize = rac2::Save_Serialize;
@@ -576,6 +689,7 @@ namespace hooks {
     namespace vendor {
         using build_list = rac2::Vendor_BuildList;
         using draw_list = rac2::Vendor_DrawList;
+        using open = rac2::Vendor_Open;
         using preview = rac2::Vendor_Preview;
         using price = rac2::Vendor_Price;
     }  // namespace vendor
