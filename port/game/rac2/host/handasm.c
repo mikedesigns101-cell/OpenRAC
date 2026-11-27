@@ -132,8 +132,9 @@ void func_0029CFB0(gaddr dst, gaddr src, int count) {
     while (count > 0) {
         const int n = count < 0x400 ? count : 0x400;
         const size_t bytes = (size_t)n * 16u;
-        memmove(G(GUEST_SCRATCHPAD), G(src & 0x01FFFFF0u), bytes);
-        memmove(G(dst & 0x01FFFFF0u), G(GUEST_SCRATCHPAD), bytes);
+        /* The 25-bit physical address, or the port's expanded RAM (foreign_class.c's classes). */
+        memmove(G(GUEST_SCRATCHPAD), G(openrac_guest_ram_address(src) & ~15u), bytes);
+        memmove(G(openrac_guest_ram_address(dst) & ~15u), G(GUEST_SCRATCHPAD), bytes);
         src += (gaddr)bytes;
         dst += (gaddr)bytes;
         count -= n;

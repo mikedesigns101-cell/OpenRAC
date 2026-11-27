@@ -65,6 +65,9 @@ static inline uint32_t openrac_ee_cvtws(float f) {
     return (uint32_t)(int32_t)f;
 }
 
+/* A scratchpad DMA's RAM: past the console's 32 MiB too when the port expands it (a class of
+ * another level's lives there: rac2/host/foreign_class.c); else the 25-bit physical address. */
+#define OPENRAC_EE_DMA_RAM(a) (openrac_guest_ram_address((gaddr)(a)) & ~15u)
 #include "openrac/ee_ops.h"
 
 /* The one vector unit 0 the program has. */

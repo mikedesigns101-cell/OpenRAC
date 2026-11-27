@@ -30,6 +30,12 @@
 #define OPENRAC_EE_MEM
 #endif
 
+/* The RAM a scratchpad DMA reads or writes for a MADR: the console's 25-bit physical address, a
+ * quadword; the port with expanded RAM gives the whole of it (ee.h). */
+#ifndef OPENRAC_EE_DMA_RAM
+#define OPENRAC_EE_DMA_RAM(a) ((a) & 0x01FFFFF0u)
+#endif
+
 #define OPENRAC_EE_S32(x) ((openrac_u64)(openrac_s64)(openrac_s32)(openrac_u32)(x))
 #define OPENRAC_EE_B(a) (*(volatile openrac_u8 *)OPENRAC_EE_PTR(a))
 
@@ -155,7 +161,7 @@ OPENRAC_EE_INLINE void openrac_spr_copy(
         return;
     }
     for (k = 0; k < n; k++) {
-        openrac_u32 memory = (*madr + 16u * k) & 0x01FFFFF0u;
+        openrac_u32 memory = OPENRAC_EE_DMA_RAM(*madr + 16u * k);
         openrac_u32 spr = 0x70000000u + ((*sadr + 16u * k) & 0x3FF0u);
         for (j = 0; j < 16u; j += 8u) {
             if (to_spr) {

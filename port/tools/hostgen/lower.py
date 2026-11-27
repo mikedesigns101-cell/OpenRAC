@@ -2278,7 +2278,10 @@ class Unit:
         if off:
             return f"((void)({value}))"
         madr, qwc, sadr = (self._spr_local(ch, f) for f in ("madr", "qwc", "sadr"))
-        memory = "GREF(uint64_t, (gaddr)(((" + madr + " + 16u * spr_k_) & 0x01FFFFF0u) + spr_j_))"
+        # The console's 25-bit physical address, or the whole of the port's expanded RAM
+        # (openrac_guest_ram_address: the same for 32 MiB).
+        memory = ("GREF(uint64_t, (gaddr)((openrac_guest_ram_address((gaddr)(" + madr
+                  + " + 16u * spr_k_)) & ~15u) + spr_j_))")
         pad = "GREF(uint64_t, (gaddr)(0x70000000u + ((" + sadr + " + 16u * spr_k_) & 0x3FF0u) + spr_j_))"
         move = f"{pad} = {memory};" if ch == 9 else f"{memory} = {pad};"
         return (f"({{ uint32_t spr_c_ = (uint32_t)({value}); if (spr_c_ & 0x100u) {{ "
