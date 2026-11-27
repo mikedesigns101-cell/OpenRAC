@@ -339,6 +339,7 @@ One of the mod's pages of the game's own menus (Mod::ui_page): set what it shows
 | `void sound_stop(std::uint32_t voice) const` |  |
 | `bool hero_set_joints(const std::vector<openrac_joint_offset>& joints) const` | Since 1.12: turns and moves the hero's joints on top of his animation (openrac_joint_offset) until the next call, composed with other mods' offsets; an empty list takes them off. False outside a level, on a port without the call, or (ports to SDK 1.14.0) for a mod without the hero's update hook. |
 | `bool has_camera() const` | Since 1.12: whether the port offers camera_view(), camera_set() and haze_set(). |
+| `bool has_rac2_camera() const` | Since 1.105: whether camera_view() and camera_set() work in Going Commando too (in play and under a vendor's menu). A port before it answers them false there. |
 | `bool camera_view(openrac_camera& out) const` | Since 1.12: the camera the game made itself for its last view in the level. False outside a level or on a port without the call. |
 | `bool camera_set(const openrac_camera& camera) const` | Since 1.12: the game's camera put where `camera` says until camera_release() or the level goes. False outside a level, while another mod holds the camera, or on a port without it. |
 | `void camera_release() const` |  |

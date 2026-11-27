@@ -2204,6 +2204,10 @@ public:
     // Since 1.12: whether the port offers camera_view(), camera_set() and haze_set().
     bool has_camera() const { return has_api_12(); }
 
+    // Since 1.105: whether camera_view() and camera_set() work in Going Commando too (in play
+    // and under a vendor's menu). A port before it answers them false there.
+    bool has_rac2_camera() const { return has_camera() && m_api->api_minor >= 105; }
+
     // Since 1.12: the camera the game made itself for its last view in the level. False outside a
     // level or on a port without the call.
     bool camera_view(openrac_camera& out) const {

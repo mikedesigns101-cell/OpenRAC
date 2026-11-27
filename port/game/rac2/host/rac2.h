@@ -67,6 +67,12 @@ uint32_t rac2_mod_pause_title(void);
 struct openrac_game_particle_spawn;
 int rac2_particle_spawn_ex(const struct openrac_game_particle_spawn* spawn);
 
+/* A mod's camera (camera_override.c; openrac_api.camera_set, camera_view): 1 done, 0 outside a
+ * level; and whether the world is drawn from it now. */
+int rac2_camera_set(const float eye[3], const float rows[9]);
+int rac2_camera_view(float eye[3], float rows[9]);
+int rac2_camera_overridden(void);
+
 /* The level's collision triangles in a box (collision_triangles.c, openrac_api.collision_triangles). */
 int rac2_collision_triangles(const float lo[3], const float hi[3], void* out, int max);
 

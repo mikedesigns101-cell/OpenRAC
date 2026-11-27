@@ -2382,6 +2382,10 @@ int main() {
             g_18 == "2 3 5 2");
       api.api_minor = 100;
       CHECK(mod.has_prop_attach() && !mod.has_prop_attach_scaled());
+      // Interface 1.105: Going Commando's camera, which a port of 1.104 lacks.
+      CHECK(mod.has_camera() && !mod.has_rac2_camera());
+      api.api_minor = 105;
+      CHECK(mod.has_rac2_camera());
       api.api_minor = OPENRAC_MOD_API_MINOR;
       CHECK(!mod.prop_attach(2, -1, 5));
       float frame[16] = {};

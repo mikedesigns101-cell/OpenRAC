@@ -141,12 +141,14 @@ extern "C" {
  * pictures of a mod's own for its overlay, drawn turned, tinted and kept in
  * shape, and a call of the overlay under the game's 2D (overlay_image_create,
  * overlay_image_destroy, openrac_overlay.image, image_quad, layer, aspect,
- * OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request 865, by Henning Berge), and
+ * OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request 865, by Henning Berge),
  * 1.104 pages a mod draws itself (OPENRAC_UI_MOD_DRAWN, the table is
  * unchanged), with Going Commando's HUD parts, quick select, 2D elements and
- * the vendor's opening as hook points.
+ * the vendor's opening as hook points, and 1.105 Going Commando's camera set by
+ * a mod: camera_set and camera_view in play and under a vendor's menu (the
+ * table is unchanged).
  */
-#define OPENRAC_MOD_API_MINOR 104
+#define OPENRAC_MOD_API_MINOR 105
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2581,7 +2583,10 @@ typedef struct openrac_api {
      * view). The game's own camera goes on underneath (camera_view). It stays until the mod calls
      * this with null, or the level goes; under the pause menu the menu's own camera is kept. One
      * mod at a time: OPENRAC_HOOK_TAKEN while another mod holds the camera, OPENRAC_HOOK_UNKNOWN
-     * outside a level or for rows that are not unit vectors at right angles. Since 1.12. */
+     * outside a level or for rows that are not unit vectors at right angles. Since 1.12; Going
+     * Commando since 1.105, in play and under a vendor's menu (whose picture of the world is the
+     * frame it took on opening, without the hero: a mod that wants him in sight keeps the menu
+     * from opening and holds him itself, docs/port/MODS.md). */
     int (*camera_set)(openrac_mod* mod, const openrac_camera* camera);
 
     /* Draws heat haze (openrac_haze) over the picture, behind the HUD: the `count` patches replace

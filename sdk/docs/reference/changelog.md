@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.105
+
+Going Commando's camera set by a mod: camera_set and camera_view in play and under a vendor's menu (the table is unchanged).
+
+No new members (the table is unchanged).
+
 ## 1.104
 
 Pages a mod draws itself (OPENRAC_UI_MOD_DRAWN, the table is unchanged), with Going Commando's HUD parts, quick select, 2D elements and the vendor's opening as hook points.
