@@ -196,9 +196,12 @@ int rac2_moby_relocate(int32_t slot, float to[3], uint32_t flags) {
         delta[k] = to[k] - was[k];
     }
     put_floats(m + MOBY_POS, to);
+    /* The sphere is kept in 1/1024 units (func_002A4E68; profile.cpp's moby_sphere): moved in world
+     * units it stayed at the old place, and MobyProc's distance test culled the moby there (a
+     * Chickenbot copied out of its drop ship ran at Ratchet unseen). */
     if (GREF(float, m + MOBY_SPHERE + 0x0Cu) > 0.0f) {
         for (unsigned k = 0; k < 3; ++k) {
-            GREF(float, m + MOBY_SPHERE + 4u * k) += delta[k];
+            GREF(float, m + MOBY_SPHERE + 4u * k) += delta[k] * 1024.0f;
         }
     }
     const gaddr pv = GREF(gaddr, m + MOBY_PVARS);
@@ -236,6 +239,15 @@ int rac2_moby_relocate(int32_t slot, float to[3], uint32_t flags) {
     }
     if ((flags & RELOCATE_WAKE) != 0 && pv != 0) {
         if (oclass == CHICKENBOT && state == 13) {
+            /* In its drop ship it is hidden (+0x34 bits 0x81, 0x71 there) and has no collision
+             * (+0x98 0); the drop that shows it is skipped, so both are given back here: its
+             * class's collision (class header +0x10). Without it a woken one ran at Ratchet unseen
+             * and unhittable. */
+            GREF(uint8_t, m + 0x34u) = (uint8_t)(GREF(uint8_t, m + 0x34u) & ~0x81u);
+            const gaddr cls = GREF(gaddr, m + 0x24u);
+            if (GREF(gaddr, m + 0x98u) == 0 && cls != 0) {
+                GREF(gaddr, m + 0x98u) = GREF(gaddr, cls + 0x10u);
+            }
             func_002A7750(m, 9, 2);
         } else if (oclass == BRUTE && state >= 13 && state <= 22 && state != 16) {
             func_002A7750(m, 1, 0);

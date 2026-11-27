@@ -1465,8 +1465,9 @@ static void take_record(gaddr m, gaddr orig, const float delta[3]) {
     }
     for (unsigned c = 0; c < 3; ++c) {
         GREF(float, m + MOBY_POS + 4u * c) += delta[c];
+        /* The sphere is kept in 1/1024 units (func_002A4E68; profile.cpp's moby_sphere). */
         if (GREF(float, m + MOBY_SPHERE + 12u) > 0.0f) {
-            GREF(float, m + MOBY_SPHERE + 4u * c) += delta[c];
+            GREF(float, m + MOBY_SPHERE + 4u * c) += delta[c] * 1024.0f;
         }
     }
 }
