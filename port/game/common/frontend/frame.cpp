@@ -1774,6 +1774,10 @@ std::optional<scene::GameScenery> scenery_matrices(
 // are added to `state`. `world_ran`, `only_own_camera`: the world renderers ran this tick, and
 // only mobys with a camera of their own were drawn without them; `under_menu`: that world is a
 // level's under a menu (world_under_menu); `debug`: OPENRAC_DEBUG.
+// Each moby's last pose by address (pose_mobys' far mobys posed every other frame), and its level.
+std::unordered_map<std::uint32_t, std::vector<assets::rac1::JointMatrix>> g_pose_cache;
+int g_pose_cache_level = -100;
+
 TickMobys pose_mobys(
     std::span<const std::uint8_t> ram,
     host::GameState& state,
@@ -1899,7 +1903,14 @@ TickMobys pose_mobys(
         // A mod's skinned mesh's bind poses against the class's (OPENRAC_MODEL_GAME_POSE), one
         // matrix a joint to multiply the game's palette by; null for none.
         const std::vector<renderer::Mat4>* rebind = nullptr;
+        // Its last pose repeated (a far moby on its off frame, OPENRAC_POSE_HALF).
+        bool reuse = false;
     };
+    // The last pose of each moby, for the far ones posed every other frame; forgotten with the level.
+    if (g_pose_cache_level != g->loaded) {
+        g_pose_cache.clear();
+        g_pose_cache_level = g->loaded;
+    }
 
     std::vector<PoseJob> pose_jobs;
     std::array<std::optional<renderer::Vec3>, 2> water_hands{};
@@ -2747,8 +2758,31 @@ TickMobys pose_mobys(
         }
         if (animate && joints > 0 && skin == nullptr && !replacement_pose && !out_of_sight) {
             const bool target = into_texture.contains(m.address) || on_screen.contains(m.address);
+            // A far world moby is posed every other frame (half of them on each), its last pose
+            // repeated in between: past OPENRAC_POSE_HALF units from the camera (25; 0 poses every
+            // moby every frame). The hero and what the game draws with a camera of its own are
+            // posed every frame.
+            static const float half_rate_from = [] {
+                const char* v = std::getenv("OPENRAC_POSE_HALF");
+                return v != nullptr ? static_cast<float>(std::atof(v)) : 25.0f;
+            }();
+            bool reuse = false;
+            if (half_rate_from > 0.0f && !target && world_ran && !own_camera && m.class_id != 0
+                && !extra && ((g->index + (m.address >> 8)) & 1u) != 0) {
+                float len2 = 0.0f;
+                for (int a = 0; a < 3; ++a) {
+                    const float v = m.matrix[12 + a] - state.camera_position[a];
+                    len2 += v * v;
+                }
+                reuse = len2 > half_rate_from * half_rate_from && g_pose_cache.contains(m.address);
+            }
             pose_jobs.push_back(
-                {m.address, joints, target, target ? target_mobys.size() : live.size(), rebind}
+                {m.address,
+                 joints,
+                 target,
+                 target ? target_mobys.size() : live.size(),
+                 rebind,
+                 reuse}
             );
         }
         // Only world instances attach to water; menu and render-to-texture previews keep their poses.
@@ -3154,10 +3188,22 @@ TickMobys pose_mobys(
     }
     std::vector<std::vector<assets::rac1::JointMatrix>> poses(pose_jobs.size());
     parallel::for_each(pose_jobs.size(), [&](std::size_t i) {
+        if (pose_jobs[i].reuse) {
+            poses[i] = g_pose_cache.find(pose_jobs[i].address)->second;  // read only here
+            return;
+        }
         poses[i] = sleeping_keys[i]
                        ? scene::moby_palette(ram, pose_jobs[i].address, *sleeping_keys[i])
                        : scene::moby_palette(ram, pose_jobs[i].address);
     });
+    if (g_pose_cache.size() > 8192) {
+        g_pose_cache.clear();  // the mobys of a long stay come and go: none kept for ever
+    }
+    for (std::size_t i = 0; i < pose_jobs.size(); ++i) {
+        if (!pose_jobs[i].reuse && !pose_jobs[i].target) {
+            g_pose_cache[pose_jobs[i].address] = poses[i];
+        }
+    }
     for (std::size_t k = 0; k < pose_jobs.size(); ++k) {
         const PoseJob& job = pose_jobs[k];
         const auto& pose = poses[k];
