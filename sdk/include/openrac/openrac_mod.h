@@ -159,9 +159,11 @@ extern "C" {
  * openrac_moby_model), and 1.121 a live moby moved to another place of its level
  * with its sphere, cells and homes, set on the floor (moby_relocate), and 1.122
  * a moby drawn as another model with that model's own animations, its own class
- * still running (moby_skin_at, openrac_moby_skin).
+ * still running (moby_skin_at, openrac_moby_skin), and 1.123 moby_relocate's
+ * NEAREST flag: a point with no floor moved to the nearest one with a floor
+ * (OPENRAC_RELOCATE_NEAREST; the table is unchanged).
  */
-#define OPENRAC_MOD_API_MINOR 122
+#define OPENRAC_MOD_API_MINOR 123
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1326,6 +1328,10 @@ typedef struct openrac_moby_model {
 #define OPENRAC_RELOCATE_FREE 0x2u
 #define OPENRAC_RELOCATE_WAKE 0x4u
 #define OPENRAC_RELOCATE_ANYWHERE 0x8u
+/* moby_relocate's flag NEAREST: a point with no floor under it (past a platform's edge, over a gap)
+ * is moved to the nearest point within 6 units across that has one, and `position` is given back
+ * there; NO_FLOOR only when none has. Since 1.123. */
+#define OPENRAC_RELOCATE_NEAREST 0x10u
 /* moby_relocate's answer for a point with no floor of the level under it. Since 1.121. */
 #define OPENRAC_RELOCATE_NO_FLOOR (-20)
 
@@ -3725,7 +3731,9 @@ typedef struct openrac_api {
      * `flags` say (OPENRAC_RELOCATE_*) its homes, its level's route and area, and its wait. Unless
      * OPENRAC_RELOCATE_ANYWHERE, the point needs a floor of the level under it (a slope a walker stands
      * on, from 2.5 units above to 8 below), and the moby is set on it: `position[2]` is given back as
-     * the floor's height. A copy (moby_copy) or a moby the game made can be moved anywhere in its
+     * the floor's height (with OPENRAC_RELOCATE_NEAREST, since 1.123, a point with no floor is moved
+     * to the nearest one within 6 units that has one, and `position` given back there). A copy
+     * (moby_copy) or a moby the game made can be moved anywhere in its
      * level; how a class behaves far from its own ground is its own (water creatures sink on land).
      * Call it on the game's thread (a tick or frame callback). Returns OPENRAC_HOOK_OK,
      * OPENRAC_RELOCATE_NO_FLOOR (nothing changes), or OPENRAC_HOOK_UNKNOWN for no live moby there, a

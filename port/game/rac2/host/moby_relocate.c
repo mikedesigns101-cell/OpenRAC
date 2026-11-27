@@ -48,6 +48,7 @@
 #define RELOCATE_FREE 0x2u
 #define RELOCATE_WAKE 0x4u
 #define RELOCATE_ANYWHERE 0x8u
+#define RELOCATE_NEAREST 0x10u
 
 /* A pvars place this near the moby's old place is one of its own, carried along. */
 #define HOME_NEAR 1.0f
@@ -155,6 +156,27 @@ static int floor_under(const float p[3], float* out) {
     return found;
 }
 
+/* OPENRAC_RELOCATE_NEAREST, for a point with no floor under it (a spot past a platform's edge): the
+ * nearest point with one within NEAREST_RADIUS across, rings NEAREST_STEP apart, each with points
+ * NEAREST_STEP apart around it; `p` is moved there and its floor put in *out. 0 for none. */
+#define NEAREST_RADIUS 6.0f
+#define NEAREST_STEP 0.5f
+static int nearest_floor(float p[3], float* out) {
+    for (float r = NEAREST_STEP; r <= NEAREST_RADIUS + 1e-3f; r += NEAREST_STEP) {
+        const int around = (int)ceilf(6.2831853f * r / NEAREST_STEP);
+        for (int i = 0; i < around; ++i) {
+            const float turn = 6.2831853f * (float)i / (float)around;
+            float q[3] = {p[0] + r * cosf(turn), p[1] + r * sinf(turn), p[2]};
+            if (floor_under(q, out)) {
+                p[0] = q[0];
+                p[1] = q[1];
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 /* The bytes of pvars of the moby at `m`: a copy's as the port made them, a placed one's from the
  * level's file, a spawned one's its slot's. */
 static uint32_t pvars_bytes(gaddr m, gaddr dynamic) {
@@ -186,7 +208,9 @@ int rac2_moby_relocate(int32_t slot, float to[3], uint32_t flags) {
     if ((flags & RELOCATE_ANYWHERE) == 0) {
         float floor = 0.0f;
         if (!floor_under(to, &floor)) {
-            return -2;
+            if ((flags & RELOCATE_NEAREST) == 0 || !nearest_floor(to, &floor)) {
+                return -2;
+            }
         }
         to[2] = floor;
     }

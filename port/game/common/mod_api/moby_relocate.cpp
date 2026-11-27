@@ -13,7 +13,8 @@ namespace openrac::mods::detail {
 
 int api_moby_relocate(openrac_mod* mod, std::int32_t slot, float position[3], std::uint32_t flags) {
     constexpr std::uint32_t kFlags = OPENRAC_RELOCATE_HOMES | OPENRAC_RELOCATE_FREE
-                                     | OPENRAC_RELOCATE_WAKE | OPENRAC_RELOCATE_ANYWHERE;
+                                     | OPENRAC_RELOCATE_WAKE | OPENRAC_RELOCATE_ANYWHERE
+                                     | OPENRAC_RELOCATE_NEAREST;
     std::int32_t level = -1;
     if (mod == nullptr || position == nullptr || slot < 0 || (flags & ~kFlags) != 0
         || g_play == nullptr || g_play->moby_relocate == nullptr || !in_level(phase_now(&level))
