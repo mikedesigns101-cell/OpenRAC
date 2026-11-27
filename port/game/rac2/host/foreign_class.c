@@ -135,10 +135,21 @@ static gaddr s_deferred[DEFER_MAX];
 static uint8_t s_deferred_k[DEFER_MAX];
 static int s_deferred_n;
 static uint8_t s_level_warned[LEVELS];
+/* Spawned Chickenbots whose first update has not run yet: freed of their level's target after it. */
+#define FREE_MAX 64
+static gaddr s_free[FREE_MAX];
+static int s_free_n;
 /* What the flushes cost: mobys run and time, over the last frames (OPENRAC_FOREIGN_SCAN logs it). */
 static uint64_t s_cost_ns, s_cost_frames, s_cost_mobys;
 
 static void stand_in(int k, gaddr moby) {
+    static uint32_t told_loads;
+    if (told_loads != rac2_program_loads()) {
+        told_loads = rac2_program_loads();
+        char message[120];
+        snprintf(message, sizeof message, "foreign class %d: its stand-in called for moby %08x", s_foreign[k].oclass, moby);
+        openrac_game_warn(message);
+    }
     if (s_deferred_n < DEFER_MAX) {
         s_deferred[s_deferred_n] = moby;
         s_deferred_k[s_deferred_n] = (uint8_t)k;
@@ -241,6 +252,7 @@ void func_L00_00300438(gaddr records, int count, int end) {
     /* A new level: the foreign programs start again from the disc's (their data as it loads). */
     openrac_guest_forget_foreign();
     s_deferred_n = 0;
+    s_free_n = 0;
     memset(s_level_warned, 0, sizeof s_level_warned);
     for (int k = 0; k < s_count; ++k) {
         Foreign* f = &s_foreign[k];
@@ -409,6 +421,22 @@ void rac2_foreign_flush(void) {
         }
     }
     s_deferred_n = 0;
+    /* Spawned Chickenbots past their first update: free of this level's target (-1, as relocate's
+     * FREE leaves a live one). */
+    for (int i = 0; i < s_free_n;) {
+        const gaddr m = s_free[i];
+        const uint8_t state = GREF(uint8_t, m + MOBY_STATE);
+        if (state == 0) {
+            ++i;
+            continue;
+        }
+        if (state < 0x80u && GREF(int16_t, m + MOBY_OCLASS) == 2638) {
+            const gaddr pv = GREF(gaddr, m + MOBY_PVARS);
+            GREF(int32_t, pv + 0x210u) = -1;
+            GREF(int32_t, pv + 0x218u) = -1;
+        }
+        s_free[i] = s_free[--s_free_n];
+    }
     s_cost_ns += now_ns() - start;
     s_cost_mobys += (uint64_t)ran;
     ++s_cost_frames;
@@ -464,7 +492,10 @@ static gaddr spawn_one(int k, const float to[3]) {
     GREF(uint8_t, m + 0x30u) = rec[0x34];
     GREF(uint16_t, m + 0x32u) = (uint16_t)(rec[0x30] | rec[0x31] << 8);
     memcpy(G(m + 0xF0u), rec + 0x4C, 12);
-    GREF(uint8_t, m + 0x21u) = rec[0x58];
+    /* No group (+0x21 -1): the visible list (func_002A08A0) runs a moby of a group only from that
+     * group's list of this level's (its record's group, 1 for Maktar's Chickenbots, is another set
+     * here), so one left in it never ran. */
+    GREF(int8_t, m + 0x21u) = -1;
     memcpy(&w, rec + 0x6C, 4);
     GREF(uint16_t, m + 0x36u) = w != 0 ? 0x7F80u : 0u;
     GREF(gaddr, m + MOBY_PVARS) = pvars;
@@ -485,11 +516,19 @@ static gaddr spawn_one(int k, const float to[3]) {
     GREF(int16_t, m + 0xB4u) = 0;
     GREF(int16_t, m + 0xB6u) = 0;
     /* Free of its level's tables: the Chickenbot's area +0x218 and target +0x210 (moby_relocate.c),
-     * its wander home +0x2E0 here. */
+     * its wander home +0x2E0 here. Its first update (state 0, func_L02_003CE4D0) deletes a moby whose
+     * target is -1 and reads that entry of the level's table (D_L02_001B3200, 48 bytes each): it starts
+     * with this level's first, and is freed once that update has run (rac2_foreign_flush). */
     if (f->oclass == 2638 && pv_size >= 0x2ECu) {
-        GREF(int32_t, pvars + 0x210u) = -1;
+        GREF(int32_t, pvars + 0x210u) = 0;
+        /* Not in a drop ship (+0x214: its first update then hides it, +0x34 |= 0x41, with no
+         * collision, and waits in state 13 for a ship this level has not): out on the ground. */
+        GREF(int32_t, pvars + 0x214u) = 0;
         GREF(int32_t, pvars + 0x218u) = -1;
         memcpy(G(pvars + 0x2E0u), to, 12);
+        if (s_free_n < SPAWN_MAX) {
+            s_free[s_free_n++] = m;
+        }
     }
     memcpy(G(m + MOBY_POS), to, 12);
     const gaddr base = GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableBase));
@@ -512,6 +551,10 @@ static void dump(const char* dir, const char* what, int oclass, gaddr at, uint32
         fclose(file);
     }
 }
+
+/* The first moby the test spawn made, watched for a few frames (its state, flags, update, next). */
+static gaddr s_watch;
+static uint32_t s_watch_from;
 
 /* The hero's moby (g_hero +0x2290; play.c). */
 #define HERO_MOBY OPENRAC_DATA(RAC2_ADDR(0x0018C0B0u))
@@ -540,11 +583,18 @@ static void spawn_test(uint32_t frame) {
         };
         const gaddr m = spawn_one(0, to);
         made += m != 0;
+        if (m != 0 && made == 1) {
+            s_watch = m;
+            s_watch_from = frame;
+        }
         if (m != 0 && made <= 3) {
-            char message[200];
-            snprintf(message, sizeof message, "foreign spawn: class %d moby %08x at %.1f %.1f %.1f, pvars %08x, update %08x",
+            char message[240];
+            snprintf(message, sizeof message, "foreign spawn: class %d moby %08x at %.1f %.1f %.1f, pvars %08x, update %08x, "
+                     "state %02x, +0x34 %04x, collision %08x, class %08x",
                      s_foreign[0].oclass, m, GREF(float, m + MOBY_POS), GREF(float, m + MOBY_POS + 4u),
-                     GREF(float, m + MOBY_POS + 8u), GREF(gaddr, m + MOBY_PVARS), GREF(gaddr, m + MOBY_UPDATE));
+                     GREF(float, m + MOBY_POS + 8u), GREF(gaddr, m + MOBY_PVARS), GREF(gaddr, m + MOBY_UPDATE),
+                     GREF(uint8_t, m + MOBY_STATE), GREF(uint16_t, m + MOBY_FLAGS), GREF(gaddr, m + 0x98u),
+                     GREF(gaddr, m + MOBY_CLASS));
             warn(message);
         }
     }
@@ -559,6 +609,9 @@ void rac2_foreign_tick(void) {
     if (s_count <= 0) {
         return;
     }
+    /* The mobys the game ran this tick: its moby loop each frame is moby_update_visible_objects
+     * (func_002B6658), which calls the stand-ins; the loop weapon_shots.c wraps runs at a load. */
+    rac2_foreign_flush();
     const uint32_t loads = rac2_program_loads();
     if (loads != s_scan_loads) {
         s_scan_loads = loads;
@@ -567,6 +620,31 @@ void rac2_foreign_tick(void) {
     }
     ++s_scan_frames;
     spawn_test(s_scan_frames);
+    if (s_watch != 0) {
+        const uint32_t d = s_scan_frames - s_watch_from;
+        if (d == 1 || d == 2 || d == 10 || d == 60 || d == 300) {
+            char message[200];
+            snprintf(message, sizeof message,
+                     "foreign watch +%u: moby %08x state %02x +0x34 %04x update %08x next %08x cell %08x pos %.1f %.1f %.1f",
+                     d, s_watch, GREF(uint8_t, s_watch + MOBY_STATE), GREF(uint16_t, s_watch + MOBY_FLAGS),
+                     GREF(gaddr, s_watch + MOBY_UPDATE), GREF(gaddr, s_watch + 0x28u), GREF(uint32_t, s_watch + 0xA4u),
+                     GREF(float, s_watch + MOBY_POS), GREF(float, s_watch + MOBY_POS + 4u), GREF(float, s_watch + MOBY_POS + 8u));
+            warn(message);
+            if (d == 2) {
+                const gaddr base = GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableBase));
+                const gaddr loop = GREF(gaddr, OPENRAC_LDATA(0, RAC2_LADDR(00, 0x001B1E9Cu)));
+                gaddr stop = loop;
+                while (stop != 0 && GREF(uint8_t, stop + MOBY_STATE) != 0xFFu && stop - loop < 0x200000u) {
+                    stop += MOBY_SIZE;
+                }
+                snprintf(message, sizeof message,
+                         "foreign watch: table %08x dynamic %08x end %08x, loop from %08x stops at %08x (slot %d), the moby slot %d",
+                         base, GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableBase + 4u)), GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableEnd)),
+                         loop, stop, (int)((stop - base) / MOBY_SIZE), (int)((s_watch - base) / MOBY_SIZE));
+                warn(message);
+            }
+        }
+    }
     if (s_scan_at != 0 && s_scan_frames % s_scan_at == 0 && s_cost_frames > 0) {
         char message[200];
         snprintf(message, sizeof message, "foreign updates at frame %u: %.1f mobys a frame, %.3f ms a frame (%llu frames)",
