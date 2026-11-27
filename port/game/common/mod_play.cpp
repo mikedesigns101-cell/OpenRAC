@@ -273,13 +273,13 @@ int game_moby_hit(
 // meshes of the ones before it. g_prop_generation grows each time the list changes, for the front
 // end to look at it again only then.
 std::mutex g_props_lock;
-std::array<Prop, OPENRAC_PROPS_MAX> g_props;
+std::array<Prop, OPENRAC_COMMANDO_PROPS_MAX> g_props;
 std::vector<std::filesystem::path> g_prop_meshes;
 std::uint32_t g_prop_meshes_loads = 0;
 unsigned g_prop_generation = 0;
 
 // Under g_props_lock, which they share with the props: the front end reads them with the props'.
-std::array<Model, OPENRAC_MODELS_MAX> g_models;
+std::array<Model, OPENRAC_COMMANDO_MODELS_MAX> g_models;
 std::map<int, SlotModel> g_slot_models;
 // By class and scope (one bit: OPENRAC_MODEL_WORLD or OPENRAC_MODEL_MENU).
 std::map<std::pair<int, std::uint32_t>, ClassModel> g_class_models;

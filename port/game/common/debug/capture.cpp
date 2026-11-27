@@ -76,6 +76,7 @@ struct Capture {
     std::string script_path;
     bool script_sweep = false;  // the settings sweep in place of a plain capture
     bool scripted = false;
+    bool script_running = false;  // the capture running now is the script's
     // What the device said when the capture started, said again at its end.
     std::string clocks_at_start, thermal_at_start;
     int level_at_start = -1;
@@ -707,7 +708,10 @@ void finish_capture(const Shown& shown, const perf_capture::Recorder& recorder) 
             written = static_cast<bool>(out);
         }
     }
-    const bool copied = SDL_SetClipboardText(report.c_str());
+    // A capture by script (OPENRAC_PERF_CAPTURE) runs unattended, often hidden beside the player's
+    // own work: its report goes to its file, not over what the player has copied.
+    const bool copied = !c.script_running && SDL_SetClipboardText(report.c_str());
+    c.script_running = false;
     // UTF-8 whatever the user's name: path.string() throws on Windows for a letter outside the
     // system's code page.
     const std::u8string where8 = path.u8string();
@@ -875,6 +879,7 @@ void capture_frame(const Shown& shown) {
     configure_capture();
     if (c.scripted && s.tick >= c.script_frame && !perf_capture::active()) {
         c.scripted = false;
+        c.script_running = true;
 
         if (c.script_sweep) {
             begin_sweep(shown, c.script_path);

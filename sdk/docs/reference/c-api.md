@@ -159,6 +159,7 @@ checks api->api_minor before it uses anything newer than the minor it was built 
 | `OPENRAC_MOBY_HIDDEN` | `0x40u` | Hidden: drawn by nothing however near, as the game hides one (its update did, or moby_hide), or faded out (alpha 0). |
 | `OPENRAC_MOBY_DRAWN` | `0x80u` | Drawn in the last frame (in view, within its draw distance, not hidden). |
 | `OPENRAC_MOBY_POOL_EXTRA_MAX` | `1024` | The most extra spare slots moby_pool_raise grants. Since 1.27. |
+| `OPENRAC_COMMANDO_MOBY_POOL_EXTRA_MAX` | `4096` | OpenRAC Commando's port grants up to this many (a level still gets only what its heap has room for). Since SDK 1.120.1. |
 | `OPENRAC_MOBY_RUN_NONE` | `(-1)` | Not looked at: no moby there, a dead one, or one the game never runs (mode bit 2). |
 | `OPENRAC_MOBY_RUN_FAR` | `0` | Left out: farther than its update distance from the camera and from every eye (play_eyes). |
 | `OPENRAC_MOBY_RUN_DRAWN` | `1` | Run: drawn in the last frame, its update distance always (255), within it of the camera, within it of an eye, or as a member of a group another member of which was run. |
@@ -197,6 +198,7 @@ checks api->api_minor before it uses anything newer than the minor it was built 
 | `OPENRAC_SHOTS_MAX` | `16` | The most shots kept for hero_shots between two calls. Since 1.9. |
 | `OPENRAC_COLLISION_LEVEL` | `(-1)` | openrac_collision_triangle.moby for a triangle of the level's own collision. Since 1.12. |
 | `OPENRAC_PROPS_MAX` | `256` | The most props the mods together have at once (openrac_api.prop_create): enough for a few meshes and the sprites of a mod's particles. Since 1.12. |
+| `OPENRAC_COMMANDO_PROPS_MAX` | `1024` | OpenRAC Commando's port keeps this many props for the mods together. Since SDK 1.120.1. |
 | `OPENRAC_PROP_MESHES_MAX` | `1024` | The most distinct meshes the props of one level load may use (openrac_api.prop_create): each is read once into the level and kept until the level is left, so this bounds that memory. A mesh a prop of the load already uses costs nothing more. Past it prop_create answers OPENRAC_HOOK_UNKNOWN and the log says why. The cost of a mesh is its own: see prop_create. |
 | `OPENRAC_PROP_JOINTS_MAX` | `256` | The most joints one prop's skin has (openrac_api.prop_set_skin): a joint is numbered 0 to 255. Since 1.33. |
 | `OPENRAC_PROP_MATRIX` | `0x1u` | openrac_prop_pose.flags: the pose is `matrix`. Since 1.12. |
@@ -205,6 +207,7 @@ checks api->api_minor before it uses anything newer than the minor it was built 
 | `OPENRAC_PROP_ALPHA` | `1u` |  |
 | `OPENRAC_PROP_ADD` | `2u` |  |
 | `OPENRAC_MODELS_MAX` | `64` | The most models the mods together have at once (openrac_api.model_create). Since 1.33. |
+| `OPENRAC_COMMANDO_MODELS_MAX` | `256` | OpenRAC Commando's port keeps this many models for the mods together. Since SDK 1.120.1. |
 | `OPENRAC_MODEL_HIDE_NATIVE` | `0x2u` | openrac_api.moby_model_at only: hide this moby instead of drawing its native model. Set model to -1. Clearing the override (model -1 without this flag) gives the moby its native model back. Since 1.33. |
 | `OPENRAC_MODEL_GAME_POSE` | `0x4u` | openrac_moby_model.flags (moby_model_slot, moby_model_class, moby_model_at): the mesh is skinned (a glTF skin whose joints are named joint_NNN, the game's joint numbers, as the port's exports of the mobys name them) and is posed every frame by the moby's own joints, as the game's model of its class is: its animation, its joint modifiers and its pose layers. Where a joint's bind pose in the mesh is not the class model's, that joint is moved by the difference (the class's bind times the inverse of the mesh's), so a mesh rigged on the exported skeleton and then moved in its bind pose still follows it. A mesh without a skin is drawn rigid, as without the flag. Since 1.120. |
 | `OPENRAC_MOBY_TEXTURES_MAX` | `16` | The most textures one openrac_moby_textures swaps. Since 1.120. |

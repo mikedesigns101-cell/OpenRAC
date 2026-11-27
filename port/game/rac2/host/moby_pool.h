@@ -12,7 +12,7 @@
 
 /* The most spare slots a request adds to a level (each takes 0x180 bytes of the level's heap; a
  * level gets fewer when its heap has less room). */
-#define RAC2_POOL_EXTRA_MAX 1024
+#define RAC2_POOL_EXTRA_MAX 4096
 
 /* Asks for `extra` more spare slots in every level loaded from now on (the largest request of any
  * mod counts, at most RAC2_POOL_EXTRA_MAX). Returns what is granted, 0 for none. */

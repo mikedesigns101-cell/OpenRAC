@@ -155,9 +155,9 @@
  * bytes each, and a later challenge mode's Swarm three copies of each: 192 KB ran out there), the
  * pool's slots kept free, the copies of one load at most. */
 #define PVARS_MAX 0x800u
-#define ROOM_BYTES 0x80000u
+#define ROOM_BYTES 0x180000u
 #define RESERVE 128
-#define COPIES_MAX 1024
+#define COPIES_MAX 4096
 /* The records and blocks a file is believed to have at most, the entries of a list. */
 #define RECORDS_MAX 4096
 #define BLOBS_MAX 8192

@@ -914,6 +914,9 @@ typedef struct openrac_moby {
 
 /* The most extra spare slots moby_pool_raise grants. Since 1.27. */
 #define OPENRAC_MOBY_POOL_EXTRA_MAX 1024
+/* OpenRAC Commando's port grants up to this many (a level still gets only what its heap has room
+ * for). Since SDK 1.120.1. */
+#define OPENRAC_COMMANDO_MOBY_POOL_EXTRA_MAX 4096
 
 /* The level's pool of spawned mobys (moby_pool_status). Since 1.27. */
 typedef struct openrac_moby_pool {
@@ -1236,6 +1239,8 @@ typedef struct openrac_collision_triangle {
 /* The most props the mods together have at once (openrac_api.prop_create): enough for a few meshes
  * and the sprites of a mod's particles. Since 1.12. */
 #define OPENRAC_PROPS_MAX 256
+/* OpenRAC Commando's port keeps this many props for the mods together. Since SDK 1.120.1. */
+#define OPENRAC_COMMANDO_PROPS_MAX 1024
 
 /* The most distinct meshes the props of one level load may use (openrac_api.prop_create): each is
  * read once into the level and kept until the level is left, so this bounds that memory. A mesh a
@@ -1278,6 +1283,8 @@ typedef struct openrac_prop_pose {
 
 /* The most models the mods together have at once (openrac_api.model_create). Since 1.33. */
 #define OPENRAC_MODELS_MAX 64
+/* OpenRAC Commando's port keeps this many models for the mods together. Since SDK 1.120.1. */
+#define OPENRAC_COMMANDO_MODELS_MAX 256
 
 /* The mesh a moby is drawn with instead of its class's (openrac_api.moby_model_slot). `model` is a
  * handle from model_create, or -1 to give the moby its own model back. `matrix` (column-major)

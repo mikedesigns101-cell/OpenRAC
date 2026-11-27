@@ -793,12 +793,13 @@ static void pool_ceiling(void) {
     rac2_pool_loading();
     rac2_wad_decompressed(file);
     CHECK(GREF(int32_t, file + 0x104u) == 200);
-    CHECK(rac2_pool_loaded(0x00480000u) == 1);
+    /* (The heap ends low enough for the most a request adds, 4096 slots since SDK 1.120.1.) */
+    CHECK(rac2_pool_loaded(0x00370000u) == 1);
     rac2_pool_restore();
     rac2_pool_loading();
     rac2_wad_decompressed(file);
     CHECK(GREF(int32_t, file + 0x104u) == 200 + RAC2_POOL_EXTRA_MAX);
-    CHECK(rac2_pool_loaded(0x00480000u + RAC2_POOL_EXTRA_MAX * 0x180u) == 0);
+    CHECK(rac2_pool_loaded(0x00370000u + RAC2_POOL_EXTRA_MAX * 0x180u) == 0);
     /* Another level's file (its own counts): room for 160 below 0x500000 less the gap; what the
      * measure's load wrote is put back. */
     put32(file + 0x100u, 13);
