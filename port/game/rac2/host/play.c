@@ -854,6 +854,7 @@ static openrac_game_play play = {
     .moby_at = moby_at,
     .slot_of = slot_of,
     .moby_class_at = moby_class_at,
+    .moby_relocate = rac2_moby_relocate,
     .moby_pose = pose_moby,
     .moby_kill = moby_kill,
     .moby_spawn = moby_spawn,

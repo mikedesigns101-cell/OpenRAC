@@ -125,6 +125,13 @@ void rac2_copy_groups_tidy(void);
  * pvars in the port's memory are its own, not a stray word. */
 gaddr rac2_copy_pvars(gaddr moby, uint32_t* bytes);
 
+/* The bytes of pvars the level's file gives the placed moby at `moby` (as the copies' scan read
+ * them), 0 when not known. */
+uint32_t rac2_placed_pvars_bytes(gaddr moby);
+
+/* The live moby in `slot` moved to `position` (moby_relocate.c; openrac_game_play.moby_relocate). */
+int rac2_moby_relocate(int32_t slot, float position[3], uint32_t flags);
+
 /* The copies made since the level's last load. */
 int rac2_copy_count(void);
 

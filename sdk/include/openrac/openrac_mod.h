@@ -156,9 +156,10 @@ extern "C" {
  * moby drawn with its class's own model and animation but with textures of the
  * mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed
  * by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of
- * openrac_moby_model).
+ * openrac_moby_model), and 1.121 a live moby moved to another place of its level
+ * with its sphere, cells and homes, set on the floor (moby_relocate).
  */
-#define OPENRAC_MOD_API_MINOR 120
+#define OPENRAC_MOD_API_MINOR 121
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1312,6 +1313,19 @@ typedef struct openrac_moby_model {
  * the mesh's), so a mesh rigged on the exported skeleton and then moved in its bind pose still follows
  * it. A mesh without a skin is drawn rigid, as without the flag. Since 1.120. */
 #define OPENRAC_MODEL_GAME_POSE 0x4u
+
+/* openrac_api.moby_relocate's flags. HOMES: the places of its own in its pvars that were at its old
+ * place (where it wanders, backs off, turns back to) go with it. FREE: for the classes the port knows
+ * (Going Commando's Thugs-4-Less Brute 2501 and Megacorp Chickenbot 2638), its level's route, area,
+ * target and squad call are taken off and its homes put at the new place. WAKE: such a one waiting
+ * (a Chickenbot hidden in its drop ship, a Brute on its entry route) starts at once. ANYWHERE: put at
+ * the point as given, with no floor needed (a flyer, a swimmer). Since 1.121. */
+#define OPENRAC_RELOCATE_HOMES 0x1u
+#define OPENRAC_RELOCATE_FREE 0x2u
+#define OPENRAC_RELOCATE_WAKE 0x4u
+#define OPENRAC_RELOCATE_ANYWHERE 0x8u
+/* moby_relocate's answer for a point with no floor of the level under it. Since 1.121. */
+#define OPENRAC_RELOCATE_NO_FLOOR (-20)
 
 /* The most textures one openrac_moby_textures swaps. Since 1.120. */
 #define OPENRAC_MOBY_TEXTURES_MAX 16
@@ -3683,6 +3697,19 @@ typedef struct openrac_api {
     int (*moby_textures_class)(
         openrac_mod* mod, int oclass, uint32_t scope, const openrac_moby_textures* t
     );
+
+    /* Moves the live moby in `slot` to `position` (the game's units) with what goes with it: its
+     * bounding sphere, the moby cells the game wakes and draws it from (MobyUpdateCell), and as
+     * `flags` say (OPENRAC_RELOCATE_*) its homes, its level's route and area, and its wait. Unless
+     * OPENRAC_RELOCATE_ANYWHERE, the point needs a floor of the level under it (a slope a walker stands
+     * on, from 2.5 units above to 8 below), and the moby is set on it: `position[2]` is given back as
+     * the floor's height. A copy (moby_copy) or a moby the game made can be moved anywhere in its
+     * level; how a class behaves far from its own ground is its own (water creatures sink on land).
+     * Call it on the game's thread (a tick or frame callback). Returns OPENRAC_HOOK_OK,
+     * OPENRAC_RELOCATE_NO_FLOOR (nothing changes), or OPENRAC_HOOK_UNKNOWN for no live moby there, a
+     * point that is not a number, outside a level, or a game without it (Going Commando only).
+     * Since 1.121. */
+    int (*moby_relocate)(openrac_mod* mod, int32_t slot, float position[3], uint32_t flags);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

@@ -922,6 +922,10 @@ typedef struct openrac_game_play {
      * list each time it changes. NULL for a game without them. */
     int (*pad_rumble)(int port, int small_motor, int large_motor, int ticks);
     void (*motors_mute)(const int32_t* items, int count);
+    /* The live moby in `slot` moved to `position` with what goes with it (openrac_api.moby_relocate,
+     * OPENRAC_RELOCATE_* flags): 0 done (`position` given back where it was put), -1 no such moby or
+     * outside a level, -2 no floor under the point (nothing changes). NULL for a game without it. */
+    int (*moby_relocate)(int32_t slot, float position[3], uint32_t flags);
 } openrac_game_play;
 
 #define OPENRAC_GAME_CAMERA_END_EASED (-1)

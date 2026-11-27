@@ -4,6 +4,10 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.121
+
+Members: `moby_relocate`.
+
 ## 1.120
 
 Members: `moby_textures_at`, `moby_textures_class`.
@@ -54,7 +58,7 @@ No new members (the table is unchanged).
 
 ## 1.108
 
-A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model).
+A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model), and 1.121 a live moby moved to another place of its level with its sphere, cells and homes, set on the floor (moby_relocate).
 
 No new members (the table is unchanged).
 

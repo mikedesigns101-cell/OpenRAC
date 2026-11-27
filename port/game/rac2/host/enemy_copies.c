@@ -1339,6 +1339,15 @@ static uint32_t pvars_size(const rac2_moby_table* t, gaddr m) {
     return i < PLACED_MAX ? scan.size[i] : 0;
 }
 
+uint32_t rac2_placed_pvars_bytes(gaddr moby) {
+    const gaddr base = GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableBase));
+    if (scan.valid != 1 || base == 0 || moby < base || (moby - base) % MOBY_SIZE != 0) {
+        return 0;
+    }
+    const uint32_t i = (moby - base) / MOBY_SIZE;
+    return i < PLACED_MAX ? scan.size[i] : 0;
+}
+
 /* Whether the pvars of the moby at `m` name `who`. */
 static int names(const rac2_moby_table* t, gaddr m, gaddr who) {
     const gaddr pvars = GREF(gaddr, m + MOBY_PVARS);

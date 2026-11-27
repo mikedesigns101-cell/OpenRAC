@@ -225,6 +225,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `moby_joint_frame` | 1.35 | experimental | yes | yes | yes |
 | `moby_set_joint_poses` | 1.35 | experimental | yes | yes | yes |
 | `moby_uid` | 1.35 | experimental | yes | no | no |
+| `moby_relocate` | 1.121 | experimental | part | yes | part |
 
 ## visuals
 

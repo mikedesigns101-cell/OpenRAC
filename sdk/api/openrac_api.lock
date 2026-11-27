@@ -236,3 +236,4 @@
 234	game_motors_mute	1856	int (*)(openrac_mod *, int32_t)
 235	moby_textures_at	1864	int (*)(openrac_mod *, uint32_t, const openrac_moby_textures *)
 236	moby_textures_class	1872	int (*)(openrac_mod *, int, uint32_t, const openrac_moby_textures *)
+237	moby_relocate	1880	int (*)(openrac_mod *, int32_t, float *, uint32_t)

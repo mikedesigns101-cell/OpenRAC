@@ -815,5 +815,7 @@ int api_moby_textures_class(
 );
 // Forgets `mod`'s textures (nullptr: every mod's).
 void moby_textures_forget(const openrac_mod* mod);
+// A live moby moved to another place of its level (interface 1.121, moby_relocate.cpp).
+int api_moby_relocate(openrac_mod* mod, std::int32_t slot, float position[3], std::uint32_t flags);
 
 }  // namespace openrac::mods::detail

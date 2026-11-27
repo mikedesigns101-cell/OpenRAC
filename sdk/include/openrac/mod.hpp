@@ -2126,6 +2126,25 @@ public:
       return m_api->moby_textures_class(m_handle, oclass, scope, &t);
     }
 
+    // Since 1.121: whether the port moves a live moby to another place of its level (moby_relocate).
+    bool has_moby_relocate() const {
+      return m_api->api_minor >= 121 &&
+             m_api->size >= offsetof(openrac_api, moby_relocate) + sizeof(void *);
+    }
+
+    // Since 1.121: moves the live moby in `slot` to `position` with its sphere, cells and, as `flags`
+    // say, its homes, route and wait (OPENRAC_RELOCATE_*); unless ANYWHERE it is set on the floor
+    // under the point, and `position[2]` comes back as that height. Returns OPENRAC_HOOK_OK,
+    // OPENRAC_RELOCATE_NO_FLOOR or OPENRAC_HOOK_UNKNOWN.
+    int moby_relocate(int32_t slot, float position[3],
+                      uint32_t flags = OPENRAC_RELOCATE_HOMES | OPENRAC_RELOCATE_FREE |
+                                       OPENRAC_RELOCATE_WAKE) const {
+      if (!has_moby_relocate()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->moby_relocate(m_handle, slot, position, flags);
+    }
+
     // Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own
     // joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the
     // mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or
