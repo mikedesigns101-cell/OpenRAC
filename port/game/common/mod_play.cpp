@@ -1183,10 +1183,12 @@ void reset_play() {
     openrac_game_moby_hit = nullptr;
     openrac_game_metal_detect = nullptr;
     drop_weapon_shots(nullptr);
+    effect_tints_forget(nullptr);
 }
 
 void drop_figures(const openrac_mod* mod) {
     drop_weapon_shots(mod);
+    effect_tints_forget(mod);
     drop_air(mod);
     // Its sharper cells (openrac_api.sharp_cells); null is the built-ins', which stay.
     if (mod != nullptr) {

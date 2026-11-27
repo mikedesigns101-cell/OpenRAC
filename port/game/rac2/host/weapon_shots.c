@@ -365,6 +365,14 @@ gaddr rac2_moby_updating(void) {
     return updating;
 }
 
+int32_t rac2_hand_item(void) {
+    return in_level() ? hand_item() : -1;
+}
+
+gaddr rac2_hand_moby(void) {
+    return hand();
+}
+
 /* The tick's ammo watch: the item in hand and its ammo after the last tick. */
 static int32_t ammo_item = -1;
 static int32_t ammo_last;

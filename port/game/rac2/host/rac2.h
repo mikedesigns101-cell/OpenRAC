@@ -67,6 +67,14 @@ uint32_t rac2_mod_pause_title(void);
 struct openrac_game_particle_spawn;
 int rac2_particle_spawn_ex(const struct openrac_game_particle_spawn* spawn);
 
+/* The game's effects recoloured (effects.c; openrac_api.effect_tint): the mods' tints, all of
+ * them each time; and a tint active for the game's particle spawns until popped (the named
+ * effects', particles.c). */
+struct openrac_game_effect_tint;
+void rac2_effect_tints(const struct openrac_game_effect_tint* tints, int count);
+void rac2_tint_push(const float rgb[3], float saturation);
+void rac2_tint_pop(void);
+
 /* A mod's camera (camera_override.c; openrac_api.camera_set, camera_view): 1 done, 0 outside a
  * level; and whether the world is drawn from it now. */
 int rac2_camera_set(const float eye[3], const float rows[9]);

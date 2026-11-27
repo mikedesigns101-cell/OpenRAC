@@ -255,6 +255,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `tie_hide` | 1.35 | experimental | yes | yes | yes |
 | `prop_animate` | 1.35 | experimental | yes | yes | yes |
 | `sharp_cells` | 1.36 | experimental | yes | yes | yes |
+| `effect_tint` | 1.106 | experimental | no | yes | no |
 
 ## camera
 

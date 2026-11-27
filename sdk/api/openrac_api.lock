@@ -231,3 +231,4 @@
 229	on_play_query	1816	int (*)(openrac_mod *, uint32_t, openrac_play_query_fn, void *)
 230	overlay_image_create	1824	int (*)(openrac_mod *, const openrac_overlay_image *)
 231	overlay_image_destroy	1832	int (*)(openrac_mod *, int)
+232	effect_tint	1840	int (*)(openrac_mod *, const openrac_effect_tint *)

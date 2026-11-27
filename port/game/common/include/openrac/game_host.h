@@ -608,7 +608,22 @@ typedef struct openrac_game_particle_spawn {
     int32_t blend;
     /* The smoke's spin rate. */
     float rot;
+    /* The named effects' saturation, 0 the game's own. */
+    float saturation;
 } openrac_game_particle_spawn;
+
+/* A tint of the game's own effects (openrac_effect_tint's fields, checked): the effects
+ * (OPENRAC_EFFECT_* bits), the item in hand and the maker's class (-1 any), the colour multipliers
+ * and saturation (1 the game's), and the trail's textures (-1 the game's) and width (0 the game's). */
+typedef struct openrac_game_effect_tint {
+    uint32_t effects;
+    int32_t item;
+    int32_t oclass;
+    float rgb[3];
+    float saturation;
+    int32_t texture[2];
+    float width;
+} openrac_game_effect_tint;
 
 typedef struct openrac_game_play {
     /* The levels, by the game's own numbers, and their names. */
@@ -896,6 +911,11 @@ typedef struct openrac_game_play {
     /* A placed moby's spawn id (the record's uid), -1 for none (openrac_api.moby_uid). NULL for a
      * game without it. */
     int32_t (*moby_uid)(int32_t slot);
+    /* The tints of the game's own effects (openrac_api.effect_tint), all mods' together in the
+     * order they were given (a later one goes over an earlier one that matches the same effect):
+     * the whole list each time it changes, `count` 0 for none. Each entry is checked. NULL for a
+     * game without them. */
+    void (*effect_tints)(const openrac_game_effect_tint* tints, int count);
 } openrac_game_play;
 
 #define OPENRAC_GAME_CAMERA_END_EASED (-1)

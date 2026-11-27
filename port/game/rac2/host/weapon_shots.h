@@ -35,6 +35,10 @@ void rac2_post_hit(
 
 /* The moby whose update the moby loop runs now, 0 between updates (weapon_culling.c). */
 gaddr rac2_moby_updating(void);
+/* The item in the hero's hand, -1 none or outside a level (effects.c). */
+int32_t rac2_hand_item(void);
+/* The moby of the weapon in the hero's hand, 0 none (effects.c). */
+gaddr rac2_hand_moby(void);
 
 /* weapon_culling.c: weapon `item`'s target picks taking every enemy in range, drawn last frame or
  * not (1), or the game's drawn ones (0) (openrac_api weapon_ignore_culling, interface 1.30): 1 for

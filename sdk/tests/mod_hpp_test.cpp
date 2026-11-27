@@ -2903,6 +2903,54 @@ int main() {
         CHECK(mod.has_particle_spawn_ex());
         CHECK(OPENRAC_HOOK_FULL == -5 && OPENRAC_PARTICLE_LIFE_MAX == 600);
         CHECK(OPENRAC_PARTICLE_CHILDREN == 1u && OPENRAC_PARTICLE_BYTE_MAX == 255 && OPENRAC_PARTICLE_ROT_MAX == 1.0f);
+        // Interface 1.106: the named effects, with their saturation; a port of 1.105 has none.
+        CHECK(mod.has_named_particles());
+        spawn.kind = OPENRAC_PARTICLE_MUZZLE;
+        spawn.saturation = 0.5f;
+        CHECK(mod.particle_spawn_ex(spawn) == OPENRAC_HOOK_FULL && g_particle.kind == OPENRAC_PARTICLE_MUZZLE
+              && g_particle.saturation == 0.5f);
+        api.api_minor = 105;
+        CHECK(!mod.has_named_particles() && mod.has_particle_spawn_ex());
+        api.api_minor = OPENRAC_MOD_API_MINOR;
+    }
+    // Interface 1.106: a tint of the game's own effects reaches the port with its size; null takes
+    // all the mod's off; a port of 1.105, or a table that ends before the field, is not asked.
+    {
+        static openrac_effect_tint g_tint{};
+        static int g_tint_calls = 0, g_tint_nulls = 0;
+        api.effect_tint = [](openrac_mod*, const openrac_effect_tint* tint) {
+            ++g_tint_calls;
+            if (tint == nullptr) {
+                ++g_tint_nulls;
+                return OPENRAC_HOOK_OK;
+            }
+            g_tint = *tint;
+            return OPENRAC_HOOK_OK;
+        };
+        CHECK(mod.has_effect_tint());
+        openrac_effect_tint t{};
+        t.effects = OPENRAC_EFFECT_MUZZLE | OPENRAC_EFFECT_IMPACT;
+        t.item = 15;
+        t.oclass = -1;
+        t.rgb[0] = 0.2f;
+        t.rgb[1] = 1.0f;
+        t.rgb[2] = 2.0f;
+        t.saturation = 1.5f;
+        t.texture[0] = t.texture[1] = -1;
+        CHECK(mod.effect_tint(t) == OPENRAC_HOOK_OK && g_tint.size == sizeof(openrac_effect_tint)
+              && g_tint.effects == 3u && g_tint.item == 15 && g_tint.rgb[2] == 2.0f
+              && g_tint.saturation == 1.5f);
+        mod.effect_tints_clear();
+        CHECK(g_tint_nulls == 1);
+        const int calls = g_tint_calls;
+        api.api_minor = 105;
+        CHECK(!mod.has_effect_tint() && mod.effect_tint(t) == OPENRAC_HOOK_UNKNOWN && g_tint_calls == calls);
+        api.api_minor = OPENRAC_MOD_API_MINOR;
+        const std::uint32_t size = api.size;
+        api.size = static_cast<std::uint32_t>(offsetof(openrac_api, effect_tint));
+        CHECK(!mod.has_effect_tint() && mod.effect_tint(t) == OPENRAC_HOOK_UNKNOWN);
+        api.size = size;
+        CHECK(OPENRAC_EFFECT_TRAIL == 4u && OPENRAC_EFFECT_TINT_MAX == 32 && OPENRAC_PARTICLE_MUZZLE == 7u);
     }
     // Interface 1.33: a particle texture (1024 indices and a 1024-byte palette) reaches the port as the mod
     // gave it, and the port's id comes back; the size and the lengths are checked here; a port of 1.31 has none.

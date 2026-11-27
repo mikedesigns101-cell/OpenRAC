@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.106
+
+Going Commando's named effects in particle_spawn_ex (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own effects recoloured: a weapon's muzzle flash, a shot's impact and its trail (effect_tint).
+
+Members: `effect_tint`.
+
 ## 1.105
 
 Going Commando's camera set by a mod: camera_set and camera_view in play and under a vendor's menu (the table is unchanged).

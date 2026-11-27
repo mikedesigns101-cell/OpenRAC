@@ -2034,6 +2034,36 @@ public:
       return m_api->particle_spawn_ex(m_handle, &spawn);
     }
 
+    // Since 1.106: whether particle_spawn_ex takes the game's named effects (OPENRAC_PARTICLE_SPARKS
+    // to _MUZZLE, Going Commando) and their saturation.
+    bool has_named_particles() const {
+      return has_particle_spawn_ex() && m_api->api_minor >= 106;
+    }
+
+    // Since 1.106: whether the port recolours the game's own effects (effect_tint).
+    bool has_effect_tint() const {
+      return m_api->api_minor >= 106 &&
+             m_api->size >= offsetof(openrac_api, effect_tint) + sizeof(void *);
+    }
+
+    // Since 1.106: recolours the game's own effects as `tint` says (see openrac_effect_tint); a
+    // tint that changes nothing takes the mod's tint of the same effects, item and class off. The
+    // size is set here. Returns OPENRAC_HOOK_OK, _FULL or _UNKNOWN.
+    int effect_tint(openrac_effect_tint tint) const {
+      if (!has_effect_tint()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      tint.size = sizeof tint;
+      return m_api->effect_tint(m_handle, &tint);
+    }
+
+    // Since 1.106: takes off all the mod's tints.
+    void effect_tints_clear() const {
+      if (has_effect_tint()) {
+        m_api->effect_tint(m_handle, nullptr);
+      }
+    }
+
     // Since 1.33: whether the port registers particle textures (particle_texture_register).
     bool has_particle_texture_register() const {
       return m_api->api_minor >= 32 &&

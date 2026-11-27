@@ -718,8 +718,15 @@ bool particle_finite(const float v[3]) {
 }
 
 int api_particle_spawn_ex(openrac_mod* mod, const openrac_particle_spawn* spawn) {
-    if (mod == nullptr || spawn == nullptr || spawn->size < sizeof(openrac_particle_spawn)
-        || spawn->kind > OPENRAC_PARTICLE_SPARK || !particle_finite(spawn->position)
+    // A mod built before 1.106 hands the struct without its saturation (and no named kinds).
+    constexpr std::uint32_t kSizeBefore106 = offsetof(openrac_particle_spawn, saturation);
+    const bool named = spawn != nullptr && spawn->kind >= OPENRAC_PARTICLE_SPARKS;
+    const float saturation =
+        spawn != nullptr && spawn->size >= sizeof(openrac_particle_spawn) ? spawn->saturation : 0.0f;
+    if (mod == nullptr || spawn == nullptr || spawn->size < kSizeBefore106
+        || spawn->kind > OPENRAC_PARTICLE_MUZZLE || (named && spawn->size < sizeof(openrac_particle_spawn))
+        || !std::isfinite(saturation) || saturation < 0.0f
+        || saturation > OPENRAC_PARTICLE_SATURATION_MAX || !particle_finite(spawn->position)
         || !particle_finite(spawn->velocity) || !std::isfinite(spawn->particle_size)
         || spawn->particle_size <= 0.0f || spawn->particle_size > OPENRAC_PARTICLE_SIZE_MAX
         || spawn->life_ticks < 1 || spawn->life_ticks > OPENRAC_PARTICLE_LIFE_MAX
@@ -741,6 +748,7 @@ int api_particle_spawn_ex(openrac_mod* mod, const openrac_particle_spawn* spawn)
     g.texture = spawn->texture;
     g.blend = spawn->blend;
     g.rot = spawn->rot;
+    g.saturation = saturation;
     return particle_start_ex(g);
 }
 
@@ -906,6 +914,89 @@ int api_sharp_cells(openrac_mod* mod, const openrac_sharp_page* pages, int count
     }
     renderer::sharp_cells::set(mod, std::move(kept));
     return OPENRAC_HOOK_OK;
+}
+
+// openrac_api.effect_tint (1.106): every mod's tints, in the order given; the game gets the whole
+// list each time it changes. Under g_effect_tints_lock.
+namespace {
+struct EffectTint {
+    openrac_mod* mod;
+    openrac_game_effect_tint tint;
+};
+std::mutex g_effect_tints_lock;
+std::vector<EffectTint> g_effect_tints;
+
+void push_effect_tints() {
+    if (g_play == nullptr || g_play->effect_tints == nullptr) {
+        return;
+    }
+    std::vector<openrac_game_effect_tint> list;
+    list.reserve(g_effect_tints.size());
+    for (const auto& t : g_effect_tints) {
+        list.push_back(t.tint);
+    }
+    g_play->effect_tints(list.data(), static_cast<int>(list.size()));
+}
+
+bool same_target(const openrac_game_effect_tint& a, const openrac_game_effect_tint& b) {
+    return a.effects == b.effects && a.item == b.item && a.oclass == b.oclass;
+}
+}  // namespace
+
+int api_effect_tint(openrac_mod* mod, const openrac_effect_tint* tint) {
+    if (mod == nullptr || g_play == nullptr || g_play->effect_tints == nullptr) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    const std::lock_guard<std::mutex> lock(g_effect_tints_lock);
+    if (tint == nullptr) {
+        std::erase_if(g_effect_tints, [&](const EffectTint& t) { return t.mod == mod; });
+        push_effect_tints();
+        return OPENRAC_HOOK_OK;
+    }
+    const auto in = [](float v, float hi) { return std::isfinite(v) && v >= 0.0f && v <= hi; };
+    constexpr std::uint32_t kAll = OPENRAC_EFFECT_MUZZLE | OPENRAC_EFFECT_IMPACT | OPENRAC_EFFECT_TRAIL;
+    if (tint->size < sizeof(openrac_effect_tint) || tint->effects == 0 || (tint->effects & ~kAll) != 0
+        || tint->item < -1 || tint->oclass < -1 || tint->oclass > 0xFFFF
+        || !in(tint->rgb[0], OPENRAC_EFFECT_RGB_MAX) || !in(tint->rgb[1], OPENRAC_EFFECT_RGB_MAX)
+        || !in(tint->rgb[2], OPENRAC_EFFECT_RGB_MAX)
+        || !in(tint->saturation, OPENRAC_PARTICLE_SATURATION_MAX) || tint->texture[0] < -1
+        || tint->texture[0] > OPENRAC_PARTICLE_BYTE_MAX || tint->texture[1] < -1
+        || tint->texture[1] > OPENRAC_PARTICLE_BYTE_MAX || !in(tint->width, 1000.0f)) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    openrac_game_effect_tint g{};
+    g.effects = tint->effects;
+    g.item = tint->item;
+    g.oclass = tint->oclass;
+    std::copy(tint->rgb, tint->rgb + 3, g.rgb);
+    g.saturation = tint->saturation;
+    g.texture[0] = tint->texture[0];
+    g.texture[1] = tint->texture[1];
+    g.width = tint->width;
+    std::erase_if(g_effect_tints, [&](const EffectTint& t) {
+        return t.mod == mod && same_target(t.tint, g);
+    });
+    const bool none = g.rgb[0] == 1.0f && g.rgb[1] == 1.0f && g.rgb[2] == 1.0f
+                      && g.saturation == 1.0f && g.texture[0] < 0 && g.texture[1] < 0
+                      && g.width == 0.0f;
+    if (!none) {
+        if (g_effect_tints.size() >= OPENRAC_EFFECT_TINT_MAX) {
+            push_effect_tints();
+            return OPENRAC_HOOK_FULL;
+        }
+        g_effect_tints.push_back({mod, g});
+    }
+    push_effect_tints();
+    return OPENRAC_HOOK_OK;
+}
+
+void effect_tints_forget(const openrac_mod* mod) {
+    const std::lock_guard<std::mutex> lock(g_effect_tints_lock);
+    const auto before = g_effect_tints.size();
+    std::erase_if(g_effect_tints, [&](const EffectTint& t) { return mod == nullptr || t.mod == mod; });
+    if (g_effect_tints.size() != before) {
+        push_effect_tints();
+    }
 }
 
 }  // namespace openrac::mods::detail

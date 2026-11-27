@@ -144,11 +144,14 @@ extern "C" {
  * OPENRAC_OVERLAY_UNDER_HUD; OpenRAC's pull request 865, by Henning Berge),
  * 1.104 pages a mod draws itself (OPENRAC_UI_MOD_DRAWN, the table is
  * unchanged), with Going Commando's HUD parts, quick select, 2D elements and
- * the vendor's opening as hook points, and 1.105 Going Commando's camera set by
- * a mod: camera_set and camera_view in play and under a vendor's menu (the
- * table is unchanged).
+ * the vendor's opening as hook points, 1.105 Going Commando's camera set by a
+ * mod: camera_set and camera_view in play and under a vendor's menu (the table
+ * is unchanged), and 1.106 Going Commando's named effects in particle_spawn_ex
+ * (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own
+ * effects recoloured: a weapon's muzzle flash, a shot's impact and its trail
+ * (effect_tint).
  */
-#define OPENRAC_MOD_API_MINOR 105
+#define OPENRAC_MOD_API_MINOR 106
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1794,6 +1797,27 @@ typedef struct openrac_pack_entry {
 #define OPENRAC_PARTICLE_SMOKE 0u
 #define OPENRAC_PARTICLE_BURST 1u
 #define OPENRAC_PARTICLE_SPARK 2u
+/* The game's named effects, whole (Going Commando; since 1.106). Each is one of the game's own
+ * routines, which makes all its particles at `position` with its own sizes, lives and colours:
+ * `particle_size`, `life_ticks` (but IMPACT's), `color_end`, `texture`, `blend` and `rot` are not
+ * used. `color` tints it: 0 keeps the game's colours, else its red, green and blue bytes multiply
+ * the effect's (0x80 is the game's own, 0xFF nearly twice), alpha unchanged; `saturation` (0 the
+ * game's, else 0.001 grey to 4) is applied before.
+ *   SPARKS: twenty spark pairs flying from the point (part_l00_spawn_spark_burst_3), two bright
+ *           flashes with OPENRAC_PARTICLE_CHILDREN.
+ *   IMPACT: the blue sparks and flashes a shot makes where it hits
+ *           (part_l00_spawn_impact_spark_burst_2); `life_ticks` up to 20 makes the short one.
+ *   SPRAY:  twenty small sparks thrown up from the point (part_spawn_small_spark_spray).
+ *   ROCKET_SMOKE: the rockets' burst of twenty smoke particles (rocket_spawn_smoke_burst).
+ *   MUZZLE: a weapon's flash at its muzzle (part_spawn_line_at_moby): nine flashes in a short
+ *           line, along `velocity` (its direction; the world's x when zero). */
+#define OPENRAC_PARTICLE_SPARKS 3u
+#define OPENRAC_PARTICLE_IMPACT 4u
+#define OPENRAC_PARTICLE_SPRAY 5u
+#define OPENRAC_PARTICLE_ROCKET_SMOKE 6u
+#define OPENRAC_PARTICLE_MUZZLE 7u
+/* The largest saturation (openrac_particle_spawn.saturation, openrac_effect_tint). Since 1.106. */
+#define OPENRAC_PARTICLE_SATURATION_MAX 4.0f
 /* The most game ticks an effect lives (a life_ticks past it is refused). Since 1.33. */
 #define OPENRAC_PARTICLE_LIFE_MAX 600u
 /* The largest size (the game's units) an effect takes. Since 1.33. */
@@ -1812,7 +1836,8 @@ typedef struct openrac_pack_entry {
 typedef struct openrac_particle_spawn {
     /* sizeof(openrac_particle_spawn), set by the mod. */
     uint32_t size;
-    /* OPENRAC_PARTICLE_SMOKE, _BURST or _SPARK. */
+    /* OPENRAC_PARTICLE_SMOKE, _BURST or _SPARK; since 1.106 one of the named effects (SPARKS to
+     * MUZZLE). */
     uint32_t kind;
     /* Where the effect starts and how it moves at the start (the game's units). */
     float position[3];
@@ -1832,7 +1857,48 @@ typedef struct openrac_particle_spawn {
     int32_t blend;
     /* SMOKE: the game's spin rate, added to the particle's rotation each tick (-1 to 1). */
     float rot;
+    /* The named effects (SPARKS to MUZZLE): their colours' saturation, 0 the game's own, else
+     * 0.001 (grey) to OPENRAC_PARTICLE_SATURATION_MAX. Read when `size` covers it. Since 1.106. */
+    float saturation;
 } openrac_particle_spawn;
+
+/* The game's own effects a mod recolours (openrac_effect_tint.effects). Going Commando; since
+ * 1.106.
+ *   MUZZLE: the flash at a weapon's muzzle (part_spawn_line_at_moby, the Lancer's own), and every
+ *           other particle the weapon in the hero's hand makes while the game runs its update in
+ *           the moby loop. (The Lancer's red and white sprites along its bullets come from
+ *           elsewhere and are not tinted yet.)
+ *   IMPACT: the sparks and flashes where a shot hits (the Lancer's spark burst,
+ *           part_l00_spawn_spark_burst_3; part_l00_spawn_impact_spark_burst_2).
+ *   TRAIL:  the ribbon a shot trails (the Lancer's bullets', the Heavy Lancer's): its core and
+ *           edge colours, and its textures and width when set. */
+#define OPENRAC_EFFECT_MUZZLE 0x1u
+#define OPENRAC_EFFECT_IMPACT 0x2u
+#define OPENRAC_EFFECT_TRAIL 0x4u
+/* The most tints at once, all mods together (effect_tint). Since 1.106. */
+#define OPENRAC_EFFECT_TINT_MAX 32
+/* The largest colour multiplier of a tint. Since 1.106. */
+#define OPENRAC_EFFECT_RGB_MAX 4.0f
+
+/* A tint of the game's own effects (openrac_api.effect_tint): the effects in `effects`, made while
+ * the weapon `item` is in the hero's hand (-1 any) by a moby of class `oclass` (the shot or the
+ * weapon that makes them: the bullet's class for IMPACT and TRAIL, the moby the flash is put on for
+ * MUZZLE; -1 any), have their colours' saturation set to `saturation` (1 the game's, 0 grey, up to
+ * OPENRAC_PARTICLE_SATURATION_MAX) and then multiplied by `rgb` (1 the game's, 0 to
+ * OPENRAC_EFFECT_RGB_MAX; alpha unchanged). TRAIL only: `texture` the ribbon's core and edge
+ * textures (the game's ids, -1 its own: 23 and 14) and `width` (0 the game's, 4). Zero-fill, then
+ * set. Since 1.106. */
+typedef struct openrac_effect_tint {
+    /* sizeof(openrac_effect_tint), set by the mod. */
+    uint32_t size;
+    uint32_t effects;
+    int32_t item;
+    int32_t oclass;
+    float rgb[3];
+    float saturation;
+    int32_t texture[2];
+    float width;
+} openrac_effect_tint;
 
 /* A particle texture of the mod's (openrac_api.particle_texture_register), in the game's own format:
  * the 32 x 32 texture's 8-bit indices (1024 bytes, row by row, as the game stores them) and its palette
@@ -3511,6 +3577,14 @@ typedef struct openrac_api {
      * thread. Since 1.103. */
     int (*overlay_image_destroy)(openrac_mod* mod, int image);
 
+
+    /* Recolours the game's own effects (openrac_effect_tint): the tint replaces the mod's tint of
+     * the same effects, item and class, and one that changes nothing (rgb 1, saturation 1, no
+     * texture or width) takes it off; null takes off all the mod's tints. They stay until taken off
+     * or the mod unloads, across levels. Returns OPENRAC_HOOK_OK, OPENRAC_HOOK_FULL past
+     * OPENRAC_EFFECT_TINT_MAX, or OPENRAC_HOOK_UNKNOWN for a value out of range or a game without
+     * them (Going Commando only). Since 1.106. */
+    int (*effect_tint)(openrac_mod* mod, const openrac_effect_tint* tint);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

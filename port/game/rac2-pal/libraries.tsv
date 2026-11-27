@@ -344,6 +344,17 @@ func_0034CED8	hud	Hud_Nanotech	hook	Draws the HUD's segmented ring meter, the to
 func_003422D0	hud	QuickSelect_Draw	hook	Draws the quick select. A hook point for mods; the game's C with none.
 func_002F90E8	hud	Vendor_Open	hook	Opens a vendor's menu. A hook point for mods; the game's C with none.
 func_0027C258	draw	DrawWorld	wrap	Draws the frame's world: a mod's camera (camera_set) is written over the game's camera block first, the game's own kept for camera_view (host/camera_override.c).
+func_L00_003AAFC8	effect	LancerMuzzleFlash	wrap	The Lancer's own muzzle flash: a mod's tint for it (OPENRAC_EFFECT_MUZZLE) active around it (host/effects.c).
+func_L00_003E74D8	effect	PartSpawnSparkBurst3	wrap	The Lancer's hit (spark pairs and flashes): a mod's tint for it (OPENRAC_EFFECT_IMPACT) active around it (host/effects.c).
+func_L00_003E7100	effect	DrawFadingTwoPassRibbon	wrap	A ribbon drawn (the Lancer's bullets' trail): a trail's tint on its colours, textures and width (host/effects.c).
+func_L00_00340CA0	effect	PartSpawnSpinningParticle	wrap	A spinning spark made: its colours tinted while a mod's tint is active (host/effects.c).
+func_L00_00341080	effect	PartSpawnFlash	wrap	A flash made: its colour tinted while a mod's tint is active (host/effects.c).
+func_002C23B8	effect	PartSpawnBurst	wrap	A spray particle made: its colour tinted while a mod's tint is active (host/effects.c).
+func_002C72D0	effect	PartSpawnGravityFade	wrap	A drifting sprite made: its colour tinted while a mod's tint is active (host/effects.c).
+func_L00_003E8BE8	effect	PartSpawnLineAtMoby	wrap	A weapon's muzzle flash: a mod's tint for it (effect_tint, OPENRAC_EFFECT_MUZZLE) active around it (host/effects.c).
+func_L00_00424EF0	effect	PartSpawnImpactSparkBurst	wrap	A shot's sparks where it hits: a mod's tint for it (OPENRAC_EFFECT_IMPACT) active around it (host/effects.c).
+func_L00_00424840	effect	ShotUpdateAndDrawTrail	wrap	A shot's trail: a mod's tint for it (OPENRAC_EFFECT_TRAIL) chosen for its ribbon (host/effects.c).
+func_L00_00424AF0	effect	DrawFadingDualRibbon	wrap	A ribbon drawn: a trail's tint on its colours, textures and width (host/effects.c).
 func_002AE318	planet	Planet_Unlock	hook	Puts a level on the ship's map (MarkLevelAvailable); every level load calls it for its own level too. A hook point for mods; the game's C with none.
 func_L01_003D2EF0	moby	Moby_DynamoPickup_Update	hook	Oozla's Dynamo pickup outside the Megacorp store (class 2709): plays its scene and gives item 36; tests item 36's owned byte. A hook point for mods; the game's C with none.
 func_L01_003D7098	moby	Moby_TractorBeamSeller_Update	hook	Oozla's Megacorp scientist (class 2766): sells the Tractor Beam (item 46) for its record's price; tests item 46's owned byte. A hook point for mods; the game's C with none.

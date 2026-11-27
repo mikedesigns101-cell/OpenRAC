@@ -853,6 +853,7 @@ static openrac_game_play play = {
     .camera_set = rac2_camera_set,
     .camera_view = rac2_camera_view,
     .camera_overridden = rac2_camera_overridden,
+    .effect_tints = rac2_effect_tints,
     .world_family = world_family,
     .hero_moby = hero_moby,
     .moby_copy_check = moby_copy_check,

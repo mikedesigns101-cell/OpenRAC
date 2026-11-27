@@ -33,6 +33,15 @@ openrac_developer_menu_look	flags	4	uint32_t
 openrac_developer_menu_look	value	8	const char *
 openrac_developer_menu_look	progress	16	float
 openrac_developer_menu_look	icon	24	const char *
+openrac_effect_tint	(size)	44	-
+openrac_effect_tint	size	0	uint32_t
+openrac_effect_tint	effects	4	uint32_t
+openrac_effect_tint	item	8	int32_t
+openrac_effect_tint	oclass	12	int32_t
+openrac_effect_tint	rgb	16	float[3]
+openrac_effect_tint	saturation	28	float
+openrac_effect_tint	texture	32	int32_t[2]
+openrac_effect_tint	width	40	float
 openrac_graphics	(size)	64	-
 openrac_graphics	size	0	uint32_t
 openrac_graphics	backend	4	uint32_t
@@ -234,7 +243,7 @@ openrac_packs_info	(size)	12	-
 openrac_packs_info	size	0	uint32_t
 openrac_packs_info	count	4	int32_t
 openrac_packs_info	digest	8	uint32_t
-openrac_particle_spawn	(size)	64	-
+openrac_particle_spawn	(size)	68	-
 openrac_particle_spawn	size	0	uint32_t
 openrac_particle_spawn	kind	4	uint32_t
 openrac_particle_spawn	position	8	float[3]
@@ -247,6 +256,7 @@ openrac_particle_spawn	flags	48	uint32_t
 openrac_particle_spawn	texture	52	int32_t
 openrac_particle_spawn	blend	56	int32_t
 openrac_particle_spawn	rot	60	float
+openrac_particle_spawn	saturation	64	float
 openrac_particle_texture	(size)	2052	-
 openrac_particle_texture	size	0	uint32_t
 openrac_particle_texture	indices	4	uint8_t[1024]
