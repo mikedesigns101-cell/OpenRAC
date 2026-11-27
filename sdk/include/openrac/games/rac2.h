@@ -314,16 +314,20 @@ typedef void (*openrac_rac2_Gui_DrawIcon)(uint32_t element);
 #define OPENRAC_RAC2_SIG_Hud_Draw "void(u32)"
 typedef void (*openrac_rac2_Hud_Draw)(uint32_t hud);
 
-/* Hud_Weapon: Draws the HUD slot of the weapon in hand (weapon_wheel_draw, HUD slot 0x23's
- * draw): the selected weapon's slot lit, its ammunition and its name. slot is the HUD slot's
- * record. A replacement that does not call the original (and returns 0) leaves it out. */
+/* Hud_Weapon: Draws the quick select that Triangle holds open (weapon_wheel_draw, HUD slot
+ * 0x23's draw, while the game's mode word 0x1A8BB0 is 4): the lit slot's ammunition bars, the
+ * weapon's name and ammunition. Its octagon frames and the weapons' icons are the HUD's own
+ * sprite elements, drawn by rac2.hud.bolts. The slot lit is the int at 0x1AE738 (OPENRAC_DATA),
+ * the slots' items the eight bytes at 0x1A73B8 (g_equippedItemSlots, 0 up then clockwise), the
+ * slots in use the int at 0x1B18D0. slot is the HUD slot's record. A replacement that does not
+ * call the original (and returns 0) leaves its bars and text out. */
 #define OPENRAC_RAC2_HOOK_Hud_Weapon "Hud_Weapon"
 #define OPENRAC_RAC2_SIG_Hud_Weapon "i32(u32)"
 typedef int32_t (*openrac_rac2_Hud_Weapon)(uint32_t slot);
 
-/* Hud_WeaponSelector: Draws the other look of the same HUD slot (DrawRadialSelectorPanel, put
- * in its place in some levels and modes). slot is the HUD slot's record. A replacement that
- * does not call the original (and returns 0) leaves it out. */
+/* Hud_WeaponSelector: Draws the other look of the quick select's HUD slot
+ * (DrawRadialSelectorPanel, put in its place in some levels and modes). slot is the HUD slot's
+ * record. A replacement that does not call the original (and returns 0) leaves it out. */
 #define OPENRAC_RAC2_HOOK_Hud_WeaponSelector "Hud_WeaponSelector"
 #define OPENRAC_RAC2_SIG_Hud_WeaponSelector "i32(u32)"
 typedef int32_t (*openrac_rac2_Hud_WeaponSelector)(uint32_t slot);
@@ -337,9 +341,12 @@ typedef int32_t (*openrac_rac2_Hud_WeaponSelector)(uint32_t slot);
 #define OPENRAC_RAC2_SIG_Hud_WeaponSlots "void(u32,i32,i32,i32)"
 typedef void (*openrac_rac2_Hud_WeaponSlots)(uint32_t hud, int32_t x, int32_t y, int32_t alpha);
 
-/* Hud_Bolts: Draws the HUD's bolt counter (DrawBoltCounterPanel: the bolts, the multiplier;
- * under the port's own wrap in host/bolt_totals.c, the compact totals). panel is the HUD's
- * object + 0x7A0. A replacement that does not call the original leaves the counter out. */
+/* Hud_Bolts: Draws the HUD's own sprite elements (DrawBoltCounterPanel; under the port's own
+ * wrap in host/bolt_totals.c, the compact totals): the bolt counter and its multiplier, the
+ * panels at the top, the quick select's octagon frames and its weapons' icons, then the top
+ * middle panel (rac2.hud.nanotech). panel is the HUD's object + 0x7A0. A replacement that does
+ * not call the original leaves all of them out; to drop one element only, call the original and
+ * leave it out with rac2.gui.draw_element or rac2.gui.draw_icon. */
 #define OPENRAC_RAC2_HOOK_Hud_Bolts "Hud_Bolts"
 #define OPENRAC_RAC2_SIG_Hud_Bolts "void(u32)"
 typedef void (*openrac_rac2_Hud_Bolts)(uint32_t panel);
@@ -365,12 +372,13 @@ typedef void (*openrac_rac2_Hud_TextPanel)(uint32_t panel);
 #define OPENRAC_RAC2_SIG_Hud_Nanotech "void(u32)"
 typedef void (*openrac_rac2_Hud_Nanotech)(uint32_t meter);
 
-/* QuickSelect_Draw: Draws the quick select (radial_menu_draw, while Triangle holds it open:
- * +0xA58 set): its backdrop and frames (gfx elements at +0, +0x4C, +0xE4, +0x130, +0x214,
- * +0x2A8, +0x2F4), its labels (+0x828 to +0x990), the item's information, its eight slots
- * (+0x340, 0x4C each) and eight icons (+0x5EC, 0x3C each), the cursor (+0x5A0), then the weapon
- * slots (rac2.hud.weapon_slots). A replacement that does not call the original draws none of
- * it; the game still reads the pad for it. */
+/* QuickSelect_Draw: Draws the radial menu at the GUI's +0x3A388 (radial_menu_draw, called by
+ * func_0029CC20 and func_L00_0030DCF8 for a menu of the game's), not the quick select Triangle
+ * holds open (that one is rac2.hud.weapon with the HUD's elements of rac2.hud.bolts): its
+ * backdrop and frames (gfx elements at +0, +0x4C, +0xE4, +0x130, +0x214, +0x2A8, +0x2F4), its
+ * labels (+0x828 to +0x990), the item's information, its eight slots (+0x340, 0x4C each) and
+ * eight icons (+0x5EC, 0x3C each), the cursor (+0x5A0), then the weapon slots
+ * (rac2.hud.weapon_slots). A replacement that does not call the original draws none of it. */
 #define OPENRAC_RAC2_HOOK_QuickSelect_Draw "QuickSelect_Draw"
 #define OPENRAC_RAC2_SIG_QuickSelect_Draw "void(u32)"
 typedef void (*openrac_rac2_QuickSelect_Draw)(uint32_t menu);
