@@ -18,12 +18,17 @@
  * as they are. The reader stays the game's: dead zones, pressures, edges, key repeat.
  */
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "game/common/lib/pad_report.h"
 #include "game_protos.h"
 #include "openrac/game_host.h"
 #include "openrac/guest.h"
+#include "openrac/host_env.h"
+#include "openrac/openrac_mod.h"
 #include "rac2.h"
+#include "weapon_shots.h"
 
 #define PAD0 RAC2_ADDR(0x00138180u)      /* g_pad_state: port 0's record */
 #define PAD1 RAC2_ADDR(0x00138500u)      /* g_pad_device_state: port 1's */
@@ -59,6 +64,82 @@ void func_002B8548(gaddr info) {
     open_port(PAD1, 1);
 }
 
+/* The mods' motors (openrac_api.pad_rumble, game_motors_mute; interface 1.107): a rumble per
+ * port counted down a poll at a time, and the items while in the hero's hand the game's own
+ * values are dropped (-1 always). Each motor the window gets is the stronger of the game's and
+ * the rumble's (set_motors' go through the window's own mixing). OPENRAC_RAC2_MOTOR_TRACE=1
+ * prints what goes to the window each time it changes. */
+static struct {
+    int small, large, ticks;
+} rumble[2];
+
+static int32_t muted[OPENRAC_MOTORS_MUTE_MAX];
+static int muted_count;
+
+int rac2_pad_rumble(int port, int small_motor, int large_motor, int ticks) {
+    if (port < 0 || port > 1) {
+        return 0;
+    }
+    rumble[port].small = small_motor != 0;
+    rumble[port].large = large_motor < 0 ? 0 : large_motor > 255 ? 255 : large_motor;
+    rumble[port].ticks = ticks;
+    return 1;
+}
+
+void rac2_motors_mute(const int32_t* items, int count) {
+    muted_count = 0;
+    for (int i = 0; items != NULL && i < count && muted_count < OPENRAC_MOTORS_MUTE_MAX; ++i) {
+        muted[muted_count++] = items[i];
+    }
+}
+
+static int game_motors_muted(void) {
+    if (muted_count == 0) {
+        return 0;
+    }
+    const int32_t item = rac2_hand_item();
+    for (int i = 0; i < muted_count; ++i) {
+        if (muted[i] == OPENRAC_MOTORS_MUTE_ALL || (item >= 0 && muted[i] == item)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void send_motors(int port, int small, int large) {
+    static int trace = -1, last[2][2] = {{-1, -1}, {-1, -1}};
+    const int game_small = small, game_large = large;
+    const int mute = game_motors_muted();
+    if (mute) {
+        small = large = 0;
+    }
+    if (port >= 0 && port <= 1 && rumble[port].ticks > 0) {
+        small = small > rumble[port].small ? small : rumble[port].small;
+        large = large > rumble[port].large ? large : rumble[port].large;
+        --rumble[port].ticks;
+    }
+    if (trace < 0) {
+        const char* v = openrac_env_string("OPENRAC_RAC2_MOTOR_TRACE");
+        trace = v != NULL && v[0] != '\0' && strcmp(v, "0") != 0;
+    }
+    if (trace && port >= 0 && port <= 1 && (last[port][0] != small || last[port][1] != large)) {
+        last[port][0] = small;
+        last[port][1] = large;
+        fprintf(
+            stderr,
+            "[motors] port %d: small %d large %d (the game's %d %d%s, rumble %d ticks left)\n",
+            port,
+            small,
+            large,
+            game_small,
+            game_large,
+            mute ? " muted" : "",
+            rumble[port].ticks
+        );
+    }
+    openrac_game_set_motors(port, small, large);
+}
+
 /* poll_pad_device_state(pad), as the game's steps it. */
 void func_002B85F8(gaddr pad) {
     const int port = GREF(int32_t, pad + PAD_SOCKET);
@@ -83,7 +164,7 @@ void func_002B85F8(gaddr pad) {
         GFRAME(report, 0x40);
         const uint8_t act = GREF(uint8_t, pad + PAD_ACT);
         openrac_pad_report(port, (uint8_t*)G(report));
-        openrac_game_set_motors(
+        send_motors(
             port,
             (act & 1) != 0 ? GREF(uint8_t, pad + PAD_MOTOR_SMALL) & 1 : 0,
             (act & 2) != 0 ? GREF(uint8_t, pad + PAD_MOTOR_LARGE) : 0

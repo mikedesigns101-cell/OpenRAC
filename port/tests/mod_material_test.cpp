@@ -70,7 +70,8 @@ int main() {
         api.moby_material(first, 0, OPENRAC_MOBY_MATERIAL_PLATINUM, 0xFFFFFF)
         == OPENRAC_HOOK_UNKNOWN
     );
-    CHECK(api.moby_material(first, kCoin, 6, 0xFFFFFF) == OPENRAC_HOOK_UNKNOWN);
+    // 6 is OPENRAC_MOBY_MATERIAL_GLOW since 1.108: the first kind no port knows is 7.
+    CHECK(api.moby_material(first, kCoin, 7, 0xFFFFFF) == OPENRAC_HOOK_UNKNOWN);
     // A level is energy's and paint's alone, at most 15, in bits 8 to 11.
     CHECK(
         api.moby_material(first, kCoin, OPENRAC_MOBY_MATERIAL_TINT | 0x100u, 0xFFFFFF)
@@ -263,7 +264,7 @@ int main() {
     CHECK(
         api.moby_material_class(first, 0, 4, OPENRAC_MOBY_MATERIAL_TINT, 0) == OPENRAC_HOOK_UNKNOWN
     );
-    CHECK(api.moby_material_class(first, 0, kBoth, 6, 0) == OPENRAC_HOOK_UNKNOWN);
+    CHECK(api.moby_material_class(first, 0, kBoth, 7, 0) == OPENRAC_HOOK_UNKNOWN);
     CHECK(
         api.moby_material_class(first, 0, kBoth, OPENRAC_MOBY_MATERIAL_TINT, 0x1000000)
         == OPENRAC_HOOK_UNKNOWN

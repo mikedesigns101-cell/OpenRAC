@@ -291,8 +291,28 @@ const float kPaintAccentGlow = 1.4;    // and at the brightest: a lit glass, a l
 const float kPaintAccentRange = 1.8;   // the texel's value that reaches kPaintAccentGlow is 1 / this
 const float kPaintAccentTint = 0.05;   // the lowest body colour the accent divides by
 
+// Glow (interface 1.108, scene::glow_material): kModMaterialGlow plus the colour, 3 bits a channel.
+// Only the glow packets change: their colour becomes it at their brightest channel, brightened.
+const int kModMaterialGlow = 8224;
+const float kGlowPacket = 1.6;
+
 bool paint() {
-    return v_mod_material >= kModMaterialPaint;
+    return v_mod_material >= kModMaterialPaint && v_mod_material < kModMaterialGlow;
+}
+
+bool glow_only() {
+    return v_mod_material >= kModMaterialGlow;
+}
+
+vec4 glow_colour(vec4 c) {
+    if (!glow_only() || v_glow == 0) {
+        return c;
+    }
+    int code = v_mod_material - kModMaterialGlow;
+    vec3 rgb = vec3(float((code >> 6) & 7), float((code >> 3) & 7), float(code & 7)) / 7.0;
+    // Its brightness is its brightest channel's, so a saturated red glow keeps its strength in blue.
+    float value = max(c.r, max(c.g, c.b));
+    return vec4(rgb * value * kGlowPacket, c.a);
 }
 
 float paint_level() {
@@ -370,7 +390,7 @@ vec4 mod_texel(vec4 texel) {
 }
 
 vec4 mod_colour(vec4 c) {
-    return paint_colour(energy_colour(obsidian_colour(platinum_colour(c))));
+    return glow_colour(paint_colour(energy_colour(obsidian_colour(platinum_colour(c)))));
 }
 
 vec3 mod_shine(vec3 rgb) {

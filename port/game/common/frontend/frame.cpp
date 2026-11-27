@@ -1555,6 +1555,11 @@ void apply_mod_material(scene::Instance& instance, const mods::MobyMaterial& mat
     constexpr int kGreenShift = 8;
     constexpr std::uint32_t kByte = 0xFF;
     const std::uint32_t kind = OPENRAC_MOBY_MATERIAL_KIND(material.material);
+    // Glow (1.108): the glow faces only, in rgb; the tint and the rest of the model as they are.
+    if (kind == OPENRAC_MOBY_MATERIAL_GLOW) {
+        instance.mod_material = scene::glow_material(material.rgb);
+        return;
+    }
     const float share =
         kind == OPENRAC_MOBY_MATERIAL_ENERGY ? OPENRAC_MOBY_MATERIAL_ENERGY_BODY : 1.0f;
     const auto channel = [&](int shift) {

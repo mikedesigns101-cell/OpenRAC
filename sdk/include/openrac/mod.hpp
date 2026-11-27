@@ -1105,6 +1105,9 @@ public:
              m_api->size >= offsetof(openrac_api, moby_material) + sizeof(void *);
     }
 
+    // Since 1.108: whether the port draws OPENRAC_MOBY_MATERIAL_GLOW (only the glow faces in rgb).
+    bool has_moby_glow() const { return has_moby_material() && m_api->api_minor >= 108; }
+
     // Since 1.24: whether the port draws OPENRAC_MOBY_MATERIAL_OBSIDIAN.
     bool has_obsidian() const {
       return has_moby_material() && m_api->api_minor >= 24;
@@ -2055,6 +2058,28 @@ public:
       }
       tint.size = sizeof tint;
       return m_api->effect_tint(m_handle, &tint);
+    }
+
+    // Since 1.107: whether the port takes a mod's timed vibration (pad_rumble) and mutes of the
+    // game's own (game_motors_mute).
+    bool has_pad_rumble() const {
+      return m_api->api_minor >= 107 &&
+             m_api->size >= offsetof(openrac_api, game_motors_mute) + sizeof(void *);
+    }
+
+    // Since 1.107: pad `port` vibrates for `ticks` game ticks, the small motor off or on, the
+    // large one at 0 to 255 (see openrac_api.pad_rumble). False when refused.
+    bool pad_rumble(int port, bool small_motor, int large_motor, int ticks) const {
+      return has_pad_rumble() &&
+             m_api->pad_rumble(m_handle, port, small_motor ? 1 : 0, large_motor, ticks) ==
+                 OPENRAC_HOOK_OK;
+    }
+
+    // Since 1.107: the game's own vibration muted while `item` is in the hero's hand
+    // (OPENRAC_MOTORS_MUTE_ALL always; OPENRAC_MOTORS_MUTE_NONE takes the mod's mutes off).
+    // Returns OPENRAC_HOOK_OK, _FULL or _UNKNOWN.
+    int game_motors_mute(std::int32_t item) const {
+      return has_pad_rumble() ? m_api->game_motors_mute(m_handle, item) : OPENRAC_HOOK_UNKNOWN;
     }
 
     // Since 1.106: takes off all the mod's tints.

@@ -71,4 +71,67 @@ int api_set_motors(openrac_mod* mod, int port, int small_motor, int large_motor)
     return OPENRAC_HOOK_OK;
 }
 
+// openrac_api.pad_rumble. Since 1.107.
+int api_pad_rumble(openrac_mod* mod, int port, int small_motor, int large_motor, int ticks) {
+    constexpr int kPorts = 2;
+    if (mod == nullptr || g_play == nullptr || g_play->pad_rumble == nullptr || port < 0
+        || port >= kPorts || (small_motor != 0 && small_motor != 1) || large_motor < 0
+        || large_motor > 255 || ticks < 0 || ticks > OPENRAC_PAD_RUMBLE_TICKS_MAX) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    return g_play->pad_rumble(port, small_motor, large_motor, ticks) != 0 ? OPENRAC_HOOK_OK
+                                                                          : OPENRAC_HOOK_UNKNOWN;
+}
+
+// The mods' mutes of the game's vibration (game_motors_mute), by mod; the game gets the items.
+namespace {
+std::mutex g_mutes_lock;
+std::vector<std::pair<const openrac_mod*, std::int32_t>> g_mutes;
+
+void push_mutes() {
+    if (g_play == nullptr || g_play->motors_mute == nullptr) {
+        return;
+    }
+    std::vector<std::int32_t> items;
+    for (const auto& m : g_mutes) {
+        items.push_back(m.second);
+    }
+    g_play->motors_mute(items.data(), static_cast<int>(items.size()));
+}
+}  // namespace
+
+void motors_mute_forget(const openrac_mod* mod) {
+    const std::lock_guard<std::mutex> lock(g_mutes_lock);
+    const auto before = g_mutes.size();
+    std::erase_if(g_mutes, [&](const auto& m) { return mod == nullptr || m.first == mod; });
+    if (g_mutes.size() != before) {
+        push_mutes();
+    }
+}
+
+// openrac_api.game_motors_mute. Since 1.107.
+int api_game_motors_mute(openrac_mod* mod, std::int32_t item) {
+    if (mod == nullptr || g_play == nullptr || g_play->motors_mute == nullptr
+        || item < OPENRAC_MOTORS_MUTE_NONE) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    const std::lock_guard<std::mutex> lock(g_mutes_lock);
+    if (item == OPENRAC_MOTORS_MUTE_NONE) {
+        std::erase_if(g_mutes, [&](const auto& m) { return m.first == mod; });
+        push_mutes();
+        return OPENRAC_HOOK_OK;
+    }
+    const bool held = std::any_of(g_mutes.begin(), g_mutes.end(), [&](const auto& m) {
+        return m.first == mod && m.second == item;
+    });
+    if (!held) {
+        if (g_mutes.size() >= OPENRAC_MOTORS_MUTE_MAX) {
+            return OPENRAC_HOOK_FULL;
+        }
+        g_mutes.emplace_back(mod, item);
+    }
+    push_mutes();
+    return OPENRAC_HOOK_OK;
+}
+
 }  // namespace openrac::mods::detail

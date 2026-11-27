@@ -54,15 +54,19 @@ No new members (the table is unchanged).
 
 ## 1.108
 
+A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model).
+
 No new members (the table is unchanged).
 
 ## 1.107
 
-No new members (the table is unchanged).
+Going Commando's pad vibration from a mod, for a time, and the game's own muted while a weapon is in the hand (pad_rumble, game_motors_mute).
+
+Members: `pad_rumble`, `game_motors_mute`.
 
 ## 1.106
 
-Going Commando's named effects in particle_spawn_ex (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own effects recoloured: a weapon's muzzle flash, a shot's impact and its trail (effect_tint), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model).
+Going Commando's named effects in particle_spawn_ex (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own effects recoloured: a weapon's muzzle flash, a shot's impact and its trail (effect_tint).
 
 Members: `effect_tint`.
 

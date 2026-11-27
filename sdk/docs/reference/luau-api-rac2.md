@@ -232,7 +232,7 @@ type Hud_DrawFn = (hud: number) -> ()
 
 ### `Hud_WeaponFn`
 
-rac2.hud.weapon (Hud_Weapon) i32(u32): Draws the HUD slot of the weapon in hand (weapon_wheel_draw, HUD slot 0x23's draw): the selected weapon's slot lit, its ammunition and its name. slot is the HUD slot's record. A replacement that does not call the original (and returns 0) leaves it out.
+rac2.hud.weapon (Hud_Weapon) i32(u32): Draws the quick select that Triangle holds open (weapon_wheel_draw, HUD slot 0x23's draw, while the game's mode word 0x1A8BB0 is 4): the lit slot's ammunition bars, the weapon's name and ammunition. Its octagon frames and the weapons' icons are the HUD's own sprite elements, drawn by rac2.hud.bolts. The slot lit is the int at 0x1AE738 (OPENRAC_DATA), the slots' items the eight bytes at 0x1A73B8 (g_equippedItemSlots, 0 up then clockwise), the slots in use the int at 0x1B18D0. slot is the HUD slot's record. A replacement that does not call the original (and returns 0) leaves its bars and text out.
 
 ```lua
 type Hud_WeaponFn = (slot: number) -> number
@@ -240,7 +240,7 @@ type Hud_WeaponFn = (slot: number) -> number
 
 ### `Hud_WeaponSelectorFn`
 
-rac2.hud.weapon_selector (Hud_WeaponSelector) i32(u32): Draws the other look of the same HUD slot (DrawRadialSelectorPanel, put in its place in some levels and modes). slot is the HUD slot's record. A replacement that does not call the original (and returns 0) leaves it out.
+rac2.hud.weapon_selector (Hud_WeaponSelector) i32(u32): Draws the other look of the quick select's HUD slot (DrawRadialSelectorPanel, put in its place in some levels and modes). slot is the HUD slot's record. A replacement that does not call the original (and returns 0) leaves it out.
 
 ```lua
 type Hud_WeaponSelectorFn = (slot: number) -> number
@@ -256,7 +256,7 @@ type Hud_WeaponSlotsFn = (hud: number, x: number, y: number, alpha: number) -> (
 
 ### `Hud_BoltsFn`
 
-rac2.hud.bolts (Hud_Bolts) void(u32): Draws the HUD's bolt counter (DrawBoltCounterPanel: the bolts, the multiplier; under the port's own wrap in host/bolt_totals.c, the compact totals). panel is the HUD's object + 0x7A0. A replacement that does not call the original leaves the counter out.
+rac2.hud.bolts (Hud_Bolts) void(u32): Draws the HUD's own sprite elements (DrawBoltCounterPanel; under the port's own wrap in host/bolt_totals.c, the compact totals): the bolt counter and its multiplier, the panels at the top, the quick select's octagon frames and its weapons' icons, then the top middle panel (rac2.hud.nanotech). panel is the HUD's object + 0x7A0. A replacement that does not call the original leaves all of them out; to drop one element only, call the original and leave it out with rac2.gui.draw_element or rac2.gui.draw_icon.
 
 ```lua
 type Hud_BoltsFn = (panel: number) -> ()
@@ -288,7 +288,7 @@ type Hud_NanotechFn = (meter: number) -> ()
 
 ### `QuickSelect_DrawFn`
 
-rac2.quick_select.draw (QuickSelect_Draw) void(u32): Draws the quick select (radial_menu_draw, while Triangle holds it open: +0xA58 set): its backdrop and frames (gfx elements at +0, +0x4C, +0xE4, +0x130, +0x214, +0x2A8, +0x2F4), its labels (+0x828 to +0x990), the item's information, its eight slots (+0x340, 0x4C each) and eight icons (+0x5EC, 0x3C each), the cursor (+0x5A0), then the weapon slots (rac2.hud.weapon_slots). A replacement that does not call the original draws none of it; the game still reads the pad for it.
+rac2.quick_select.draw (QuickSelect_Draw) void(u32): Draws the radial menu at the GUI's +0x3A388 (radial_menu_draw, called by func_0029CC20 and func_L00_0030DCF8 for a menu of the game's), not the quick select Triangle holds open (that one is rac2.hud.weapon with the HUD's elements of rac2.hud.bolts): its backdrop and frames (gfx elements at +0, +0x4C, +0xE4, +0x130, +0x214, +0x2A8, +0x2F4), its labels (+0x828 to +0x990), the item's information, its eight slots (+0x340, 0x4C each) and eight icons (+0x5EC, 0x3C each), the cursor (+0x5A0), then the weapon slots (rac2.hud.weapon_slots). A replacement that does not call the original draws none of it.
 
 ```lua
 type QuickSelect_DrawFn = (menu: number) -> ()

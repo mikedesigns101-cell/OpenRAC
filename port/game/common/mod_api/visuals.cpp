@@ -139,7 +139,8 @@ bool moby_material_known(std::uint32_t material, std::uint32_t rgb) {
     if (kind == OPENRAC_MOBY_MATERIAL_PAINT) {
         extra &= ~OPENRAC_MOBY_MATERIAL_PAINT_EFFECTS;
     }
-    return kind <= OPENRAC_MOBY_MATERIAL_PAINT
+    // Glow (1.108) carries nothing but its rgb.
+    return kind <= OPENRAC_MOBY_MATERIAL_GLOW
            && (extra == 0 || (levelled && (extra & ~kLevels) == 0)) && rgb <= kRgbMax;
 }
 

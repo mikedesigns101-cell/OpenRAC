@@ -67,6 +67,8 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `capture_mouse` | 1.2 | stable | yes | yes | yes |
 | `button_label` | 1.31 | stable | yes | yes | yes |
 | `set_motors` | 1.37 | experimental | yes | yes | yes |
+| `pad_rumble` | 1.107 | experimental | no | yes | no |
+| `game_motors_mute` | 1.107 | experimental | no | yes | no |
 
 ## graphics
 
@@ -270,7 +272,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `camera_script_play` | 1.14 | stable | yes | no | no |
 | `camera_script_view` | 1.14 | stable | yes | no | no |
 | `camera_script_show` | 1.14 | stable | yes | no | no |
-| `camera_shake` | 1.33 | experimental | yes | no | no |
+| `camera_shake` | 1.33 | experimental | yes | yes | no |
 | `camera_visibility_bypass` | 1.33 | experimental | yes | yes | yes |
 | `camera_fov` | 1.35 | experimental | yes | yes | yes |
 

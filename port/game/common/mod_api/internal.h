@@ -784,6 +784,8 @@ openrac_gaddr api_weapon_record(openrac_mod* mod, std::int32_t item);
 void drop_weapon_shots(const openrac_mod* mod);
 // Forgets `mod`'s effect tints (nullptr: every mod's) and tells the game (visuals.cpp).
 void effect_tints_forget(const openrac_mod* mod);
+// Forgets `mod`'s mutes of the game's vibration (nullptr: every mod's) and tells the game (input.cpp).
+void motors_mute_forget(const openrac_mod* mod);
 
 int api_weapon_ignore_culling(openrac_mod* mod, std::int32_t item, std::int32_t enabled);
 
@@ -803,6 +805,9 @@ int api_overlay_image_destroy(openrac_mod* mod, int image);
 
 int api_effect_tint(openrac_mod* mod, const openrac_effect_tint* tint);
 
+int api_pad_rumble(openrac_mod* mod, int port, int small_motor, int large_motor, int ticks);
+
+int api_game_motors_mute(openrac_mod* mod, std::int32_t item);
 // A moby drawn with textures of a mod's (interface 1.120, moby_textures.cpp).
 int api_moby_textures_at(openrac_mod* mod, std::uint32_t address, const openrac_moby_textures* t);
 int api_moby_textures_class(

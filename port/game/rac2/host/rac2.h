@@ -75,11 +75,17 @@ void rac2_effect_tints(const struct openrac_game_effect_tint* tints, int count);
 void rac2_tint_push(const float rgb[3], float saturation);
 void rac2_tint_pop(void);
 
+/* The mods' motors (pad_state.c; openrac_api.pad_rumble, game_motors_mute). */
+int rac2_pad_rumble(int port, int small_motor, int large_motor, int ticks);
+void rac2_motors_mute(const int32_t* items, int count);
+
 /* A mod's camera (camera_override.c; openrac_api.camera_set, camera_view): 1 done, 0 outside a
  * level; and whether the world is drawn from it now. */
 int rac2_camera_set(const float eye[3], const float rows[9]);
 int rac2_camera_view(float eye[3], float rows[9]);
 int rac2_camera_overridden(void);
+/* The level camera's shake on channel 0 or 1 (camera_override.c; openrac_api.camera_shake). */
+int rac2_camera_shake(int channel, float amplitude, int frames);
 
 /* The level's collision triangles in a box (collision_triangles.c, openrac_api.collision_triangles). */
 int rac2_collision_triangles(const float lo[3], const float hi[3], void* out, int max);

@@ -2952,6 +2952,29 @@ int main() {
         api.size = size;
         CHECK(OPENRAC_EFFECT_TRAIL == 4u && OPENRAC_EFFECT_TINT_MAX == 32 && OPENRAC_PARTICLE_MUZZLE == 7u);
     }
+    // Interface 1.107: a timed vibration and a mute of the game's reach the port; a port of 1.106
+    // is not asked.
+    {
+        static std::string g_rumble;
+        static std::int32_t g_mute = 99;
+        api.pad_rumble = [](openrac_mod*, int port, int small_motor, int large_motor, int ticks) {
+            g_rumble = std::to_string(port) + " " + std::to_string(small_motor) + " "
+                       + std::to_string(large_motor) + " " + std::to_string(ticks);
+            return OPENRAC_HOOK_OK;
+        };
+        api.game_motors_mute = [](openrac_mod*, std::int32_t item) {
+            g_mute = item;
+            return OPENRAC_HOOK_OK;
+        };
+        CHECK(mod.has_pad_rumble() && mod.pad_rumble(0, true, 200, 12) && g_rumble == "0 1 200 12");
+        CHECK(mod.game_motors_mute(30) == OPENRAC_HOOK_OK && g_mute == 30);
+        api.api_minor = 106;
+        g_rumble.clear();
+        CHECK(!mod.has_pad_rumble() && !mod.pad_rumble(0, true, 200, 12) && g_rumble.empty()
+              && mod.game_motors_mute(OPENRAC_MOTORS_MUTE_ALL) == OPENRAC_HOOK_UNKNOWN && g_mute == 30);
+        api.api_minor = OPENRAC_MOD_API_MINOR;
+        CHECK(OPENRAC_MOTORS_MUTE_ALL == -1 && OPENRAC_MOTORS_MUTE_NONE == -2 && OPENRAC_PAD_RUMBLE_TICKS_MAX == 600);
+    }
     // Interface 1.33: a particle texture (1024 indices and a 1024-byte palette) reaches the port as the mod
     // gave it, and the port's id comes back; the size and the lengths are checked here; a port of 1.31 has none.
     {

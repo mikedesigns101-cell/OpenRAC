@@ -146,13 +146,17 @@ extern "C" {
  * unchanged), with Going Commando's HUD parts, quick select, 2D elements and
  * the vendor's opening as hook points, 1.105 Going Commando's camera set by a
  * mod: camera_set and camera_view in play and under a vendor's menu (the table
- * is unchanged), and 1.106 Going Commando's named effects in particle_spawn_ex
+ * is unchanged), 1.106 Going Commando's named effects in particle_spawn_ex
  * (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own
  * effects recoloured: a weapon's muzzle flash, a shot's impact and its trail
- * (effect_tint), and 1.120 a moby drawn with its class's own model and animation
- * but with textures of the mod's (moby_textures_at, moby_textures_class), and a
- * mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a
- * flag of openrac_moby_model).
+ * (effect_tint), 1.107 Going Commando's pad vibration from a mod, for a time,
+ * and the game's own muted while a weapon is in the hand (pad_rumble,
+ * game_motors_mute), 1.108 a moby's glow faces alone drawn in a colour of
+ * the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a
+ * moby drawn with its class's own model and animation but with textures of the
+ * mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed
+ * by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of
+ * openrac_moby_model).
  */
 #define OPENRAC_MOD_API_MINOR 120
 
@@ -1916,6 +1920,15 @@ typedef struct openrac_particle_spawn {
 /* The largest colour multiplier of a tint. Since 1.106. */
 #define OPENRAC_EFFECT_RGB_MAX 4.0f
 
+/* The longest pad_rumble, in game ticks (10 seconds at 60). Since 1.107. */
+#define OPENRAC_PAD_RUMBLE_TICKS_MAX 600
+/* game_motors_mute's item: the game's vibration muted whatever is in the hand, and no longer
+ * muted (the mod's mutes taken off). Since 1.107. */
+#define OPENRAC_MOTORS_MUTE_ALL (-1)
+#define OPENRAC_MOTORS_MUTE_NONE (-2)
+/* The most items game_motors_mute holds, all mods together. Since 1.107. */
+#define OPENRAC_MOTORS_MUTE_MAX 16
+
 /* A tint of the game's own effects (openrac_api.effect_tint): the effects in `effects`, made while
  * the weapon `item` is in the hero's hand (-1 any) by a moby of class `oclass` (the shot or the
  * weapon that makes them: the bullet's class for IMPACT and TRAIL, the moby the flash is put on for
@@ -2046,6 +2059,12 @@ typedef struct openrac_moby_visual {
  * refuses the bit (OPENRAC_HOOK_UNKNOWN), and weapon_look takes paint only since 1.39. Since
  * 1.39. */
 #define OPENRAC_MOBY_MATERIAL_PAINT_EFFECTS 0x2000000u
+/* moby_material: only the moby's glow faces (the game's glow packets, a mod model's faces with
+ * _LIGHT_SLOT -2: lamps, energy cells, a weapon's lit stripes) drawn in `rgb` at their own
+ * brightness, a little brighter; the rest of the model, its tint and its lighting stay as they
+ * are. rgb keeps the top 3 bits of each channel (eight steps). A port older than 1.108 refuses it
+ * (OPENRAC_HOOK_UNKNOWN). Since 1.108. */
+#define OPENRAC_MOBY_MATERIAL_GLOW 6
 /* What moby_copy_check says of a moby: OPENRAC_COPY_OK when moby_copy may copy it, else why not.
  * Since 1.25. */
 #define OPENRAC_COPY_OK 0
@@ -3621,6 +3640,21 @@ typedef struct openrac_api {
      * OPENRAC_EFFECT_TINT_MAX, or OPENRAC_HOOK_UNKNOWN for a value out of range or a game without
      * them (Going Commando only). Since 1.106. */
     int (*effect_tint)(openrac_mod* mod, const openrac_effect_tint* tint);
+
+    /* Vibrates pad port (0 or 1) for ticks game ticks (1 to OPENRAC_PAD_RUMBLE_TICKS_MAX): the
+     * small motor off or on (0, 1), the large one at 0 to 255; each motor plays the stronger of
+     * this, the game's and set_motors. A new call on the port replaces the last one there (any
+     * mod's); ticks 0 stops it. It does not wait for the game: it plays in the pause menu too.
+     * Going Commando. Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for a
+     * value out of range or a game without it. Since 1.107. */
+    int (*pad_rumble)(openrac_mod* mod, int port, int small_motor, int large_motor, int ticks);
+
+    /* Mutes the game's own pad vibration (its weapons' kick, hits, explosions): while item is in
+     * the hero's hand (item 0 or more), always (OPENRAC_MOTORS_MUTE_ALL), or no longer
+     * (OPENRAC_MOTORS_MUTE_NONE, the mod's mutes taken off); set_motors and pad_rumble still play.
+     * Up to OPENRAC_MOTORS_MUTE_MAX items for all mods. Going Commando. Returns OPENRAC_HOOK_OK,
+     * OPENRAC_HOOK_FULL past the most, or OPENRAC_HOOK_UNKNOWN for a game without it. Since 1.107. */
+    int (*game_motors_mute)(openrac_mod* mod, int32_t item);
 
     /* Draws the moby at `address` (the game's address of a moby the game has: a placed one, a copy, a
      * spawned one) with its class's own model, skin and animation, but with pictures of the mod's in
