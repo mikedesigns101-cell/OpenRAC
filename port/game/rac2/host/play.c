@@ -853,6 +853,7 @@ static openrac_game_play play = {
     .camera_set = rac2_camera_set,
     .camera_view = rac2_camera_view,
     .camera_overridden = rac2_camera_overridden,
+    .camera_shake = rac2_camera_shake,
     .effect_tints = rac2_effect_tints,
     .pad_rumble = rac2_pad_rumble,
     .motors_mute = rac2_motors_mute,

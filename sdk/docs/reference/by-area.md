@@ -270,7 +270,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `camera_script_play` | 1.14 | stable | yes | no | no |
 | `camera_script_view` | 1.14 | stable | yes | no | no |
 | `camera_script_show` | 1.14 | stable | yes | no | no |
-| `camera_shake` | 1.33 | experimental | yes | no | no |
+| `camera_shake` | 1.33 | experimental | yes | yes | no |
 | `camera_visibility_bypass` | 1.33 | experimental | yes | yes | yes |
 | `camera_fov` | 1.35 | experimental | yes | yes | yes |
 

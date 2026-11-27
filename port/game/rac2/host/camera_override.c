@@ -87,6 +87,25 @@ int rac2_camera_view(float eye[3], float rows[9]) {
     return 1;
 }
 
+/* The level camera's shakes (openrac_api.camera_shake, interface 1.33): the camera block's three
+ * CameraShake records from +0x160 (amplitude, offset, frames, longest; 0x10 bytes each), which
+ * cam_update_shake (func_00271958) plays each frame, channels 0 and 1 moving the eye along two of
+ * the camera's rows (its modes 0 and 1). The game's own triggers write the amplitude and the frames, in ticks
+ * (part_emit_blast_and_shake: 0.1 for 40), and clear the longest. */
+#define CAMERA_SHAKES OPENRAC_DATA(RAC2_g_cameraPos + 0x20u)
+
+int rac2_camera_shake(int channel, float amplitude, int frames) {
+    if (!level_running() || (channel != 0 && channel != 1)
+        || !(amplitude >= 0.0f && amplitude <= 1.0f) || frames < 0 || frames > 600) {
+        return 0;
+    }
+    const gaddr base = CAMERA_SHAKES + 0x10u * (unsigned)channel;
+    GREF(float, base) = amplitude;
+    GREF(int32_t, base + 8u) = frames;
+    GREF(int32_t, base + 12u) = 0;
+    return 1;
+}
+
 /* DrawWorld: the game's camera kept, then the mod's written over it. */
 void func_0027BD70(void) {
     if (level_running() && mode_takes_camera()) {
