@@ -802,7 +802,11 @@ int main(int argc, char** argv) {
         || std::any_of(destination_mounts.begin(), destination_mounts.end(), [](const auto& mount) {
                return has_virtual_sector_mappings(mount);
            });
-    if (expanded_streams) {
+    // Going Commando's classes of other levels go in RAM past the console's 32 MiB
+    // (rac2/host/foreign_class.c).
+    const bool foreign_classes = std::string_view(openrac_game.game) == "rac2"
+                                 && env::value(env::Var::ForeignClasses).has_value();
+    if (expanded_streams || foreign_classes) {
         ram_size = GUEST_RAM_EXPANDED_SIZE;
     }
     if (ram_size > GUEST_RAM_SIZE) {

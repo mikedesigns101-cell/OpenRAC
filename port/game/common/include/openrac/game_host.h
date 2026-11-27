@@ -80,6 +80,17 @@ uint64_t openrac_disc_read_some(uint64_t offset, void* dst, uint64_t size);
  * `size` bytes of it into `dst` (1, or 0 when it is shorter or cannot be read). */
 uint64_t openrac_disc_file_size(const char* path);
 int openrac_disc_read_file(const char* path, void* dst, uint64_t size);
+/* Going Commando: moby class `oclass` of level `level` as that level's core holds it on the
+ * player's disc image, before the game relocates it (program/levels.cpp): its bytes (valid until
+ * the next call), their size and its 16-byte texture map. 0, or -1 (no image, no such class). */
+int openrac_game_level_class(int level, int oclass, const uint8_t** bytes, uint32_t* size,
+                             uint8_t map[16]);
+/* Going Commando: the first moby of class `oclass` that level `level`'s gameplay file places, from
+ * the disc image: its 0x88-byte record, its pvars block as the file has it (valid until the next
+ * call) and the offsets in that block of the words the load makes addresses (the block's address
+ * added). 0, or -1. */
+int openrac_game_level_record(int level, int oclass, uint8_t record[0x88], const uint8_t** pvars,
+                              uint32_t* pvars_size, const uint32_t** inner, uint32_t* inner_count);
 /* Portable presentation's own mechanical/chirp cues, mixed with game audio. */
 void openrac_game_infobot_sound(int opening);
 void openrac_game_special_sound(int item);

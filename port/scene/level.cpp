@@ -21,6 +21,7 @@
 #include <thread>
 #include <vector>
 
+#include "common/env.h"
 #include "common/joining_thread.h"
 #include "common/json.h"
 #include "common/log.h"
@@ -1213,6 +1214,46 @@ bool load_level(
                 continue;
             }
             mobys[id] = {*model, static_cast<float>(cls["scale"].number(1.0)), false};
+        }
+    }
+
+    // Going Commando's classes of other levels the runtime registers in every level
+    // (OPENRAC_FOREIGN_CLASSES, "level:class" pairs; rac2/host/foreign_class.c): each class's model
+    // as its own level's manifest has it.
+    if (const auto foreign = env::value(env::Var::ForeignClasses)) {
+        const std::string list(*foreign);
+        for (std::size_t at = 0; at < list.size();) {
+            int from = -1, id = -1, used = 0;
+            if (std::sscanf(list.c_str() + at, "%d:%d%n", &from, &id, &used) != 2 || used <= 0) {
+                break;
+            }
+            at += static_cast<std::size_t>(used);
+            while (at < list.size() && (list[at] == ',' || list[at] == ' ')) {
+                ++at;
+            }
+            const fs::path other = dir.parent_path() / std::format("level_{:02}", from);
+            if (id < 0 || from < 0 || mobys.contains(id) || other.filename() == dir.filename()) {
+                continue;
+            }
+            json::Value other_manifest;
+            std::string other_error;
+            if (!json::parse_file((other / "manifest.json").string(), other_manifest, other_error)) {
+                log::warn("foreign moby class {}: {}", id, other_error);
+                continue;
+            }
+            const json::Value& cls = other_manifest["classes"]["moby"][std::to_string(id)];
+            if (!cls["mesh"].is_string()) {
+                log::warn("foreign moby class {}: level {} has no model of it", id, from);
+                continue;
+            }
+            std::string model_error;
+            auto model = load_model(other / cls["mesh"].string(), out, model_error);
+            if (!model) {
+                log::warn("foreign moby class {}: {}", id, model_error);
+                continue;
+            }
+            mobys[id] = {*model, static_cast<float>(cls["scale"].number(1.0)), false};
+            log::info("foreign moby class {}: level {}'s model drawn here", id, from);
         }
     }
 

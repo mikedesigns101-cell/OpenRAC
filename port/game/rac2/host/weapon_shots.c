@@ -910,6 +910,8 @@ void func_L00_0032CF60(void) {
             openrac_game_moby_update(slot, 1);
         }
     }
+    /* The other levels' classes' updates the loop noted, each level's program entered once. */
+    rac2_foreign_flush();
 }
 
 /* ---- Firing again, and shots for a mod ---- */

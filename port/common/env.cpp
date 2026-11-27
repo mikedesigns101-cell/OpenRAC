@@ -146,6 +146,21 @@ constexpr std::array<Variable, kVariableCount> kVariables = {{
     {Var::FocusedPacing, "OPENRAC_FOCUSED_PACING",
      Kind::Flag, Truth::Set, "off",
      "frames paced as a focused window's in the background too (no hold to the tick)"},
+    {Var::ForeignClasses, "OPENRAC_FOREIGN_CLASSES",
+     Kind::Text, Truth::NotAFlag, "none",
+     "Going Commando: LEVEL:CLASS[,LEVEL:CLASS...]: those moby classes read from the disc image and "
+     "registered in every level loaded, run with their own level's code (rac2/host/foreign_class.c)"},
+    {Var::ForeignDump, "OPENRAC_FOREIGN_DUMP",
+     Kind::Path, Truth::NotAFlag, "none",
+     "Going Commando: a folder the foreign classes' blocks are written to at OPENRAC_FOREIGN_SCAN's frame"},
+    {Var::ForeignScan, "OPENRAC_FOREIGN_SCAN",
+     Kind::Integer, Truth::NotAFlag, "none",
+     "Going Commando: N: N frames into each load, the foreign classes' mobys checked for words into "
+     "the copy and into the level's own block; every N frames, what their updates cost"},
+    {Var::ForeignSpawn, "OPENRAC_FOREIGN_SPAWN",
+     Kind::Text, Truth::NotAFlag, "none",
+     "Going Commando: FRAME:COUNT[:DISTANCE]: COUNT mobys of the first foreign class made around the "
+     "hero FRAME frames into each load (a test)"},
     {Var::Fps, "OPENRAC_FPS",
      Kind::Flag, Truth::Set, "off",
      "the ticks per second over each 300 ticks, in the log"},

@@ -44,6 +44,10 @@ uint32_t rac2_program_loads(void);
 /* Once a frame, before the mods' tick (tools.c's on_frame): what the play calls follow over time
  * (play.c). */
 void rac2_play_frame(void);
+/* Once a frame from rac2_play_frame: the checks of the classes of other levels (foreign_class.c). */
+void rac2_foreign_tick(void);
+/* After the moby loop (weapon_shots.c): the foreign classes' updates it noted (foreign_class.c). */
+void rac2_foreign_flush(void);
 /* The play calls' table installed (play.c, from rac2_install_tools). */
 void rac2_install_play(void);
 /* The mods' pages in the title's main menu (mod_pages.c): the table installed (from

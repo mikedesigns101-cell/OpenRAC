@@ -39,51 +39,223 @@ namespace {
 // Going Commando's programs (games/rac2/decomp/docs/build/levels.md): G/LEVELn.WAD, which holds level n but
 // for the museum, level 30, in G/LEVEL21.WAD. Its word pair at +0x10 gives the level data's sector,
 // which opens with the (offset, size) of the program. The image is opened once.
-bool rac2_level_program(int level, std::vector<std::uint8_t>* bytes) {
+// The image, opened once (nullptr when it cannot be), and where level `level`'s data starts in it
+// (0 when it has no such level).
+assets::disc::IsoImage* rac2_iso() {
+    static std::optional<assets::disc::IsoImage> iso;
+    static bool tried = false;
+    if (!tried) {
+        tried = true;
+        // The disc's files, read through their sector map (assets/disc/sector_map.h).
+        const fs::path image = g_options.data / "iso_data" / openrac_game.game;
+        try {
+            iso.emplace(assets::disc::IsoImage::open(image));
+        } catch (const std::exception& e) {
+            log::warn("the disc image {} cannot be read: {}", image.string(), e.what());
+        }
+    }
+    return iso ? &*iso : nullptr;
+}
+
+std::uint32_t rac2_word(const std::vector<std::uint8_t>& from, std::size_t at) {
+    std::uint32_t value = 0;
+    if (at + sizeof(value) <= from.size()) {
+        std::memcpy(&value, from.data() + at, sizeof(value));
+    }
+    return value;
+}
+
+std::uint64_t rac2_level_data(assets::disc::IsoImage& iso, int level) {
     constexpr int kMuseum = 30;
     constexpr int kMuseumFile = 21;
     constexpr std::uint64_t kSector = 2048;
-    static std::optional<assets::disc::IsoImage> iso;
-    static bool tried = false;
-    // The disc's files, read through their sector map (assets/disc/sector_map.h).
-    const fs::path image = g_options.data / "iso_data" / openrac_game.game;
+    const std::string name = std::format("G/LEVEL{}.WAD", level == kMuseum ? kMuseumFile : level);
+    const assets::disc::IsoEntry* file = iso.find(name);
+    if (file == nullptr) {
+        return 0;
+    }
+    const std::uint64_t start = file->lba * kSector;
+    const std::vector<std::uint8_t> head = iso.read_bytes(start, 0x18);
+    if (static_cast<int>(rac2_word(head, 0x08)) != level) {
+        return 0;
+    }
+    return start + rac2_word(head, 0x10) * kSector;
+}
 
+bool rac2_level_program(int level, std::vector<std::uint8_t>* bytes) {
+    assets::disc::IsoImage* iso = rac2_iso();
+    if (iso == nullptr) {
+        return false;
+    }
     try {
-        if (!tried) {
-            tried = true;
-            iso.emplace(assets::disc::IsoImage::open(image));
-        }
-
-        if (!iso) {
+        const std::uint64_t data = rac2_level_data(*iso, level);
+        if (data == 0) {
             return false;
         }
+        const std::vector<std::uint8_t> slot = iso->read_bytes(data, 8);
+        *bytes = iso->read_bytes(data + rac2_word(slot, 0), rac2_word(slot, 4));
+        return !bytes->empty();
+    } catch (const std::exception& e) {
+        log::warn("level {}'s program cannot be read from the disc image: {}", level, e.what());
+        return false;
+    }
+}
 
-        const auto word = [](const std::vector<std::uint8_t>& from, std::size_t at) {
-            std::uint32_t value;
-            std::memcpy(&value, from.data() + at, sizeof(value));
-            return value;
+// A moby class of a level as its core holds it on the disc, before the game relocates it
+// (LoadLevelArchiveResources, func_L00_00303990: the level data opens with (offset, size) pairs,
+// the core index second and the core data tenth, WAD-compressed; the index's moby class table,
+// +0x18 its count and +0x1C its 0x20-byte records, each +0 the block's offset in the core, +4 the
+// class, +0x10 its texture map). A block ends where the next block of the core starts (the bounds
+// extractor/level.py core_boundaries takes, with the index's +0x24, PrintMobyClassSizes's end).
+// The last level's core is kept: several classes of one level read it once.
+struct Rac2Class {
+    int level = -1, oclass = -1;
+    std::vector<std::uint8_t> bytes;
+    std::uint8_t map[16] = {};
+};
+
+bool rac2_level_class(int level, int oclass, Rac2Class* out) {
+    static int core_level = -1;
+    static std::vector<std::uint8_t> index, core;
+    assets::disc::IsoImage* iso = rac2_iso();
+    if (iso == nullptr) {
+        return false;
+    }
+    try {
+        if (core_level != level) {
+            core_level = -1;
+            index.clear();
+            core.clear();
+            const std::uint64_t data = rac2_level_data(*iso, level);
+            if (data == 0) {
+                return false;
+            }
+            const std::vector<std::uint8_t> slots = iso->read_bytes(data, 0x50);
+            const auto section = [&](std::size_t pair) {
+                std::vector<std::uint8_t> raw =
+                    iso->read_bytes(data + rac2_word(slots, pair * 8), rac2_word(slots, pair * 8 + 4));
+                return assets::disc::is_wad(raw) ? assets::disc::wad_decompress(raw) : raw;
+            };
+            index = section(1);
+            core = section(9);
+            if (index.size() < 0x90 || core.size() != rac2_word(index, 0x8C)) {
+                log::warn("level {}'s core cannot be read from the disc image", level);
+                index.clear();
+                core.clear();
+                return false;
+            }
+            core_level = level;
+        }
+        const std::uint32_t count = rac2_word(index, 0x18), table = rac2_word(index, 0x1C);
+        std::size_t record = SIZE_MAX;
+        for (std::uint32_t i = 0; i < count && table + (i + 1) * 0x20ull <= index.size(); ++i) {
+            if (static_cast<int>(rac2_word(index, table + i * 0x20 + 4)) == oclass) {
+                record = table + i * 0x20;
+            }
+        }
+        if (record == SIZE_MAX) {
+            return false;
+        }
+        const std::uint32_t at = rac2_word(index, record);
+        std::uint64_t end = core.size();
+        const auto bound = [&](std::uint64_t b) {
+            if (b > at && b < end) {
+                end = b;
+            }
         };
-        const std::string name =
-            std::format("G/LEVEL{}.WAD", level == kMuseum ? kMuseumFile : level);
-        const assets::disc::IsoEntry* file = iso->find(name);
+        for (std::size_t w : {0x08, 0x0C, 0x10, 0x14, 0x24, 0x60}) {
+            bound(rac2_word(index, w));
+        }
+        const std::size_t tables[3][2] = {{0x18, 0x20}, {0x20, 0x20}, {0x28, 0x30}};
+        for (const auto& t : tables) {
+            const std::uint32_t n = rac2_word(index, t[0]), first = rac2_word(index, t[0] + 4);
+            for (std::uint32_t i = 0; i < n && first + (i + 1) * t[1] <= index.size(); ++i) {
+                bound(rac2_word(index, first + i * t[1]));
+            }
+        }
+        if (at == 0 || at >= core.size() || end - at < 0x50) {
+            return false;
+        }
+        out->level = level;
+        out->oclass = oclass;
+        out->bytes.assign(core.begin() + at, core.begin() + static_cast<std::ptrdiff_t>(end));
+        std::memcpy(out->map, index.data() + record + 0x10, sizeof(out->map));
+        return true;
+    } catch (const std::exception& e) {
+        log::warn("level {}'s class {} cannot be read from the disc image: {}", level, oclass, e.what());
+        return false;
+    }
+}
 
+// The first moby of a class a level's gameplay file places, as LoadLevelData reads it
+// (func_L00_00300618): the level header's +0x20 (the file's first sector, from the level's, and its
+// sectors), WAD-compressed; section +0x4C the records (a count, then from +0x10 records of the
+// size their first word gives: +0x28 the class, +0x68 its pvars block or -1), +0x5C the blocks'
+// (offset, size) in section +0x60, +0x64 the pointers inside blocks (block, offset; -1 ends) that
+// the load turns into addresses. The record, its block and those pointers' offsets in it.
+struct Rac2Record {
+    int level = -1, oclass = -1;
+    std::vector<std::uint8_t> record, pvars;
+    std::vector<std::uint32_t> inner;
+};
+
+bool rac2_level_record(int level, int oclass, Rac2Record* out) {
+    assets::disc::IsoImage* iso = rac2_iso();
+    if (iso == nullptr) {
+        return false;
+    }
+    try {
+        constexpr std::uint64_t kSector = 2048;
+        const std::string name = std::format("G/LEVEL{}.WAD", level);
+        const assets::disc::IsoEntry* file = iso->find(name);
         if (file == nullptr) {
             return false;
         }
-
-        const std::uint64_t start = file->lba * kSector;
-        const std::vector<std::uint8_t> head = iso->read_bytes(start, 0x18);
-
-        if (static_cast<int>(word(head, 0x08)) != level) {
+        const std::vector<std::uint8_t> head = iso->read_bytes(file->lba * kSector, 0x60);
+        if (static_cast<int>(rac2_word(head, 0x08)) != level) {
             return false;
         }
-
-        const std::uint64_t data = start + word(head, 0x10) * kSector;
-        const std::vector<std::uint8_t> slot = iso->read_bytes(data, 8);
-        *bytes = iso->read_bytes(data + word(slot, 0), word(slot, 4));
-        return !bytes->empty();
+        std::vector<std::uint8_t> raw = iso->read_bytes(
+            (file->lba + rac2_word(head, 0x20)) * kSector, rac2_word(head, 0x24) * kSector
+        );
+        const std::vector<std::uint8_t> g =
+            assets::disc::is_wad(raw) ? assets::disc::wad_decompress(raw) : std::move(raw);
+        const std::uint32_t mobys = rac2_word(g, 0x4C), blocks = rac2_word(g, 0x5C);
+        const std::uint32_t data = rac2_word(g, 0x60), inner = rac2_word(g, 0x64);
+        const std::uint32_t count = rac2_word(g, mobys);
+        std::size_t p = mobys + 0x10;
+        for (std::uint32_t i = 0; i < count && p + 0x88 <= g.size(); ++i) {
+            const std::uint32_t size = rac2_word(g, p) & ~3u;
+            const std::int32_t block = static_cast<std::int32_t>(rac2_word(g, p + 0x68));
+            if (size < 0x88) {
+                return false;
+            }
+            if (static_cast<int>(rac2_word(g, p + 0x28)) == oclass && block >= 0) {
+                const std::uint32_t off = rac2_word(g, blocks + block * 8u);
+                const std::uint32_t bytes = rac2_word(g, blocks + block * 8u + 4u);
+                if (std::uint64_t(data) + off + bytes > g.size()) {
+                    return false;
+                }
+                out->level = level;
+                out->oclass = oclass;
+                out->record.assign(g.begin() + p, g.begin() + p + 0x88);
+                out->pvars.assign(g.begin() + data + off, g.begin() + data + off + bytes);
+                out->inner.clear();
+                for (std::size_t q = inner; inner != 0 && q + 8 <= g.size()
+                                            && static_cast<std::int32_t>(rac2_word(g, q)) >= 0;
+                     q += 8) {
+                    if (static_cast<std::int32_t>(rac2_word(g, q)) == block
+                        && rac2_word(g, q + 4) + 4u <= bytes) {
+                        out->inner.push_back(rac2_word(g, q + 4));
+                    }
+                }
+                return true;
+            }
+            p += size;
+        }
+        return false;
     } catch (const std::exception& e) {
-        log::warn("level {}'s program cannot be read from {}: {}", level, image.string(), e.what());
+        log::warn("level {}'s gameplay file cannot be read from the disc image: {}", level, e.what());
         return false;
     }
 }
@@ -303,6 +475,102 @@ void load_level_program(int level) {
 
 extern "C" void openrac_game_clear_level_programs(void) {
     openrac_guest_clear_level_programs();
+}
+
+extern "C" int openrac_game_level_class(
+    int level, int oclass, const uint8_t** bytes, uint32_t* size, uint8_t map[16]
+) {
+#ifdef OPENRAC_HAS_DISC
+    // Each class read once a run: the disc is not read again at each load of the level.
+    static std::vector<Rac2Class> classes;
+    if (std::string(openrac_game.game) != "rac2" || bytes == nullptr || size == nullptr
+        || map == nullptr) {
+        return -1;
+    }
+    const Rac2Class* found = nullptr;
+    for (const Rac2Class& c : classes) {
+        if (c.level == level && c.oclass == oclass) {
+            found = &c;
+        }
+    }
+    if (found == nullptr) {
+        Rac2Class c;
+        if (!rac2_level_class(level, oclass, &c)) {
+            classes.push_back(Rac2Class{level, oclass, {}, {}});  // not read again either
+            return -1;
+        }
+        log::info("level {}'s moby class {}: {} bytes read from the disc image", level, oclass, c.bytes.size());
+        classes.push_back(std::move(c));
+        found = &classes.back();
+    }
+    if (found->bytes.empty()) {
+        return -1;
+    }
+    *bytes = found->bytes.data();
+    *size = static_cast<uint32_t>(found->bytes.size());
+    std::memcpy(map, found->map, sizeof(found->map));
+    return 0;
+#else
+    (void)level;
+    (void)oclass;
+    (void)bytes;
+    (void)size;
+    (void)map;
+    return -1;
+#endif
+}
+
+extern "C" int openrac_game_level_record(
+    int level, int oclass, uint8_t record[0x88], const uint8_t** pvars, uint32_t* pvars_size,
+    const uint32_t** inner, uint32_t* inner_count
+) {
+#ifdef OPENRAC_HAS_DISC
+    static std::vector<Rac2Record> records;
+    if (std::string(openrac_game.game) != "rac2" || record == nullptr || pvars == nullptr
+        || pvars_size == nullptr || inner == nullptr || inner_count == nullptr) {
+        return -1;
+    }
+    const Rac2Record* found = nullptr;
+    for (const Rac2Record& r : records) {
+        if (r.level == level && r.oclass == oclass) {
+            found = &r;
+        }
+    }
+    if (found == nullptr) {
+        Rac2Record r;
+        if (!rac2_level_record(level, oclass, &r)) {
+            records.push_back(Rac2Record{level, oclass, {}, {}, {}});
+            return -1;
+        }
+        log::info(
+            "level {}'s first moby of class {}: {} bytes of pvars, {} pointers in them",
+            level,
+            oclass,
+            r.pvars.size(),
+            r.inner.size()
+        );
+        records.push_back(std::move(r));
+        found = &records.back();
+    }
+    if (found->record.empty()) {
+        return -1;
+    }
+    std::memcpy(record, found->record.data(), 0x88);
+    *pvars = found->pvars.data();
+    *pvars_size = static_cast<uint32_t>(found->pvars.size());
+    *inner = found->inner.data();
+    *inner_count = static_cast<uint32_t>(found->inner.size());
+    return 0;
+#else
+    (void)level;
+    (void)oclass;
+    (void)record;
+    (void)pvars;
+    (void)pvars_size;
+    (void)inner;
+    (void)inner_count;
+    return -1;
+#endif
 }
 
 #ifdef OPENRAC_FRONTEND

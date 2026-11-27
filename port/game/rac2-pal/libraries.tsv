@@ -271,6 +271,7 @@ func_0027E338	draw	DrawFlatBox	wrap	a box of flat colour (the pages' frames): dr
 func_00314B5C	moby	NanotechBallUpdate	wrap	the nanotech cluster's update: its sphere test runs against the picture's sides (host/wide_view.c)
 func_002A7650	moby	SetDeathBits	wrap	a moby's death recorded: for an enemy's copy (host/enemy_copies.c) the marks it leaves on its original's save id are put back
 func_L00_003021B0	level	LoadLevelData	wrap	the level's gameplay file read for the mods' enemy copies as the game has laid the level out from it (host/enemy_copies.c)
+func_L00_00301FD0	level	PrintMobyClassSizes	wrap	after the level's classes: classes of other levels read from the disc image registered (host/foreign_class.c)
 func_L00_003AF190	weapon	ProjectileSpawnTargeted	wrap	the Minirocket Tube's homing rocket made (class 1498): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
 func_L00_0040E9F0	weapon	SpawnAimedProjectile	wrap	the RYNO II's rocket made (class 3799): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
 func_L00_003ADC68	weapon	EffectSpawnOwnedMoby	wrap	the Seeker Gun's seeker made (class 3329): the hero's noted for the mods, and made again for them (host/weapon_shots.c)
