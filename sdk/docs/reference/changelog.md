@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.107
+
+Going Commando's pad vibration from a mod, for a time, and the game's own muted while a weapon is in the hand (pad_rumble, game_motors_mute).
+
+Members: `pad_rumble`, `game_motors_mute`.
+
 ## 1.106
 
 Going Commando's named effects in particle_spawn_ex (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own effects recoloured: a weapon's muzzle flash, a shot's impact and its trail (effect_tint).

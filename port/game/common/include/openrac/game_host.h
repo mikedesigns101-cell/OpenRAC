@@ -916,6 +916,12 @@ typedef struct openrac_game_play {
      * the whole list each time it changes, `count` 0 for none. Each entry is checked. NULL for a
      * game without them. */
     void (*effect_tints)(const openrac_game_effect_tint* tints, int count);
+    /* The pads' motors for a mod (openrac_api.pad_rumble, game_motors_mute): pad `port` vibrating
+     * for `ticks` polls (checked; 0 stops it), the last call on a port replacing the one before; and
+     * the items while in the hero's hand the game's own vibration is muted (-1: always), the whole
+     * list each time it changes. NULL for a game without them. */
+    int (*pad_rumble)(int port, int small_motor, int large_motor, int ticks);
+    void (*motors_mute)(const int32_t* items, int count);
 } openrac_game_play;
 
 #define OPENRAC_GAME_CAMERA_END_EASED (-1)

@@ -234,3 +234,5 @@ on_play_query	hooks	1.40	experimental
 overlay_image_create	graphics	1.103	experimental
 overlay_image_destroy	graphics	1.103	experimental
 effect_tint	visuals	1.106	experimental
+pad_rumble	input	1.107	experimental
+game_motors_mute	input	1.107	experimental

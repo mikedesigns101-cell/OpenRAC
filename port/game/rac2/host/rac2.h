@@ -75,6 +75,10 @@ void rac2_effect_tints(const struct openrac_game_effect_tint* tints, int count);
 void rac2_tint_push(const float rgb[3], float saturation);
 void rac2_tint_pop(void);
 
+/* The mods' motors (pad_state.c; openrac_api.pad_rumble, game_motors_mute). */
+int rac2_pad_rumble(int port, int small_motor, int large_motor, int ticks);
+void rac2_motors_mute(const int32_t* items, int count);
+
 /* A mod's camera (camera_override.c; openrac_api.camera_set, camera_view): 1 done, 0 outside a
  * level; and whether the world is drawn from it now. */
 int rac2_camera_set(const float eye[3], const float rows[9]);

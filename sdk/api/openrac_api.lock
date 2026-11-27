@@ -232,3 +232,5 @@
 230	overlay_image_create	1824	int (*)(openrac_mod *, const openrac_overlay_image *)
 231	overlay_image_destroy	1832	int (*)(openrac_mod *, int)
 232	effect_tint	1840	int (*)(openrac_mod *, const openrac_effect_tint *)
+233	pad_rumble	1848	int (*)(openrac_mod *, int, int, int, int)
+234	game_motors_mute	1856	int (*)(openrac_mod *, int32_t)

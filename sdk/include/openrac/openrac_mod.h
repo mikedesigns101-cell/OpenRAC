@@ -146,12 +146,14 @@ extern "C" {
  * unchanged), with Going Commando's HUD parts, quick select, 2D elements and
  * the vendor's opening as hook points, 1.105 Going Commando's camera set by a
  * mod: camera_set and camera_view in play and under a vendor's menu (the table
- * is unchanged), and 1.106 Going Commando's named effects in particle_spawn_ex
+ * is unchanged), 1.106 Going Commando's named effects in particle_spawn_ex
  * (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own
  * effects recoloured: a weapon's muzzle flash, a shot's impact and its trail
- * (effect_tint).
+ * (effect_tint), and 1.107 Going Commando's pad vibration from a mod, for a
+ * time, and the game's own muted while a weapon is in the hand (pad_rumble,
+ * game_motors_mute).
  */
-#define OPENRAC_MOD_API_MINOR 106
+#define OPENRAC_MOD_API_MINOR 107
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1880,6 +1882,15 @@ typedef struct openrac_particle_spawn {
 /* The largest colour multiplier of a tint. Since 1.106. */
 #define OPENRAC_EFFECT_RGB_MAX 4.0f
 
+/* The longest pad_rumble, in game ticks (10 seconds at 60). Since 1.107. */
+#define OPENRAC_PAD_RUMBLE_TICKS_MAX 600
+/* game_motors_mute's item: the game's vibration muted whatever is in the hand, and no longer
+ * muted (the mod's mutes taken off). Since 1.107. */
+#define OPENRAC_MOTORS_MUTE_ALL (-1)
+#define OPENRAC_MOTORS_MUTE_NONE (-2)
+/* The most items game_motors_mute holds, all mods together. Since 1.107. */
+#define OPENRAC_MOTORS_MUTE_MAX 16
+
 /* A tint of the game's own effects (openrac_api.effect_tint): the effects in `effects`, made while
  * the weapon `item` is in the hero's hand (-1 any) by a moby of class `oclass` (the shot or the
  * weapon that makes them: the bullet's class for IMPACT and TRAIL, the moby the flash is put on for
@@ -3585,6 +3596,21 @@ typedef struct openrac_api {
      * OPENRAC_EFFECT_TINT_MAX, or OPENRAC_HOOK_UNKNOWN for a value out of range or a game without
      * them (Going Commando only). Since 1.106. */
     int (*effect_tint)(openrac_mod* mod, const openrac_effect_tint* tint);
+
+    /* Vibrates pad port (0 or 1) for ticks game ticks (1 to OPENRAC_PAD_RUMBLE_TICKS_MAX): the
+     * small motor off or on (0, 1), the large one at 0 to 255; each motor plays the stronger of
+     * this, the game's and set_motors. A new call on the port replaces the last one there (any
+     * mod's); ticks 0 stops it. It does not wait for the game: it plays in the pause menu too.
+     * Going Commando. Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for a
+     * value out of range or a game without it. Since 1.107. */
+    int (*pad_rumble)(openrac_mod* mod, int port, int small_motor, int large_motor, int ticks);
+
+    /* Mutes the game's own pad vibration (its weapons' kick, hits, explosions): while item is in
+     * the hero's hand (item 0 or more), always (OPENRAC_MOTORS_MUTE_ALL), or no longer
+     * (OPENRAC_MOTORS_MUTE_NONE, the mod's mutes taken off); set_motors and pad_rumble still play.
+     * Up to OPENRAC_MOTORS_MUTE_MAX items for all mods. Going Commando. Returns OPENRAC_HOOK_OK,
+     * OPENRAC_HOOK_FULL past the most, or OPENRAC_HOOK_UNKNOWN for a game without it. Since 1.107. */
+    int (*game_motors_mute)(openrac_mod* mod, int32_t item);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

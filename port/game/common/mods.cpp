@@ -1116,6 +1116,8 @@ void fill_api(const Host& host) {
     g_api.overlay_image_create = api_overlay_image_create;
     g_api.overlay_image_destroy = api_overlay_image_destroy;
     g_api.effect_tint = api_effect_tint;
+    g_api.pad_rumble = api_pad_rumble;
+    g_api.game_motors_mute = api_game_motors_mute;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
 }
