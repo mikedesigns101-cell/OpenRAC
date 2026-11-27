@@ -2723,7 +2723,29 @@ TickMobys pose_mobys(
             );
         }
         // Its pose, evaluated after the loop with the others' on several threads.
-        if (animate && joints > 0 && skin == nullptr && !replacement_pose) {
+        // A world moby out of the camera's sight (behind it, or well outside the sides of its view,
+        // its sphere included) is not posed: it is drawn in its bind pose, which no one sees. The
+        // poses are the moby part of the scene that grows with the enemies (0.02 ms each). The hero
+        // and what the game draws with a camera of its own are always posed. OPENRAC_POSE_CULL=0
+        // poses every moby, as before.
+        static const bool pose_cull = [] {
+            const char* v = std::getenv("OPENRAC_POSE_CULL");
+            return v == nullptr || v[0] != '0';
+        }();
+        bool out_of_sight = false;
+        if (pose_cull && world_ran && !free_camera && !own_camera && m.class_id != 0 && !extra) {
+            float v[3], d = 0.0f, len2 = 0.0f;
+            for (int a = 0; a < 3; ++a) {
+                v[a] = m.matrix[12 + a] - state.camera_position[a];
+                d += v[a] * state.forward[a];
+                len2 += v[a] * v[a];
+            }
+            const float r = std::max(m.world_sphere[3], 4.0f);
+            const float side = std::sqrt(std::max(len2 - d * d, 0.0f));
+            // 1.8 across a unit ahead: a half angle of 61 degrees, wider than any view the game makes.
+            out_of_sight = d < -r || side > d * 1.8f + r * 1.5f;
+        }
+        if (animate && joints > 0 && skin == nullptr && !replacement_pose && !out_of_sight) {
             const bool target = into_texture.contains(m.address) || on_screen.contains(m.address);
             pose_jobs.push_back(
                 {m.address, joints, target, target ? target_mobys.size() : live.size(), rebind}
