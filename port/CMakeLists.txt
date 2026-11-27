@@ -322,6 +322,7 @@ add_library(openrac_mods STATIC
   game/common/mod_api/hooks.cpp
   game/common/mod_api/input.cpp
   game/common/mod_api/menus.cpp
+  game/common/mod_api/moby_textures.cpp
   game/common/mod_api/party.cpp
   game/common/mod_api/play.cpp
   game/common/mod_api/saves.cpp

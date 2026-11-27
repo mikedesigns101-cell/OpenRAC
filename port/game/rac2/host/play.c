@@ -540,6 +540,17 @@ static int32_t slot_of(gaddr moby) {
     return (int32_t)((moby - base) / MOBY_SIZE);
 }
 
+/* The class of the live moby at `moby` (openrac_game_play.moby_class_at: moby_model_at, and
+ * moby_textures_at of OpenRAC Commando's 1.120), -1 for an address that is no live moby of the
+ * level's table. */
+static int32_t moby_class_at(gaddr moby) {
+    if (!in_level() || slot_of(moby) < 0 || GREF(uint8_t, moby + MOBY_STATE) >= 0x80) {
+        return -1;
+    }
+    const int32_t oclass = GREF(int16_t, moby + MOBY_OCLASS);
+    return oclass >= 0 ? oclass : -1;
+}
+
 /* A placed moby's key: its id in the level's file (+0xB2); one the game made has none. */
 static int32_t moby_key(gaddr moby, gaddr dynamic) {
     return moby < dynamic ? GREF(int16_t, moby + MOBY_UID) : -1;
@@ -842,6 +853,7 @@ static openrac_game_play play = {
     .moby_slot = moby_slot,
     .moby_at = moby_at,
     .slot_of = slot_of,
+    .moby_class_at = moby_class_at,
     .moby_pose = pose_moby,
     .moby_kill = moby_kill,
     .moby_spawn = moby_spawn,

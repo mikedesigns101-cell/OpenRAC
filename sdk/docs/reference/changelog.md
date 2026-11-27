@@ -4,9 +4,65 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.120
+
+Members: `moby_textures_at`, `moby_textures_class`.
+
+## 1.119
+
+No new members (the table is unchanged).
+
+## 1.118
+
+No new members (the table is unchanged).
+
+## 1.117
+
+No new members (the table is unchanged).
+
+## 1.116
+
+No new members (the table is unchanged).
+
+## 1.115
+
+No new members (the table is unchanged).
+
+## 1.114
+
+No new members (the table is unchanged).
+
+## 1.113
+
+No new members (the table is unchanged).
+
+## 1.112
+
+No new members (the table is unchanged).
+
+## 1.111
+
+No new members (the table is unchanged).
+
+## 1.110
+
+No new members (the table is unchanged).
+
+## 1.109
+
+No new members (the table is unchanged).
+
+## 1.108
+
+No new members (the table is unchanged).
+
+## 1.107
+
+No new members (the table is unchanged).
+
 ## 1.106
 
-Going Commando's named effects in particle_spawn_ex (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own effects recoloured: a weapon's muzzle flash, a shot's impact and its trail (effect_tint).
+Going Commando's named effects in particle_spawn_ex (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own effects recoloured: a weapon's muzzle flash, a shot's impact and its trail (effect_tint), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model).
 
 Members: `effect_tint`.
 

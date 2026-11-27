@@ -410,7 +410,34 @@ struct MobyModelDraw {
     std::array<float, 16> matrix{};
     // Suppress this moby, including its native model, for this frame.
     bool hidden = false;
+    // Posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, interface 1.120): a skinned mesh.
+    bool game_pose = false;
 };
+
+// ---- Moby textures (interface 1.120, mod_api/moby_textures.cpp) ----
+
+// One texture of a moby's class model drawn as a picture of a mod's: the class model's texture by
+// its place (`index`, -1 none) or by its file name without extension (`name`), and the picture.
+struct MobyTextureSwap {
+    int index = -1;
+    std::string name;
+    std::filesystem::path png;
+};
+
+// The textures a mod draws a moby with (moby_textures_at: `address` and the class it had; `scope` 0)
+// or every moby of a class in one scope (moby_textures_class: `address` 0, `scope` one of
+// OPENRAC_MODEL_WORLD and _MENU). `key` names the class and its swaps together: two mobys with the
+// same key are drawn with one model.
+struct MobyTexturesDraw {
+    std::uint32_t address = 0;
+    int oclass = -1;
+    std::uint32_t scope = 0;
+    std::string key;
+    std::vector<MobyTextureSwap> swaps;
+};
+
+// The mods' textures of this level load. From any thread.
+std::vector<MobyTexturesDraw> moby_textures_drawn();
 
 // The mobys the mods draw with a mesh of their own in the level now (this level load's). From any
 // thread.

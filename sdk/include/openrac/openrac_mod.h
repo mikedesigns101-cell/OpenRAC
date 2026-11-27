@@ -149,9 +149,12 @@ extern "C" {
  * is unchanged), and 1.106 Going Commando's named effects in particle_spawn_ex
  * (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own
  * effects recoloured: a weapon's muzzle flash, a shot's impact and its trail
- * (effect_tint).
+ * (effect_tint), and 1.120 a moby drawn with its class's own model and animation
+ * but with textures of the mod's (moby_textures_at, moby_textures_class), and a
+ * mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a
+ * flag of openrac_moby_model).
  */
-#define OPENRAC_MOD_API_MINOR 106
+#define OPENRAC_MOD_API_MINOR 120
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1289,6 +1292,39 @@ typedef struct openrac_moby_model {
 /* openrac_api.moby_model_at only: hide this moby instead of drawing its native model. Set model to
  * -1. Clearing the override (model -1 without this flag) gives the moby its native model back. Since 1.33. */
 #define OPENRAC_MODEL_HIDE_NATIVE 0x2u
+
+/* openrac_moby_model.flags (moby_model_slot, moby_model_class, moby_model_at): the mesh is skinned (a
+ * glTF skin whose joints are named joint_NNN, the game's joint numbers, as the port's exports of the
+ * mobys name them) and is posed every frame by the moby's own joints, as the game's model of its class
+ * is: its animation, its joint modifiers and its pose layers. Where a joint's bind pose in the mesh is
+ * not the class model's, that joint is moved by the difference (the class's bind times the inverse of
+ * the mesh's), so a mesh rigged on the exported skeleton and then moved in its bind pose still follows
+ * it. A mesh without a skin is drawn rigid, as without the flag. Since 1.120. */
+#define OPENRAC_MODEL_GAME_POSE 0x4u
+
+/* The most textures one openrac_moby_textures swaps. Since 1.120. */
+#define OPENRAC_MOBY_TEXTURES_MAX 16
+
+/* One texture of a moby's model drawn as a picture of the mod's (openrac_api.moby_textures_at):
+ * `index` the class model's texture by its place (0 the first texture its model's parts use, in the
+ * order of the parts, which is the order of the images of the port's export of the class), or -1 to
+ * name it: `name` the texture's file name in the level's export without its extension ("moby_0088");
+ * `png` a .png in the mod's folder (as prop_create's mesh path), any size, with alpha where the
+ * original has it. Since 1.120. */
+typedef struct openrac_moby_texture {
+    int32_t index;
+    const char* name;
+    const char* png;
+} openrac_moby_texture;
+
+/* The textures a moby is drawn with in place of its class's own (openrac_api.moby_textures_at,
+ * moby_textures_class): `count` of them, 0 to give the moby its own back. Since 1.120. */
+typedef struct openrac_moby_textures {
+    /* sizeof(openrac_moby_textures), set by the mod. */
+    uint32_t size;
+    uint32_t count;
+    openrac_moby_texture textures[OPENRAC_MOBY_TEXTURES_MAX];
+} openrac_moby_textures;
 
 /* openrac_api.moby_model_class's `scope`: the mobys of the level's world (array mobys, drawn with
  * the level's camera), and the mobys a menu draws with a camera of its own, in the array or not
@@ -3585,6 +3621,27 @@ typedef struct openrac_api {
      * OPENRAC_EFFECT_TINT_MAX, or OPENRAC_HOOK_UNKNOWN for a value out of range or a game without
      * them (Going Commando only). Since 1.106. */
     int (*effect_tint)(openrac_mod* mod, const openrac_effect_tint* tint);
+
+    /* Draws the moby at `address` (the game's address of a moby the game has: a placed one, a copy, a
+     * spawned one) with its class's own model, skin and animation, but with pictures of the mod's in
+     * place of some of its textures (openrac_moby_textures; count 0 gives it its own back), from the
+     * frame after the port has read the pictures into the level (a few frames). Only that moby is drawn
+     * so; a mesh override of it (moby_model_at, moby_model_slot) is drawn instead. Another mod's
+     * textures on the same address are replaced. The textures go when the class the game reads at the
+     * address changes, with its level and the mod's unload. A texture `index` past the class model's
+     * or a `name` it does not use changes nothing and is logged. Returns OPENRAC_HOOK_OK,
+     * OPENRAC_HOOK_FULL past 4096 mobys of the mod's, or OPENRAC_HOOK_UNKNOWN for a null `t`, a short
+     * `size`, a count past OPENRAC_MOBY_TEXTURES_MAX, an entry without a picture or with neither index
+     * nor name, a picture that is not a .png in the mod's folder, an address that is 0 or not a moby,
+     * outside a level, or a port without it (nothing changes). Since 1.120. */
+    int (*moby_textures_at)(openrac_mod* mod, uint32_t address, const openrac_moby_textures* t);
+
+    /* The same for every moby of class `oclass` in `scope` (OPENRAC_MODEL_WORLD, _MENU or both, as
+     * moby_model_class's): a moby's own (moby_textures_at) wins. Returns as moby_textures_at, with
+     * OPENRAC_HOOK_UNKNOWN for a class below 0 or a scope of 0 or with other bits. Since 1.120. */
+    int (*moby_textures_class)(
+        openrac_mod* mod, int oclass, uint32_t scope, const openrac_moby_textures* t
+    );
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

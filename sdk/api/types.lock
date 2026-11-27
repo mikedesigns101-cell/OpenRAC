@@ -188,6 +188,14 @@ openrac_moby_run	draw_dist	52	int32_t
 openrac_moby_run	drawn	56	int32_t
 openrac_moby_run	ran	60	int32_t
 openrac_moby_run	distance	64	float
+openrac_moby_texture	(size)	24	-
+openrac_moby_texture	index	0	int32_t
+openrac_moby_texture	name	8	const char *
+openrac_moby_texture	png	16	const char *
+openrac_moby_textures	(size)	392	-
+openrac_moby_textures	size	0	uint32_t
+openrac_moby_textures	count	4	uint32_t
+openrac_moby_textures	textures	8	openrac_moby_texture[16]
 openrac_moby_visual	(size)	12	-
 openrac_moby_visual	moby	0	openrac_gaddr
 openrac_moby_visual	oclass	4	int32_t

@@ -56,6 +56,7 @@
 #include "game/common/frontend/effects_dump.h"
 #include "game/common/frontend/energy_effects.h"
 #include "game/common/frontend/geometry.h"
+#include "game/common/frontend/moby_textures.h"
 #include "game/common/frontend/state.h"
 #include "game/common/mods.h"
 #include "game/common/particle_texture_cache.h"
@@ -418,6 +419,7 @@ void use_level(int number) {
     });
     g->render.level = scene::LevelData();
     g->prop_models.clear();
+    forget_moby_textures();
     g->prop_rigs.clear();
     g->moby_skins = {};
     audio::ui_sounds::play_pickup_audio(-1);

@@ -763,17 +763,17 @@ std::vector<MobyModelDraw> moby_models_drawn() {
     const std::uint32_t loads = loads_now();
     for (const auto& [slot, s] : g_slot_models) {
         if (s.mod != nullptr && s.loads == loads) {
-            out.push_back({s.address, s.oclass, 0, s.mesh, s.matrix, s.hidden});
+            out.push_back({s.address, s.oclass, 0, s.mesh, s.matrix, s.hidden, s.game_pose});
         }
     }
     for (const auto& [address, s] : g_address_models) {
         if (s.mod != nullptr && s.loads == loads) {
-            out.push_back({address, s.oclass, 0, s.mesh, s.matrix, s.hidden});
+            out.push_back({address, s.oclass, 0, s.mesh, s.matrix, s.hidden, s.game_pose});
         }
     }
     for (const auto& [key, c] : g_class_models) {
         if (c.mod != nullptr && c.loads == loads) {
-            out.push_back({0, key.first, key.second, c.mesh, c.matrix, false});
+            out.push_back({0, key.first, key.second, c.mesh, c.matrix, false, c.game_pose});
         }
     }
     return out;
@@ -1184,11 +1184,13 @@ void reset_play() {
     openrac_game_metal_detect = nullptr;
     drop_weapon_shots(nullptr);
     effect_tints_forget(nullptr);
+    moby_textures_forget(nullptr);
 }
 
 void drop_figures(const openrac_mod* mod) {
     drop_weapon_shots(mod);
     effect_tints_forget(mod);
+    moby_textures_forget(mod);
     drop_air(mod);
     // Its sharper cells (openrac_api.sharp_cells); null is the built-ins', which stay.
     if (mod != nullptr) {

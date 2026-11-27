@@ -246,7 +246,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `model_create` | 1.33 | experimental | yes | yes | yes |
 | `moby_model_slot` | 1.33 | experimental | yes | yes | yes |
 | `moby_model_class` | 1.33 | experimental | yes | yes | yes |
-| `moby_model_at` | 1.33 | experimental | yes | part | part |
+| `moby_model_at` | 1.33 | experimental | yes | yes | part |
 | `particle_spawn_ex` | 1.33 | experimental | yes | yes | part |
 | `particle_texture_register` | 1.33 | experimental | yes | part | part |
 | `moby_material_class` | 1.34 | experimental | yes | yes | yes |
@@ -256,6 +256,8 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `prop_animate` | 1.35 | experimental | yes | yes | yes |
 | `sharp_cells` | 1.36 | experimental | yes | yes | yes |
 | `effect_tint` | 1.106 | experimental | no | yes | no |
+| `moby_textures_at` | 1.120 | experimental | yes | yes | part |
+| `moby_textures_class` | 1.120 | experimental | yes | yes | yes |
 
 ## camera
 

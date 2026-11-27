@@ -561,7 +561,7 @@ int api_moby_model_class(
 ) {
     constexpr std::uint32_t kScopes = OPENRAC_MODEL_WORLD | OPENRAC_MODEL_MENU;
     if (mod == nullptr || oclass < 0 || scope == 0 || (scope & ~kScopes) != 0 || m == nullptr
-        || m->size < sizeof(openrac_moby_model) || m->flags != 0
+        || m->size < sizeof(openrac_moby_model) || (m->flags & ~OPENRAC_MODEL_GAME_POSE) != 0
         || !std::all_of(m->matrix, m->matrix + 16, [](float f) { return std::isfinite(f); })) {
         return OPENRAC_HOOK_UNKNOWN;
     }
@@ -595,13 +595,14 @@ int api_moby_model_class(
         c.loads = loads;
         c.mesh = model->mesh;
         std::copy(m->matrix, m->matrix + 16, c.matrix.begin());
+        c.game_pose = (m->flags & OPENRAC_MODEL_GAME_POSE) != 0;
     }
     return OPENRAC_HOOK_OK;
 }
 
 int api_moby_model_slot(openrac_mod* mod, int slot, const openrac_moby_model* m) {
     if (mod == nullptr || g_play == nullptr || m == nullptr || m->size < sizeof(openrac_moby_model)
-        || m->flags != 0
+        || (m->flags & ~OPENRAC_MODEL_GAME_POSE) != 0
         || !std::all_of(m->matrix, m->matrix + 16, [](float f) { return std::isfinite(f); })) {
         return OPENRAC_HOOK_UNKNOWN;
     }
@@ -638,6 +639,7 @@ int api_moby_model_slot(openrac_mod* mod, int slot, const openrac_moby_model* m)
     s.mesh = model->mesh;
     std::copy(m->matrix, m->matrix + 16, s.matrix.begin());
     s.hidden = false;
+    s.game_pose = (m->flags & OPENRAC_MODEL_GAME_POSE) != 0;
     return OPENRAC_HOOK_OK;
 }
 
@@ -645,7 +647,7 @@ int api_moby_model_slot(openrac_mod* mod, int slot, const openrac_moby_model* m)
 // own at that address (moby_class_at), so an override goes when the class there changes.
 int api_moby_model_at(openrac_mod* mod, std::uint32_t address, const openrac_moby_model* m) {
     if (mod == nullptr || g_play == nullptr || m == nullptr || m->size < sizeof(openrac_moby_model)
-        || (m->flags & ~OPENRAC_MODEL_HIDE_NATIVE) != 0
+        || (m->flags & ~(OPENRAC_MODEL_HIDE_NATIVE | OPENRAC_MODEL_GAME_POSE)) != 0
         || ((m->flags & OPENRAC_MODEL_HIDE_NATIVE) != 0 && m->model >= 0)
         || !std::all_of(m->matrix, m->matrix + 16, [](float f) { return std::isfinite(f); })) {
         return OPENRAC_HOOK_UNKNOWN;
@@ -696,6 +698,7 @@ int api_moby_model_at(openrac_mod* mod, std::uint32_t address, const openrac_mob
     s.mesh = model->mesh;
     std::copy(m->matrix, m->matrix + 16, s.matrix.begin());
     s.hidden = false;
+    s.game_pose = (m->flags & OPENRAC_MODEL_GAME_POSE) != 0;
     return OPENRAC_HOOK_OK;
 }
 

@@ -56,6 +56,7 @@
 #include "game/common/frontend/hero_shadows.h"
 #include "game/common/frontend/input_latency.h"
 #include "game/common/frontend/menu_layers.h"
+#include "game/common/frontend/moby_textures.h"
 #include "game/common/frontend/scenery_capture.h"
 #include "game/common/frontend/state.h"
 #include "game/common/frontend/view_mobys.h"
@@ -1107,6 +1108,7 @@ void use_world(std::span<const std::uint8_t> ram, int level) {
     const int loading = world == -2 ? g->render.profile->loading_world() : -1;
     use_level(loading >= 0 ? loading : world);
     load_prop_meshes();
+    load_moby_textures();
     if (next_level >= 0) {
         preload_level(next_level);
     }
@@ -1889,6 +1891,9 @@ TickMobys pose_mobys(
         int joints = 0;
         bool target = false;
         std::size_t index = 0;
+        // A mod's skinned mesh's bind poses against the class's (OPENRAC_MODEL_GAME_POSE), one
+        // matrix a joint to multiply the game's palette by; null for none.
+        const std::vector<renderer::Mat4>* rebind = nullptr;
     };
 
     std::vector<PoseJob> pose_jobs;
@@ -2017,6 +2022,9 @@ TickMobys pose_mobys(
             class_overrides.emplace(std::make_pair(draw.oclass, draw.scope), &draw);
         }
     }
+    // The mobys the mods draw with textures of their own (interface 1.120): the model made for each
+    // (frontend/moby_textures.cpp), by address and by class and scope.
+    const TexturedModels textured = textured_models_now();
     for (std::size_t index = 0; index < state.mobys.size(); ++index) {
         bool light_only = false;
         const host::LiveMoby& m = state.mobys[index];
@@ -2171,7 +2179,12 @@ TickMobys pose_mobys(
         if (cls == g->render.level.moby_classes.end() && mod_model == nullptr) {
             continue;
         }
-        scene::Instance instance{cls->second.first, m.matrix, {1, 1, 1, 1}};
+        // A mod's mesh for a moby whose class the level does not draw: no class model to start from
+        // (and no authored bounds to keep below).
+        const bool classless = cls == g->render.level.moby_classes.end();
+        scene::Instance instance{
+            classless ? mod_model_index : cls->second.first, m.matrix, {1, 1, 1, 1}
+        };
         const bool native_gold =
             replaced && replacement->height == 0
             && scene::vendor_preview::normal_weapon_class(replacement_class) != replacement_class
@@ -2427,6 +2440,15 @@ TickMobys pose_mobys(
             instance.matrix = scene::pickup_preview::apply(instance.matrix, center, 0, entry);
             instance.world_sphere = {};
         }
+        if (mod_model == nullptr && !replaced && !classless) {
+            // Its class's model with a mod's textures (interface 1.120): the same mesh, skin and
+            // bounds, so it is posed and culled as the class's own.
+            if (const auto made = textured.find(
+                    m.address, m.class_id, own_camera ? OPENRAC_MODEL_MENU : OPENRAC_MODEL_WORLD
+                )) {
+                instance.model = *made;
+            }
+        }
         if (mod_model != nullptr) {
             // A mesh of a mod's draws in place of the moby's model (interface 1.33, moby_model_slot).
             instance.model = mod_model_index;
@@ -2616,9 +2638,16 @@ TickMobys pose_mobys(
                 : std::max(
                       model.joints, (inspect_bones || attached_bones) ? int(model.bones.size()) : 0
                   );
-        // A mod's mesh is rigid: the game's palette would number another mesh's joints wrongly.
+        // A mod's mesh is rigid: the game's palette would number another mesh's joints wrongly. One
+        // the mod made on the class's skeleton (OPENRAC_MODEL_GAME_POSE, interface 1.120) is posed by
+        // it, each joint moved from the class's bind pose to the mesh's (frontend/moby_textures.cpp).
+        const std::vector<renderer::Mat4>* rebind = nullptr;
         if (mod_model != nullptr) {
             joints = 0;
+            if (mod_model->game_pose && model.joints > 0 && !classless) {
+                joints = model.joints;
+                rebind = game_pose_rebind(cls->second.first, instance.model);
+            }
         }
         if (skin != nullptr) {
             // The skin's animation for the class's sequence, from when the sequence began.
@@ -2680,7 +2709,7 @@ TickMobys pose_mobys(
         if (animate && joints > 0 && skin == nullptr && !replacement_pose) {
             const bool target = into_texture.contains(m.address) || on_screen.contains(m.address);
             pose_jobs.push_back(
-                {m.address, joints, target, target ? target_mobys.size() : live.size()}
+                {m.address, joints, target, target ? target_mobys.size() : live.size(), rebind}
             );
         }
         // Only world instances attach to water; menu and render-to-texture previews keep their poses.
@@ -3117,6 +3146,9 @@ TickMobys pose_mobys(
                 c[13] = f[3][1] / 1024.0f;
                 c[14] = f[3][2] / 1024.0f;
                 c[15] = 1.0f;
+            }
+            if (job.rebind != nullptr && static_cast<std::size_t>(j) < job.rebind->size()) {
+                c = renderer::multiply(c, (*job.rebind)[static_cast<std::size_t>(j)]);
             }
             palette.push_back(c);
         }

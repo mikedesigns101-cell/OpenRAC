@@ -2064,6 +2064,59 @@ public:
       }
     }
 
+    // Since 1.120: whether the port draws a moby with its class's model and textures of the mod's
+    // (moby_textures_at, moby_textures_class), and poses a mod's skinned mesh by the moby's joints
+    // (OPENRAC_MODEL_GAME_POSE).
+    bool has_moby_textures() const {
+      return m_api->api_minor >= 120 &&
+             m_api->size >= offsetof(openrac_api, moby_textures_class) + sizeof(void *);
+    }
+
+    // Since 1.120: draws the moby at `address` with `textures` in place of its class's (see
+    // openrac_api.moby_textures_at); an empty `textures` gives it its own back. The size and count
+    // are set here. Returns OPENRAC_HOOK_OK, _FULL or _UNKNOWN (also past
+    // OPENRAC_MOBY_TEXTURES_MAX textures).
+    int moby_textures_at(std::uint32_t address,
+                         const std::vector<openrac_moby_texture> &textures) const {
+      if (!has_moby_textures() || textures.size() > OPENRAC_MOBY_TEXTURES_MAX) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      openrac_moby_textures t{};
+      t.size = sizeof t;
+      t.count = static_cast<uint32_t>(textures.size());
+      std::copy(textures.begin(), textures.end(), t.textures);
+      return m_api->moby_textures_at(m_handle, address, &t);
+    }
+
+    // Since 1.120: the same for every moby of `oclass` in `scope` (OPENRAC_MODEL_WORLD, _MENU).
+    int moby_textures_class(int oclass, uint32_t scope,
+                            const std::vector<openrac_moby_texture> &textures) const {
+      if (!has_moby_textures() || textures.size() > OPENRAC_MOBY_TEXTURES_MAX) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      openrac_moby_textures t{};
+      t.size = sizeof t;
+      t.count = static_cast<uint32_t>(textures.size());
+      std::copy(textures.begin(), textures.end(), t.textures);
+      return m_api->moby_textures_class(m_handle, oclass, scope, &t);
+    }
+
+    // Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own
+    // joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the
+    // mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or
+    // _UNKNOWN.
+    int moby_model_at_posed(std::uint32_t address, int model) const {
+      if (!has_moby_textures() || !has_moby_model_at()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      openrac_moby_model m{};
+      m.size = sizeof m;
+      m.flags = OPENRAC_MODEL_GAME_POSE;
+      m.model = model;
+      m.matrix[0] = m.matrix[5] = m.matrix[10] = m.matrix[15] = 1.0f;
+      return m_api->moby_model_at(m_handle, address, &m);
+    }
+
     // Since 1.33: whether the port registers particle textures (particle_texture_register).
     bool has_particle_texture_register() const {
       return m_api->api_minor >= 32 &&

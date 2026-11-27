@@ -257,6 +257,7 @@ struct SlotModel {
     std::filesystem::path mesh;
     std::array<float, 16> matrix{};
     bool hidden = false;
+    bool game_pose = false;  // OPENRAC_MODEL_GAME_POSE (interface 1.120)
 };
 
 // What a mod drew the mobys of a class with in one scope (interface 1.33): whose, the mesh, how it is
@@ -266,6 +267,7 @@ struct ClassModel {
     std::uint32_t loads = 0;
     std::filesystem::path mesh;
     std::array<float, 16> matrix{};
+    bool game_pose = false;  // OPENRAC_MODEL_GAME_POSE (interface 1.120)
 };
 
 // A mod's material on every moby of a class in one scope (openrac_api.moby_material_class,
@@ -800,5 +802,13 @@ int api_overlay_image_create(openrac_mod* mod, const openrac_overlay_image* imag
 int api_overlay_image_destroy(openrac_mod* mod, int image);
 
 int api_effect_tint(openrac_mod* mod, const openrac_effect_tint* tint);
+
+// A moby drawn with textures of a mod's (interface 1.120, moby_textures.cpp).
+int api_moby_textures_at(openrac_mod* mod, std::uint32_t address, const openrac_moby_textures* t);
+int api_moby_textures_class(
+    openrac_mod* mod, int oclass, std::uint32_t scope, const openrac_moby_textures* t
+);
+// Forgets `mod`'s textures (nullptr: every mod's).
+void moby_textures_forget(const openrac_mod* mod);
 
 }  // namespace openrac::mods::detail
