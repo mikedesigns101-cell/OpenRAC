@@ -59,6 +59,12 @@ int main() {
     // The accent of 0x40F0FF keeps its top 3 bits a channel: 010, 111, 111.
     CHECK(painted[3] == scene::kModMaterialPaint + 7 + 16 * (1 + (2 << 6 | 7 << 3 | 7)));
 
+    // Glow (1.108): above every paint code, its colour's top 3 bits a channel; blue 0x2040FF is
+    // 001, 010, 111, and white the highest code, 8735.
+    CHECK(scene::glow_material(0x000000) == scene::kModMaterialGlow && scene::kModMaterialGlow > 8223);
+    CHECK(scene::glow_material(0x2040FF) == scene::kModMaterialGlow + (1 << 6 | 2 << 3 | 7));
+    CHECK(scene::glow_material(0xFFFFFF) == 8735);
+
     // The accent's colour does not move the glow level, and the level does not move the accent.
     CHECK(scene::paint_material(3, true, 0x804020) != scene::paint_material(4, true, 0x804020));
     CHECK(scene::paint_material(3, true, 0x804020) != scene::paint_material(3, true, 0x804040));

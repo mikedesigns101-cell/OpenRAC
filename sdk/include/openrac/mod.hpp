@@ -1105,6 +1105,9 @@ public:
              m_api->size >= offsetof(openrac_api, moby_material) + sizeof(void *);
     }
 
+    // Since 1.108: whether the port draws OPENRAC_MOBY_MATERIAL_GLOW (only the glow faces in rgb).
+    bool has_moby_glow() const { return has_moby_material() && m_api->api_minor >= 108; }
+
     // Since 1.24: whether the port draws OPENRAC_MOBY_MATERIAL_OBSIDIAN.
     bool has_obsidian() const {
       return has_moby_material() && m_api->api_minor >= 24;

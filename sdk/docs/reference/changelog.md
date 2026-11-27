@@ -4,6 +4,12 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.108
+
+A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged).
+
+No new members (the table is unchanged).
+
 ## 1.107
 
 Going Commando's pad vibration from a mod, for a time, and the game's own muted while a weapon is in the hand (pad_rumble, game_motors_mute).

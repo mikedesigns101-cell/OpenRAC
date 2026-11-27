@@ -149,11 +149,12 @@ extern "C" {
  * is unchanged), 1.106 Going Commando's named effects in particle_spawn_ex
  * (OPENRAC_PARTICLE_SPARKS to _MUZZLE, with a saturation) and the game's own
  * effects recoloured: a weapon's muzzle flash, a shot's impact and its trail
- * (effect_tint), and 1.107 Going Commando's pad vibration from a mod, for a
- * time, and the game's own muted while a weapon is in the hand (pad_rumble,
- * game_motors_mute).
+ * (effect_tint), 1.107 Going Commando's pad vibration from a mod, for a time,
+ * and the game's own muted while a weapon is in the hand (pad_rumble,
+ * game_motors_mute), and 1.108 a moby's glow faces alone drawn in a colour of
+ * the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged).
  */
-#define OPENRAC_MOD_API_MINOR 107
+#define OPENRAC_MOD_API_MINOR 108
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2021,6 +2022,12 @@ typedef struct openrac_moby_visual {
  * refuses the bit (OPENRAC_HOOK_UNKNOWN), and weapon_look takes paint only since 1.39. Since
  * 1.39. */
 #define OPENRAC_MOBY_MATERIAL_PAINT_EFFECTS 0x2000000u
+/* moby_material: only the moby's glow faces (the game's glow packets, a mod model's faces with
+ * _LIGHT_SLOT -2: lamps, energy cells, a weapon's lit stripes) drawn in `rgb` at their own
+ * brightness, a little brighter; the rest of the model, its tint and its lighting stay as they
+ * are. rgb keeps the top 3 bits of each channel (eight steps). A port older than 1.108 refuses it
+ * (OPENRAC_HOOK_UNKNOWN). Since 1.108. */
+#define OPENRAC_MOBY_MATERIAL_GLOW 6
 /* What moby_copy_check says of a moby: OPENRAC_COPY_OK when moby_copy may copy it, else why not.
  * Since 1.25. */
 #define OPENRAC_COPY_OK 0

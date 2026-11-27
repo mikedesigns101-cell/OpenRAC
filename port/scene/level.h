@@ -218,6 +218,18 @@ constexpr std::uint16_t paint_material(
     return static_cast<std::uint16_t>(kModMaterialPaint + (level & 15u) + 16u * accent_code);
 }
 
+// Instance::mod_material of OPENRAC_MOBY_MATERIAL_GLOW (interface 1.108): this plus the colour, 3
+// bits a channel, red highest (r << 6 | g << 3 | b), so mesh.frag reads it from the one code; above
+// every paint code (8223). The highest, 8224 + 511 = 8735, the packed `lights` holds exactly
+// (512 x 8735 + 255 is under 2^23).
+inline constexpr std::uint16_t kModMaterialGlow = 8224;
+constexpr std::uint16_t glow_material(std::uint32_t rgb) {
+    const std::uint32_t red = rgb >> 21 & 7u;
+    const std::uint32_t green = rgb >> 13 & 7u;
+    const std::uint32_t blue = rgb >> 5 & 7u;
+    return static_cast<std::uint16_t>(kModMaterialGlow + (red << 6 | green << 3 | blue));
+}
+
 // Returns a live moby's `lights` as mesh.vert reads it: -1 - (its shine distance + the step times
 // `material`), so the per-instance attributes, all sixteen in use, carry the material too. A lit
 // tie (`lights` >= 0) and a moby with no material keep `lights` as they are.
