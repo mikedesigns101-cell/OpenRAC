@@ -157,9 +157,11 @@ extern "C" {
  * mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed
  * by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of
  * openrac_moby_model), and 1.121 a live moby moved to another place of its level
- * with its sphere, cells and homes, set on the floor (moby_relocate).
+ * with its sphere, cells and homes, set on the floor (moby_relocate), and 1.122
+ * a moby drawn as another model with that model's own animations, its own class
+ * still running (moby_skin_at, openrac_moby_skin).
  */
-#define OPENRAC_MOD_API_MINOR 121
+#define OPENRAC_MOD_API_MINOR 122
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1326,6 +1328,26 @@ typedef struct openrac_moby_model {
 #define OPENRAC_RELOCATE_ANYWHERE 0x8u
 /* moby_relocate's answer for a point with no floor of the level under it. Since 1.121. */
 #define OPENRAC_RELOCATE_NO_FLOOR (-20)
+
+/* The most sequences an openrac_moby_skin maps. Since 1.122. */
+#define OPENRAC_MOBY_SKIN_SEQS_MAX 64
+
+/* A moby drawn as another model with that model's own animations (openrac_api.moby_skin_at): the
+ * game runs the moby's own class (its logic, collision, hits), only its look changes. `model` a
+ * handle from model_create of a skinned .glb with animations (the port's exports of a class have
+ * seq_00_loop... in their sequences' order), -1 to give the moby its own look back; `scale` on the
+ * moby's matrix (the other class's moby scale over the moby's own; 0 is 1); `animations`, `count` of
+ * them, the model's animation (its place in the .glb) played while the moby's class plays each of
+ * its sequences, -1 for the same number (or the first when the model has not that many); each
+ * starts from its beginning when the sequence changes. Since 1.122. */
+typedef struct openrac_moby_skin {
+    /* sizeof(openrac_moby_skin), set by the mod. */
+    uint32_t size;
+    int32_t model;
+    float scale;
+    uint32_t count;
+    int16_t animations[OPENRAC_MOBY_SKIN_SEQS_MAX];
+} openrac_moby_skin;
 
 /* The most textures one openrac_moby_textures swaps. Since 1.120. */
 #define OPENRAC_MOBY_TEXTURES_MAX 16
@@ -3710,6 +3732,16 @@ typedef struct openrac_api {
      * point that is not a number, outside a level, or a game without it (Going Commando only).
      * Since 1.121. */
     int (*moby_relocate)(openrac_mod* mod, int32_t slot, float position[3], uint32_t flags);
+
+    /* Draws the moby at `address` as another model with its own animations (openrac_moby_skin): a
+     * borrowed look on the moby's own class, which still runs its logic, collision and hits. From
+     * the frame after the model is in the level. A mesh override (moby_model_at) wins over it, and it
+     * over the moby's textures (moby_textures_at). It goes when the class at the address changes,
+     * with its level and the mod's unload. Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for a
+     * null or short `s`, a count past OPENRAC_MOBY_SKIN_SEQS_MAX, a scale below 0 or not a number, a
+     * model that is not the mod's, an address that is no moby, outside a level, or a port without
+     * it. Since 1.122. */
+    int (*moby_skin_at)(openrac_mod* mod, uint32_t address, const openrac_moby_skin* s);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

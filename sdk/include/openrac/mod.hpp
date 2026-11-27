@@ -2145,6 +2145,33 @@ public:
       return m_api->moby_relocate(m_handle, slot, position, flags);
     }
 
+    // Since 1.122: whether the port draws a moby as another model with its own animations
+    // (moby_skin_at).
+    bool has_moby_skin() const {
+      return m_api->api_minor >= 122 &&
+             m_api->size >= offsetof(openrac_api, moby_skin_at) + sizeof(void *);
+    }
+
+    // Since 1.122: draws the moby at `address` as `model` (a model_create handle of a skinned .glb
+    // with animations; -1 gives it its own look back), at `scale` on its matrix, playing for each of
+    // its class's sequences the model's animation `animations[sequence]` (-1 or past the list: the
+    // same number). Its own class keeps running. Returns OPENRAC_HOOK_OK or _UNKNOWN.
+    int moby_skin_at(std::uint32_t address, int model, float scale = 1.0f,
+                     const std::vector<int> &animations = {}) const {
+      if (!has_moby_skin() || animations.size() > OPENRAC_MOBY_SKIN_SEQS_MAX) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      openrac_moby_skin s{};
+      s.size = sizeof s;
+      s.model = model;
+      s.scale = scale;
+      s.count = static_cast<uint32_t>(animations.size());
+      for (std::size_t i = 0; i < animations.size(); ++i) {
+        s.animations[i] = static_cast<int16_t>(animations[i]);
+      }
+      return m_api->moby_skin_at(m_handle, address, &s);
+    }
+
     // Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own
     // joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the
     // mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or

@@ -815,6 +815,10 @@ int api_moby_textures_class(
 );
 // Forgets `mod`'s textures (nullptr: every mod's).
 void moby_textures_forget(const openrac_mod* mod);
+// A moby drawn as another model with its own animations (interface 1.122, moby_textures.cpp),
+// and the mesh of `mod`'s model `handle` of this level load (visuals.cpp; empty for none).
+int api_moby_skin_at(openrac_mod* mod, std::uint32_t address, const openrac_moby_skin* s);
+std::filesystem::path model_mesh(const openrac_mod* mod, int handle);
 // A live moby moved to another place of its level (interface 1.121, moby_relocate.cpp).
 int api_moby_relocate(openrac_mod* mod, std::int32_t slot, float position[3], std::uint32_t flags);
 

@@ -37,6 +37,10 @@ std::set<std::string> s_failed;
 // The bind-pose differences made this level, by class model and mesh (nullopt: all identity).
 std::map<std::pair<std::uint32_t, std::uint32_t>, std::optional<std::vector<renderer::Mat4>>>
     s_rebinds;
+// The skins made this level (interface 1.122), by key (mods::MobySkinDraw::key), and the keys whose
+// mesh has no skeleton or animations.
+std::map<std::string, scene::MobySkin> s_skins;
+std::set<std::string> s_skins_failed;
 
 // The class model's textures in the order its parts first use them (the requests' indices).
 std::vector<int> model_images(const scene::LevelData& level, const scene::Model& model) {
@@ -187,13 +191,24 @@ std::optional<std::uint32_t> TexturedModels::find(
     return std::nullopt;
 }
 
+const scene::MobySkin* TexturedModels::skin(std::uint32_t address, int oclass) const {
+    const auto own = skins.find(address);
+    return own != skins.end() && own->second.first == oclass ? own->second.second : nullptr;
+}
+
 TexturedModels textured_models_now() {
     TexturedModels out;
     std::vector<mods::MobyTexturesDraw> draws = mods::moby_textures_drawn();
-    if (draws.empty()) {
+    const std::vector<mods::MobySkinDraw> skins = mods::moby_skins_drawn();
+    if (draws.empty() && skins.empty()) {
         return out;
     }
     const std::lock_guard<std::mutex> lock(s_lock);
+    for (const mods::MobySkinDraw& d : skins) {
+        if (const auto made = s_skins.find(d.key); made != s_skins.end()) {
+            out.skins[d.address] = {d.oclass, &made->second};
+        }
+    }
     for (const mods::MobyTexturesDraw& d : draws) {
         const auto made = s_made.find(d.key);
         if (made == s_made.end()) {
@@ -208,10 +223,55 @@ TexturedModels textured_models_now() {
     return out;
 }
 
+// The skins the mods ask for whose mesh is in the level by now (load_prop_meshes): each made once
+// with its skeleton and animations (scene::load_prop_rig, as a skins.json skin is).
+void load_moby_skins() {
+    const std::vector<mods::MobySkinDraw> draws = mods::moby_skins_drawn();
+    for (const mods::MobySkinDraw& d : draws) {
+        {
+            const std::lock_guard<std::mutex> lock(s_lock);
+            if (s_skins.contains(d.key) || s_skins_failed.contains(d.key)) {
+                continue;
+            }
+        }
+        const auto held =
+            std::find_if(g->prop_models.begin(), g->prop_models.end(), [&](const auto& m) {
+                return m.first == d.mesh;
+            });
+        if (held == g->prop_models.end()) {
+            continue;  // not in the level yet
+        }
+        std::string why;
+        auto rig = scene::load_prop_rig(d.mesh, why);
+        const std::lock_guard<std::mutex> lock(s_lock);
+        if (!rig || rig->animations.empty()) {
+            s_skins_failed.insert(d.key);
+            log::warn(
+                "mods: moby skin {}: {}",
+                d.mesh.filename().string(),
+                rig ? "the model has no animations" : why
+            );
+            continue;
+        }
+        scene::MobySkin skin;
+        skin.model = held->second;
+        skin.rig = std::move(*rig);
+        skin.scale = d.scale;
+        skin.animations = d.animations;
+        log::info(
+            "mods: moby skin {} made ({} animations)",
+            d.mesh.filename().string(),
+            skin.rig.animations.size()
+        );
+        s_skins.emplace(d.key, std::move(skin));
+    }
+}
+
 void load_moby_textures() {
     if (!g || !g->prop_scene_ready) {
         return;
     }
+    load_moby_skins();
     const std::vector<mods::MobyTexturesDraw> draws = mods::moby_textures_drawn();
     if (draws.empty()) {
         return;
@@ -291,6 +351,8 @@ void forget_moby_textures() {
     s_made.clear();
     s_failed.clear();
     s_rebinds.clear();
+    s_skins.clear();
+    s_skins_failed.clear();
 }
 
 const std::vector<renderer::Mat4>* game_pose_rebind(std::uint32_t class_model, std::uint32_t mesh) {

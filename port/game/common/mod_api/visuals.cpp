@@ -557,6 +557,12 @@ int api_model_create(openrac_mod* mod, const char* mesh_path) {
     return free_handle;
 }
 
+std::filesystem::path model_mesh(const openrac_mod* mod, int handle) {
+    const std::lock_guard<std::mutex> lock(g_props_lock);
+    const Model* model = own_model(mod, handle);
+    return model != nullptr ? model->mesh : std::filesystem::path();
+}
+
 int api_moby_model_class(
     openrac_mod* mod, int oclass, std::uint32_t scope, const openrac_moby_model* m
 ) {

@@ -8,6 +8,7 @@
 // model whose materials use the pictures: frontend/moby_textures.cpp) and draws the mobys with it.
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
@@ -40,6 +41,19 @@ struct TexturesEntry {
 std::mutex g_lock;
 std::map<std::uint32_t, TexturesEntry> g_by_address;
 std::map<std::pair<int, std::uint32_t>, TexturesEntry> g_by_class;
+
+// A moby drawn as another model (moby_skin_at, interface 1.122).
+struct SkinEntry {
+    const openrac_mod* mod = nullptr;
+    std::uint32_t loads = 0;
+    int oclass = -1;
+    std::filesystem::path mesh;
+    float scale = 1.0f;
+    std::vector<int> animations;
+    std::string key;
+};
+
+std::map<std::uint32_t, SkinEntry> g_skins;
 
 // The swaps `t` asks for, read and checked: false for a request the interface does not describe.
 bool read_swaps(openrac_mod* mod, const openrac_moby_textures* t, std::vector<MobyTextureSwap>& out) {
@@ -156,15 +170,57 @@ int api_moby_textures_class(
     return OPENRAC_HOOK_OK;
 }
 
+int api_moby_skin_at(openrac_mod* mod, std::uint32_t address, const openrac_moby_skin* s) {
+    std::int32_t level = -1;
+    if (mod == nullptr || address == 0 || s == nullptr || s->size < sizeof(openrac_moby_skin)
+        || s->count > OPENRAC_MOBY_SKIN_SEQS_MAX || !std::isfinite(s->scale) || s->scale < 0.0f
+        || g_play == nullptr || g_play->moby_class_at == nullptr || !in_level(phase_now(&level))) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    const std::int32_t oclass = g_play->moby_class_at(address);
+    if (oclass < 0) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    std::filesystem::path mesh;
+    if (s->model >= 0) {
+        // The model's mesh, as moby_model_at takes it (visuals.cpp's models, under their lock).
+        mesh = model_mesh(mod, s->model);
+        if (mesh.empty()) {
+            return OPENRAC_HOOK_UNKNOWN;
+        }
+    }
+    const std::uint32_t loads = loads_now();
+    const std::lock_guard<std::mutex> lock(g_lock);
+    std::erase_if(g_skins, [&](const auto& e) { return e.second.loads != loads; });
+    if (mesh.empty()) {
+        g_skins.erase(address);
+        return OPENRAC_HOOK_OK;
+    }
+    SkinEntry& e = g_skins[address];
+    e.mod = mod;
+    e.loads = loads;
+    e.oclass = oclass;
+    e.mesh = mesh;
+    e.scale = s->scale > 0.0f ? s->scale : 1.0f;
+    e.animations.assign(s->animations, s->animations + s->count);
+    e.key = mesh.generic_string() + "|" + std::to_string(e.scale);
+    for (const int a : e.animations) {
+        e.key += "," + std::to_string(a);
+    }
+    return OPENRAC_HOOK_OK;
+}
+
 void moby_textures_forget(const openrac_mod* mod) {
     const std::lock_guard<std::mutex> lock(g_lock);
     if (mod == nullptr) {
         g_by_address.clear();
         g_by_class.clear();
+        g_skins.clear();
         return;
     }
     std::erase_if(g_by_address, [&](const auto& e) { return e.second.mod == mod; });
     std::erase_if(g_by_class, [&](const auto& e) { return e.second.mod == mod; });
+    std::erase_if(g_skins, [&](const auto& e) { return e.second.mod == mod; });
 }
 
 }  // namespace openrac::mods::detail
@@ -185,6 +241,20 @@ std::vector<MobyTexturesDraw> moby_textures_drawn() {
     for (const auto& [key, e] : g_by_class) {
         if (e.loads == loads) {
             out.push_back({0, key.first, key.second, e.key, e.swaps});
+        }
+    }
+    return out;
+}
+
+std::vector<MobySkinDraw> moby_skins_drawn() {
+    using namespace detail;
+    std::vector<MobySkinDraw> out;
+    const std::uint32_t loads = loads_now();
+    const std::lock_guard<std::mutex> lock(g_lock);
+    out.reserve(g_skins.size());
+    for (const auto& [address, e] : g_skins) {
+        if (e.loads == loads) {
+            out.push_back({address, e.oclass, e.mesh, e.scale, e.animations, e.key});
         }
     }
     return out;

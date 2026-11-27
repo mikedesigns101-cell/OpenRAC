@@ -2486,6 +2486,18 @@ TickMobys pose_mobys(
                 }
             }
         }
+        // A mod's skin on it (interface 1.122, moby_skin_at): the same, set by address. A mod's mesh
+        // (moby_model_at) wins.
+        if (skin == nullptr && mod_model == nullptr) {
+            if (const scene::MobySkin* own = textured.skin(m.address, m.class_id)) {
+                skin = own;
+                instance.model = skin->model;
+                instance.world_sphere = {};
+                for (int i = 0; i < 12; ++i) {
+                    instance.matrix[static_cast<std::size_t>(i)] *= skin->scale;
+                }
+            }
+        }
         // How MobyProc blends it (ReRAC's MobyBlend, from the game's moby draw). Its vertex alpha is
         // its alpha byte (+0x23) times its distance fade (GameProfile::moby_distance_fade: the last 16
         // units of its draw distance) >> 7. Mode bit 0x200 (+0x34) adds it; the fade below 0x80 or

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "renderer/math.h"
+#include "scene/moby_skin.h"
 
 namespace openrac::frontend {
 
@@ -34,6 +35,13 @@ struct TexturedModels {
     // The model for the moby at `address` of class `oclass` drawn in `scope`: its own, else its
     // class's; none while it is not made (or could not be).
     std::optional<std::uint32_t> find(std::uint32_t address, int oclass, std::uint32_t scope) const;
+
+    // The mods' skins (openrac_api.moby_skin_at, interface 1.122) made for this level, by moby
+    // address with the class each was set for.
+    std::unordered_map<std::uint32_t, std::pair<int, const scene::MobySkin*>> skins;
+
+    // The skin the moby at `address` of class `oclass` is drawn with; null for none.
+    const scene::MobySkin* skin(std::uint32_t address, int oclass) const;
 };
 
 // The mods' textured mobys whose models are made, for this frame. From the game's thread.

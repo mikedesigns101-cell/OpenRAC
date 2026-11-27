@@ -1121,6 +1121,7 @@ void fill_api(const Host& host) {
     g_api.moby_textures_at = api_moby_textures_at;
     g_api.moby_textures_class = api_moby_textures_class;
     g_api.moby_relocate = api_moby_relocate;
+    g_api.moby_skin_at = api_moby_skin_at;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
 }

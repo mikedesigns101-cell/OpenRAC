@@ -439,6 +439,23 @@ struct MobyTexturesDraw {
 // The mods' textures of this level load. From any thread.
 std::vector<MobyTexturesDraw> moby_textures_drawn();
 
+// A moby a mod draws as another model with that model's own animations (openrac_api.moby_skin_at,
+// interface 1.122): the moby by its address and the class it had, the skinned mesh (one of the
+// level's prop meshes, by path), the scale on the moby's matrix, and the mesh's animation for each
+// of the class's sequences (-1: the same number, else its first). `key` names the mesh, the scale
+// and the animations together.
+struct MobySkinDraw {
+    std::uint32_t address = 0;
+    int oclass = -1;
+    std::filesystem::path mesh;
+    float scale = 1.0f;
+    std::vector<int> animations;
+    std::string key;
+};
+
+// The mods' skins of this level load. From any thread.
+std::vector<MobySkinDraw> moby_skins_drawn();
+
 // The mobys the mods draw with a mesh of their own in the level now (this level load's). From any
 // thread.
 std::vector<MobyModelDraw> moby_models_drawn();

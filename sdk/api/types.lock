@@ -188,6 +188,12 @@ openrac_moby_run	draw_dist	52	int32_t
 openrac_moby_run	drawn	56	int32_t
 openrac_moby_run	ran	60	int32_t
 openrac_moby_run	distance	64	float
+openrac_moby_skin	(size)	144	-
+openrac_moby_skin	size	0	uint32_t
+openrac_moby_skin	model	4	int32_t
+openrac_moby_skin	scale	8	float
+openrac_moby_skin	count	12	uint32_t
+openrac_moby_skin	animations	16	int16_t[64]
 openrac_moby_texture	(size)	24	-
 openrac_moby_texture	index	0	int32_t
 openrac_moby_texture	name	8	const char *

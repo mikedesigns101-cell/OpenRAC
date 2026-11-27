@@ -239,3 +239,4 @@ game_motors_mute	input	1.107	experimental
 moby_textures_at	visuals	1.120	experimental
 moby_textures_class	visuals	1.120	experimental
 moby_relocate	world	1.121	experimental
+moby_skin_at	visuals	1.122	experimental
