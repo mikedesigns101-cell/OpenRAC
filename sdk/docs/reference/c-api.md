@@ -386,9 +386,9 @@ checks api->api_minor before it uses anything newer than the minor it was built 
 | `OPENRAC_GUI_SPRITE_FRAME_CORNER` | `2` | the help box frame's corner line |
 | `OPENRAC_GUI_SPRITE_PAUSE_PLATE_FILL` | `3` | the pause menu's plate: its fill (x its left end) |
 | `OPENRAC_GUI_SPRITE_PAUSE_PLATE_FRAME` | `4` | ... and its frame, drawn over the fill |
-| `OPENRAC_GUI_SPRITE_HUD_LEFT_FILL` | `5` | the HUD's top left plate (health): fill |
+| `OPENRAC_GUI_SPRITE_HUD_LEFT_FILL` | `5` | the HUD's top left plate (weapon, ammo): fill |
 | `OPENRAC_GUI_SPRITE_HUD_LEFT_FRAME` | `6` | ... frame |
-| `OPENRAC_GUI_SPRITE_HUD_RIGHT_FILL` | `7` | the HUD's top right plate (bolts): fill |
+| `OPENRAC_GUI_SPRITE_HUD_RIGHT_FILL` | `7` | the HUD's top right plate: fill |
 | `OPENRAC_GUI_SPRITE_HUD_RIGHT_FRAME` | `8` | ... frame |
 | `OPENRAC_GUI_SPRITE_TOP_PLATE_FILL` | `9` | the HUD's top middle plate: fill |
 | `OPENRAC_GUI_SPRITE_TOP_PLATE_FRAME` | `10` | ... frame |
@@ -1598,8 +1598,8 @@ box, in the order of `layer` (0 first) and then of the array. Places in the game
 - OPENRAC_GUI_SPRITE: sprite `id` (OPENRAC_GUI_SPRITE_*) at (x, y), scaled by scale_x, scale_y (a
   negative scale mirrors it), at `frame` of its own animation (0 to 1; how far a bracket
   reaches), in `rgba` (0: the game's 128 grey, opaque).
-- OPENRAC_GUI_ICON: HUD texture `id` (the number the game's HUD draws it by; the docs list
-  the bolt's and others) in the box x, y, w x h (top left, size), tinted `rgba` (0: as it is).
+- OPENRAC_GUI_ICON: HUD texture `id` (the number the game's HUD draws it by; it can change
+  from level to level) in the box x, y, w x h (top left, size), tinted `rgba` (0: as it is).
 - OPENRAC_GUI_ITEM_ICON: the icon of item `id` (the game's item number), as OPENRAC_GUI_ICON.
 - OPENRAC_GUI_ICON_KEY: the icon of key `id` (picture `frame` of it), as OPENRAC_GUI_ICON.
 Since 1.129.

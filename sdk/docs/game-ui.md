@@ -35,8 +35,11 @@ if (mod.has_game_ui()) mod.gui_draw(e, 2);
 - `gui_draw(elements, count)` sets **all** the mod draws, in place of what it drew before; `count`
   0 takes it away. It stays (drawn every frame) until the mod sets it again or the level loads.
 - It is drawn after the game's HUD and its help box, in the same 2D pass: under a menu that covers
-  the 2D, in a scene, it is not drawn (as the HUD is not). Elements go in the order of `layer`
-  (0 first), then of the array. The mods' own help boxes go on top of everything.
+  the 2D, in a scene, it is not drawn (as the HUD is not). Seen in the game: drawn in play and with
+  Triangle held 40 ticks (the quick select's ring did not show in that test); not under the pause
+  menu nor the vendor's screen (they cover the 2D pass).
+  Elements go in the order of `layer` (0 first), then of the array. The mods' own help boxes go on
+  top of everything.
 - At most `OPENRAC_GUI_ELEMENTS_MAX` (64) a mod, `OPENRAC_GUI_ELEMENTS_ALL` (256) for all the mods.
 - Colours are `rgba` bytes (red, green, blue, alpha, 0 to 255). As in the game, 128 a channel is
   the font's or the sprite's own shade (255 about doubles it); 0 in all four means "the game's
@@ -125,8 +128,8 @@ frames' #70C0F0); a plate is its fill, then its frame over it, at the same place
 | 2 | `FRAME_CORNER` | the help box frame's line | idem |
 | 3 | `PAUSE_PLATE_FILL` | the pause menu's plate, its fill | x 124 (its left end), y 36, 86 ... 336 (its top), `frame` 0.37 (about 250 wide, 28 tall) |
 | 4 | `PAUSE_PLATE_FRAME` | its double frame | idem; the chosen one in white (#ECFDFE) |
-| 5, 6 | `HUD_LEFT_FILL`, `_FRAME` | the HUD's top left plate (health) | x 10, y 10, `frame` 4 |
-| 7, 8 | `HUD_RIGHT_FILL`, `_FRAME` | the HUD's top right plate (bolts) | x 498, y 10 |
+| 5, 6 | `HUD_LEFT_FILL`, `_FRAME` | the HUD's top left plate (the held weapon's icon and its ammo) | x 10, y 10, `frame` 4 |
+| 7, 8 | `HUD_RIGHT_FILL`, `_FRAME` | the HUD's top right plate | x 498, y 10 |
 | 9, 10 | `TOP_PLATE_FILL`, `_FRAME` | the HUD's top middle plate | x 147, y 10 |
 | 11, 12 | `CORNER_FILL`, `_FRAME` | a small corner piece | x 184 / 185, y 29 / 30, four times mirrored |
 | 13 | `VENDOR_LIST_FILL` | the vendor's six plates, stacked: fill | x 250, y 190 |
@@ -152,7 +155,11 @@ game's display list); one with a lower layer goes under it.
 
 The catalogue was made with `OPENRAC_GAME_UI_LOG=sprites` (below), on the NTSC-U disc (v1.01; the
 other releases have none of this yet). The icons: `OPENRAC_GUI_ITEM_ICON` draws any item's icon
-(all 55 were drawn in a test); HUD textures by number change from level to level, keys do not.
+(all 55 were drawn in a test; item 30, the Lancer, is key 60004, the one the HUD's top left plate
+and the Weapons page show for it); HUD textures by number change from level to level, keys do not.
+Keys the probe saw: 60004 to 60007 (weapons' icons: the HUD, the Weapons page, the vendor's ammo
+slots), 30055 (the top right plate's icon, HUD texture 84 in Oozla). The vendor's bolt sign by
+"Cost:" is not among them (not found as an icon key).
 
 ## Tests
 
