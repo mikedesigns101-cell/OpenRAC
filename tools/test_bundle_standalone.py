@@ -506,7 +506,10 @@ class Commando(unittest.TestCase):
         self.assertEqual(ids[ids.index("port-levels") + 1], "mod-models")
         models = actions["versions"]["rac2/ntsc"][ids.index("mod-models")]
         self.assertEqual(models["makes"], "{data}/plugins/commando-protocol/modelos_construidos.json")
-        self.assertIn(f"{{data}}/port/ntsc/{bundle.LEVELS_STAMP}", [n["path"] for n in models["needs"]])
+        # It waits for the stamp the levels' step leaves (Going Commando's format, not rac1's).
+        levels = actions["versions"]["rac2/ntsc"][ids.index("port-levels")]
+        self.assertIn(levels["artifact"], [n["path"] for n in models["needs"]])
+        self.assertEqual(levels["artifact"], f"{{data}}/port/ntsc/levels-{going_commando_format()}.json")
         self.assertIn("builder/construir.py", models["args"])
         # Without a builder, no step for it.
         plain = bundle.player_actions(only=["rac2/ntsc"])

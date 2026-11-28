@@ -162,7 +162,7 @@ def point_at(args: list[str], levels: str) -> list[str]:
     return args[:at + 1] + [levels] + args[at + 2:]
 
 
-def mod_models_action(key: str, mod_id: str) -> dict:
+def mod_models_action(key: str, mod_id: str, levels_stamp: str) -> dict:
     """OpenRAC: Commando's step after the levels: the mod's model builder (builder/construir.py),
     from the data folder's levels into the installed mod's folder. It leaves modelos_construidos.json
     there (also when some models failed: those use the game's own), which marks it done; installing
@@ -184,7 +184,9 @@ def mod_models_action(key: str, mod_id: str) -> dict:
         "cwd": ".",
         "requires": ["python"],
         "makes": f"{mod}/modelos_construidos.json",
-        "needs": [{"path": f"{levels}/{LEVELS_STAMP}", "from": "the levels (Get the levels ready)"},
+        # The levels' own stamp, as Get the levels ready names it (a later game's export has a format
+        # of its own: levels-21.json for Going Commando, not LEVELS_STAMP).
+        "needs": [{"path": levels_stamp, "from": "the levels (Get the levels ready)"},
                   {"path": f"{mod}/openrac-mod.json", "from": "the mod, which the launcher installs"}],
         "output": "{data}/builder_log",
         "platforms": ["linux", "macos", "windows"],
@@ -268,7 +270,7 @@ def player_actions(android: bool = False, android_games: set[str] | None = None,
                 action.pop("todo", None)
             kept.append(action)
             if mod_models and action["id"] == "port-levels":
-                kept.append(mod_models_action(key, mod_models))
+                kept.append(mod_models_action(key, mod_models, action["artifact"]))
         out["versions"][key] = kept
     return out
 
