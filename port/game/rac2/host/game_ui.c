@@ -226,7 +226,6 @@ static const sprite_entry k_sprites[] = {
     {"hud_left_frame", 0x90F0u, 0, 0.0f, 0x55F0C070u},           /* HUD_LEFT_FRAME */
     {"hud_right_fill", 0x93C0u, 0, 0.0f, 0x60442D00u},           /* HUD_RIGHT_FILL */
     {"hud_right_frame", 0x9590u, 0, 0.0f, 0x55F0C070u},          /* HUD_RIGHT_FRAME */
-    {"hud_health_icon", 0x9B00u, 0, 0.0f, 0x80001EFFu},          /* HUD_HEALTH_ICON */
     {"top_plate_fill", 0xC1E0u, 0, 0.0f, 0x60442D00u},           /* TOP_PLATE_FILL */
     {"top_plate_frame", 0xC670u, 0, 0.0f, 0x55F0C070u},          /* TOP_PLATE_FRAME */
     {"corner_fill", 0xDD50u, 0, 0.0f, 0x80EFDFC3u},              /* CORNER_FILL */

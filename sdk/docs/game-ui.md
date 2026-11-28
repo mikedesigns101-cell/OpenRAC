@@ -112,7 +112,47 @@ mod.game_sound_play(11, 1);                          // the vendor's (class 11) 
 
 ## The game's sprites
 
-(The catalogue: filled in from the probe.)
+The plates and frames of the game's menus are "native quads" objects of its resident GUI data
+(loaded once, the same in every level): each has its own shape and its own animation, where
+`frame` (0 to 1) stretches it (how wide a plate, how far a bracket reaches). `x, y` is the
+object's anchor, where the game itself puts it (below); `scale_x`, `scale_y` scale it from there
+(-1 mirrors it). Leave `rgba` at 0 for the game's own colour (the fills' #002D44 at 96 of 128, the
+frames' #70C0F0); a plate is its fill, then its frame over it, at the same place and `frame`.
+
+| id | `OPENRAC_GUI_SPRITE_` | what | the game draws it at |
+|---|---|---|---|
+| 1 | `FRAME_END` | the help box frame's end bracket | the box's corners (the frame of `OPENRAC_GUI_BOX`) |
+| 2 | `FRAME_CORNER` | the help box frame's line | idem |
+| 3 | `PAUSE_PLATE_FILL` | the pause menu's plate, its fill | x 124 (its left end), y 36, 86 ... 336 (its top), `frame` 0.37 (about 250 wide, 28 tall) |
+| 4 | `PAUSE_PLATE_FRAME` | its double frame | idem; the chosen one in white (#ECFDFE) |
+| 5, 6 | `HUD_LEFT_FILL`, `_FRAME` | the HUD's top left plate (health) | x 10, y 10, `frame` 4 |
+| 7, 8 | `HUD_RIGHT_FILL`, `_FRAME` | the HUD's top right plate (bolts) | x 498, y 10 |
+| 9, 10 | `TOP_PLATE_FILL`, `_FRAME` | the HUD's top middle plate | x 147, y 10 |
+| 11, 12 | `CORNER_FILL`, `_FRAME` | a small corner piece | x 184 / 185, y 29 / 30, four times mirrored |
+| 13 | `VENDOR_LIST_FILL` | the vendor's six plates, stacked: fill | x 250, y 190 |
+| 14, 15 | `VENDOR_LIST_FRAME`, `_INNER` | their double frame, their thin inner frame | idem |
+| 16 | `VENDOR_ARROWS` | the arrows beside each plate | idem |
+| 17 | `VENDOR_CURSOR` | the chosen plate's frame | idem |
+| 18 | `BRACKET_END` | a bracket's end | x 165, y 68, `scale_x` -1 |
+| 19 | `BRACKET_LINE` | a bracket's line | x 330, y 68, `frame` 0.145 |
+
+```cpp
+// A pause-menu plate with a word in it, as the game draws its own.
+openrac_gui_element p[3] = {};
+for (auto& e : p) { e.size = sizeof e; e.scale_x = e.scale_y = 1; }
+p[0].kind = OPENRAC_GUI_SPRITE; p[0].id = OPENRAC_GUI_SPRITE_PAUSE_PLATE_FILL;  p[0].x = 124; p[0].y = 210; p[0].frame = 0.37f;
+p[1].kind = OPENRAC_GUI_SPRITE; p[1].id = OPENRAC_GUI_SPRITE_PAUSE_PLATE_FRAME; p[1].x = 124; p[1].y = 210; p[1].frame = 0.37f;
+p[2].kind = OPENRAC_GUI_TEXT; p[2].layer = 1; p[2].flags = OPENRAC_GUI_CENTER; p[2].x = 249; p[2].y = 216;
+std::snprintf(p[2].text, sizeof p[2].text, "Weapons");
+mod.gui_draw(p, 3);
+```
+
+A text with a higher `layer` goes over a sprite (the port keeps each element's place in the
+game's display list); one with a lower layer goes under it.
+
+The catalogue was made with `OPENRAC_GAME_UI_LOG=sprites` (below), on the NTSC-U disc (v1.01; the
+other releases have none of this yet). The icons: `OPENRAC_GUI_ITEM_ICON` draws any item's icon
+(all 55 were drawn in a test); HUD textures by number change from level to level, keys do not.
 
 ## Tests
 

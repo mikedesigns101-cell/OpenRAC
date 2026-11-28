@@ -2435,18 +2435,17 @@ typedef void (*openrac_glider_fn)(void* user, const openrac_glider_event* event)
 #define OPENRAC_GUI_SPRITE_HUD_LEFT_FRAME 6     /* ... frame */
 #define OPENRAC_GUI_SPRITE_HUD_RIGHT_FILL 7     /* the HUD's top right plate (bolts): fill */
 #define OPENRAC_GUI_SPRITE_HUD_RIGHT_FRAME 8    /* ... frame */
-#define OPENRAC_GUI_SPRITE_HUD_HEALTH_ICON 9    /* the HUD's health icon */
-#define OPENRAC_GUI_SPRITE_TOP_PLATE_FILL 10    /* the HUD's top middle plate: fill */
-#define OPENRAC_GUI_SPRITE_TOP_PLATE_FRAME 11   /* ... frame */
-#define OPENRAC_GUI_SPRITE_CORNER_FILL 12       /* a corner piece the game draws four times, mirrored */
-#define OPENRAC_GUI_SPRITE_CORNER_FRAME 13      /* ... its frame */
-#define OPENRAC_GUI_SPRITE_VENDOR_LIST_FILL 14  /* the vendor's six stacked plates: fill */
-#define OPENRAC_GUI_SPRITE_VENDOR_LIST_FRAME 15 /* ... their double frame */
-#define OPENRAC_GUI_SPRITE_VENDOR_LIST_INNER 16 /* ... their thin inner frame */
-#define OPENRAC_GUI_SPRITE_VENDOR_ARROWS 17     /* the vendor's side arrows by each plate */
-#define OPENRAC_GUI_SPRITE_VENDOR_CURSOR 18     /* the vendor's chosen-plate frame */
-#define OPENRAC_GUI_SPRITE_BRACKET_END 19       /* a bracket's end (mirror it with scale_x -1) */
-#define OPENRAC_GUI_SPRITE_BRACKET_LINE 20      /* a bracket's line (`frame`: how far it reaches) */
+#define OPENRAC_GUI_SPRITE_TOP_PLATE_FILL 9     /* the HUD's top middle plate: fill */
+#define OPENRAC_GUI_SPRITE_TOP_PLATE_FRAME 10   /* ... frame */
+#define OPENRAC_GUI_SPRITE_CORNER_FILL 11       /* a corner piece the game draws four times, mirrored */
+#define OPENRAC_GUI_SPRITE_CORNER_FRAME 12      /* ... its frame */
+#define OPENRAC_GUI_SPRITE_VENDOR_LIST_FILL 13  /* the vendor's six stacked plates: fill */
+#define OPENRAC_GUI_SPRITE_VENDOR_LIST_FRAME 14 /* ... their double frame */
+#define OPENRAC_GUI_SPRITE_VENDOR_LIST_INNER 15 /* ... their thin inner frame */
+#define OPENRAC_GUI_SPRITE_VENDOR_ARROWS 16     /* the vendor's side arrows by each plate */
+#define OPENRAC_GUI_SPRITE_VENDOR_CURSOR 17     /* the vendor's chosen-plate frame */
+#define OPENRAC_GUI_SPRITE_BRACKET_END 18       /* a bracket's end (mirror it with scale_x -1) */
+#define OPENRAC_GUI_SPRITE_BRACKET_LINE 19      /* a bracket's line (`frame`: how far it reaches) */
 
 /* The most elements a mod draws at once, and the mods together; the most bytes of a text (with its
  * end). Since 1.129. */

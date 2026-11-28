@@ -384,6 +384,23 @@ checks api->api_minor before it uses anything newer than the minor it was built 
 | `OPENRAC_GUI_COLOUR_7` | `"\x0F"` |  |
 | `OPENRAC_GUI_SPRITE_FRAME_END` | `1` | the help box frame's end bracket (left; mirrored right) |
 | `OPENRAC_GUI_SPRITE_FRAME_CORNER` | `2` | the help box frame's corner line |
+| `OPENRAC_GUI_SPRITE_PAUSE_PLATE_FILL` | `3` | the pause menu's plate: its fill (x its left end) |
+| `OPENRAC_GUI_SPRITE_PAUSE_PLATE_FRAME` | `4` | ... and its frame, drawn over the fill |
+| `OPENRAC_GUI_SPRITE_HUD_LEFT_FILL` | `5` | the HUD's top left plate (health): fill |
+| `OPENRAC_GUI_SPRITE_HUD_LEFT_FRAME` | `6` | ... frame |
+| `OPENRAC_GUI_SPRITE_HUD_RIGHT_FILL` | `7` | the HUD's top right plate (bolts): fill |
+| `OPENRAC_GUI_SPRITE_HUD_RIGHT_FRAME` | `8` | ... frame |
+| `OPENRAC_GUI_SPRITE_TOP_PLATE_FILL` | `9` | the HUD's top middle plate: fill |
+| `OPENRAC_GUI_SPRITE_TOP_PLATE_FRAME` | `10` | ... frame |
+| `OPENRAC_GUI_SPRITE_CORNER_FILL` | `11` | a corner piece the game draws four times, mirrored |
+| `OPENRAC_GUI_SPRITE_CORNER_FRAME` | `12` | ... its frame |
+| `OPENRAC_GUI_SPRITE_VENDOR_LIST_FILL` | `13` | the vendor's six stacked plates: fill |
+| `OPENRAC_GUI_SPRITE_VENDOR_LIST_FRAME` | `14` | ... their double frame |
+| `OPENRAC_GUI_SPRITE_VENDOR_LIST_INNER` | `15` | ... their thin inner frame |
+| `OPENRAC_GUI_SPRITE_VENDOR_ARROWS` | `16` | the vendor's side arrows by each plate |
+| `OPENRAC_GUI_SPRITE_VENDOR_CURSOR` | `17` | the vendor's chosen-plate frame |
+| `OPENRAC_GUI_SPRITE_BRACKET_END` | `18` | a bracket's end (mirror it with scale_x -1) |
+| `OPENRAC_GUI_SPRITE_BRACKET_LINE` | `19` | a bracket's line (`frame`: how far it reaches) |
 | `OPENRAC_GUI_ELEMENTS_MAX` | `64` | The most elements a mod draws at once, and the mods together; the most bytes of a text (with its end). Since 1.129. |
 | `OPENRAC_GUI_ELEMENTS_ALL` | `256` |  |
 | `OPENRAC_GUI_TEXT_BYTES` | `256` |  |
