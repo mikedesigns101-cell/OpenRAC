@@ -585,6 +585,13 @@ void gadgets_frame();
 void gadgets_save_changed();
 std::string gadgets_save_key(const openrac_mod* mod);
 void gadgets_reset();
+// The game's Glider of the mods' pads (interface 1.127, mod_api/glider.cpp): the events of a frame
+// to the mods' callbacks, and the pads and callbacks forgotten at the mods' unload.
+void glider_frame();
+void glider_reset();
+// Whether a mod of the list asks for the game's RAM past 32 MiB ("expanded_ram", 1.127), read
+// before the game's memory is made.
+bool wants_expanded_ram(const std::filesystem::path& list, bool purist);
 
 // The OPENRAC_OVERLAY_* bit of a frame of the game's phase `phase` (OPENRAC_PLAY_*); 0 for a phase
 // nothing is drawn over. openrac_overlay.phase holds this bit, not the game's phase.

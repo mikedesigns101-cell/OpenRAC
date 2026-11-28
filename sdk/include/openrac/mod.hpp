@@ -2290,6 +2290,48 @@ public:
       return moby_layer_at(address, index, layer);
     }
 
+    // Since 1.127: whether the port imports the hero's seqs of other levels and puts the game's
+    // Glider in any level (hero_seq_import, glider_pad_add, glider_pad_remove, on_glider).
+    bool has_glider() const {
+      return m_api->api_minor >= 127 &&
+             m_api->size >= offsetof(openrac_api, on_glider) + sizeof(void *);
+    }
+
+    // Since 1.127: seq `seq` of the hero's class as level `level` has it, wherever his class lacks
+    // it (the manifest's "expanded_ram"). Returns OPENRAC_HOOK_OK or _UNKNOWN.
+    int hero_seq_import(int level, int seq) const {
+      if (!has_glider()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->hero_seq_import(m_handle, level, seq);
+    }
+
+    // Since 1.127: a launch pad for the game's Glider (openrac_glider_pad). Returns the pad's number
+    // or OPENRAC_HOOK_UNKNOWN.
+    int glider_pad_add(const openrac_glider_pad &pad) const {
+      if (!has_glider()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->glider_pad_add(m_handle, &pad);
+    }
+
+    // Since 1.127: takes the mod's pad `pad` away from the next load of its level.
+    int glider_pad_remove(int pad) const {
+      if (!has_glider()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->glider_pad_remove(m_handle, pad);
+    }
+
+    // Since 1.127: `fn` called with each thing that happens at the mod's pads. Only while the mod
+    // loads.
+    int on_glider(openrac_glider_fn fn, void *user) const {
+      if (!has_glider()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->on_glider(m_handle, fn, user);
+    }
+
     // Since 1.126: takes off the mod's layer `index` of the moby at `address`.
     int moby_layer_off(std::uint32_t address, int index) const {
       openrac_moby_layer layer{};

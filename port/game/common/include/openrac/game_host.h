@@ -91,6 +91,10 @@ int openrac_game_level_class(int level, int oclass, const uint8_t** bytes, uint3
  * added). 0, or -1. */
 int openrac_game_level_record(int level, int oclass, uint8_t record[0x88], const uint8_t** pvars,
                               uint32_t* pvars_size, const uint32_t** inner, uint32_t* inner_count);
+/* Going Commando: seq `seq` of the hero's class as level `level`'s core holds it on the player's
+ * disc image, before the game relocates it (its pointers offsets from its start): its bytes (valid
+ * until the next call) and their size. 0, or -1 (no image, the level has no such seq). */
+int openrac_game_level_hero_seq(int level, int seq, const uint8_t** bytes, uint32_t* size);
 /* Portable presentation's own mechanical/chirp cues, mixed with game audio. */
 void openrac_game_infobot_sound(int opening);
 void openrac_game_special_sound(int item);
@@ -645,6 +649,40 @@ typedef struct openrac_game_gadget {
     const char* description;
 } openrac_game_gadget;
 
+/* A launch pad for the game's Glider a mod puts in a level (openrac_game_play.glider_pad_add;
+ * Going Commando: rac2/host/glider.c): in level `level`, at `position` facing `yaw` (radians about
+ * z); the flight ends on the ground within `landing_radius` of `landing` and at most
+ * `landing_height` above it; `item` is the item the hero has to own to take off (21, the Glider;
+ * -1 none). */
+typedef struct openrac_game_glider_pad {
+    int level;
+    float position[3];
+    float yaw;
+    float landing[3];
+    float landing_radius;
+    float landing_height;
+    int32_t item;
+} openrac_game_glider_pad;
+
+/* openrac_game_glider_event.kind: the hero onto a pad and off it, X on a pad without the item, the
+ * take-off, the landing in the pad's zone, a crash (a wall: he falls), a fall into what the level
+ * kills with (the game's material 1: water or a pit), the flight ended another way (his state
+ * changed: a cut scene, a death). */
+#define OPENRAC_GAME_GLIDER_ON_PAD 1
+#define OPENRAC_GAME_GLIDER_OFF_PAD 2
+#define OPENRAC_GAME_GLIDER_REFUSED 3
+#define OPENRAC_GAME_GLIDER_LAUNCH 4
+#define OPENRAC_GAME_GLIDER_LAND 5
+#define OPENRAC_GAME_GLIDER_CRASH 6
+#define OPENRAC_GAME_GLIDER_KILLED 7
+#define OPENRAC_GAME_GLIDER_ABORT 8
+
+typedef struct openrac_game_glider_event {
+    int kind;
+    int pad;
+    float position[3];
+} openrac_game_glider_event;
+
 /* openrac_game_gadget_event.kind. */
 #define OPENRAC_GAME_GADGET_EQUIPPED 1
 #define OPENRAC_GAME_GADGET_PUT_AWAY 2
@@ -984,6 +1022,17 @@ typedef struct openrac_game_play {
      * hero, a vehicle, or a seq his class has not. NULLs for a game without them. */
     int (*hero_anim_frames)(int seq);
     int (*hero_play_anim)(int seq, int frame, float blend_ticks, float speed, int hold);
+    /* The hero's seqs of another level and the game's Glider in any level (interface 1.127; Going
+     * Commando: rac2/host/hero_seqs.c, glider.c). hero_seq_import asks for seq `seq` of the hero's
+     * class as level `level` has it in every level whose own class lacks it, from now on (read from
+     * the player's disc into the RAM past 32 MiB): 0, or -1 (bad numbers, the RAM not expanded, no
+     * such seq there). glider_pad_add a pad (each load of its level has it): its id, or -1;
+     * glider_pad_remove takes one away (from the next load of its level), 0 or -1; glider_events
+     * the events since the last call (at most `max`), their count. NULLs for a game without them. */
+    int (*hero_seq_import)(int level, int seq);
+    int (*glider_pad_add)(const openrac_game_glider_pad* pad);
+    int (*glider_pad_remove)(int id);
+    int (*glider_events)(openrac_game_glider_event* out, int max);
 } openrac_game_play;
 
 /* Set by the mods' layer (interface 1.125), called by the game each time the hero's state starts an

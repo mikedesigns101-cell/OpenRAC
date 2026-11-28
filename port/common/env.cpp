@@ -192,6 +192,10 @@ constexpr std::array<Variable, kVariableCount> kVariables = {{
     {Var::GlHideExtensions, "OPENRAC_GL_HIDE_EXTENSIONS",
      Kind::Text, Truth::NotAFlag, "none",
      "NAME,...: the renderer acts as if the driver lacked these GL extensions"},
+    {Var::GliderLog, "OPENRAC_GLIDER_LOG",
+     Kind::Text, Truth::NotAFlag, "none",
+     "Going Commando: TICKS: every TICKS ticks of a flight from a mod's glider pad, the glider's state, "
+     "place, speed and angles logged (rac2/host/glider.c; a test)"},
     {Var::GlProgramCache, "OPENRAC_GL_PROGRAM_CACHE",
      Kind::Text, Truth::NotAFlag, "the cache folder's gl_programs",
      "where OpenGL keeps its compiled programs between runs; off (or 0, none) compiles every one"},

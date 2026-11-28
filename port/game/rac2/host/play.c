@@ -430,6 +430,25 @@ void func_L00_002D2168(int seq, int frame, float blend) {
             }
         }
     }
+    /* A seq his class has no keys for in this level hangs the game (its frames are read from an
+     * empty entry): never passed on, whoever asks (interface 1.127; the level's own states never
+     * ask for one, so nothing changes for them). */
+    if (seq >= 0 && hero_moby() != 0 && seq_frames(hero_moby(), (uint32_t)seq) == 0) {
+        static uint32_t told_loads;
+        static uint8_t told[256];
+        if (told_loads != rac2_program_loads()) {
+            told_loads = rac2_program_loads();
+            memset(told, 0, sizeof told);
+        }
+        if (seq < 256 && !told[seq]) {
+            told[seq] = 1;
+            char message[160];
+            snprintf(message, sizeof message, "hero seq %d has no keys in level %d: not started (state %d)", seq,
+                     openrac_game_loaded_overlay(), GREF(int32_t, HERO_STATE));
+            openrac_game_warn(message);
+        }
+        return;
+    }
     func_L00_002D2168__game(seq, frame, blend);
 }
 
@@ -1051,6 +1070,8 @@ void rac2_play_frame(void) {
     rac2_copy_arenas_tick();
     rac2_foreign_tick();
     rac2_gadgets_frame();
+    rac2_hero_seqs_tick();
+    rac2_glider_tick();
     hero_anim_probe();
     hero_anim_frame();
     follow_motion();
@@ -1123,6 +1144,10 @@ static openrac_game_play play = {
     .gadget_events = rac2_gadget_events,
     .hero_anim_frames = hero_anim_frames,
     .hero_play_anim = hero_play_anim,
+    .hero_seq_import = rac2_hero_seq_import,
+    .glider_pad_add = rac2_glider_pad_add,
+    .glider_pad_remove = rac2_glider_pad_remove,
+    .glider_events = rac2_glider_events,
 };
 
 void rac2_install_play(void) {

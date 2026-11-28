@@ -121,6 +121,8 @@ typedef struct {
     int slot;
     gaddr own;
     uint32_t loads;
+    /* The levels it is registered in, a bit each (rac2_foreign_want); 0 every level. */
+    uint32_t levels;
 } Foreign;
 
 static Foreign s_foreign[FOREIGN_MAX];
@@ -213,7 +215,7 @@ static void read_config(void) {
             break;
         }
         if (level >= 0 && level < LEVELS && oclass >= 0 && oclass < 0x2000) {
-            s_foreign[s_count++] = (Foreign){level, oclass, 0, 0, -1, 0, 0};
+            s_foreign[s_count++] = (Foreign){level, oclass, 0, 0, -1, 0, 0, 0};
         }
         env += used;
         while (*env == ',' || *env == ' ') {
@@ -259,6 +261,9 @@ void func_L00_00300438(gaddr records, int count, int end) {
         f->at = 0;
         f->slot = -1;
         f->own = 0;
+        if (f->levels != 0 && (level >= 32 || (f->levels & (1u << level)) == 0)) {
+            continue;
+        }
         char message[256];
         const uint32_t used = GREF(uint32_t, CACHE_COUNT);
         if (used + SLOTS_SPARE > SLOTS_MAX) {
@@ -447,7 +452,54 @@ void rac2_foreign_flush(void) {
  * first moby of the class on the disc (openrac_game_level_record): its scale, draw words, turn,
  * pvars (in the port's room, its pointers made addresses), flags and colour; no save id and no
  * reward, and none of its level's routes, areas or targets (-1: none). Returns the moby, or 0. */
+static gaddr spawn_class(int k, const float to[3], gaddr own_pvars, int on_floor);
+
 static gaddr spawn_one(int k, const float to[3]) {
+    return spawn_class(k, to, 0, 1);
+}
+
+/* Another part of the port's own use of a class of another level (glider.c): class `oclass` of
+ * level `level` registered at each load of level `in` too (-1: of every level). Returns its index,
+ * or -1 (no room in the list). */
+int rac2_foreign_want(int level, int oclass, int in) {
+    if (s_count < 0) {
+        read_config();
+    }
+    for (int k = 0; k < s_count; ++k) {
+        if (s_foreign[k].level == level && s_foreign[k].oclass == oclass) {
+            if (in < 0) {
+                s_foreign[k].levels = 0;
+            } else if (s_foreign[k].levels != 0 && in < 32) {
+                s_foreign[k].levels |= 1u << in;
+            }
+            return k;
+        }
+    }
+    if (s_count >= FOREIGN_MAX || level < 0 || level >= LEVELS || in >= 32) {
+        return -1;
+    }
+    s_foreign[s_count] = (Foreign){level, oclass, 0, 0, -1, 0, 0, in < 0 ? 0u : 1u << in};
+    return s_count++;
+}
+
+/* Foreign class k's copy as this load registered it, or 0. */
+gaddr rac2_foreign_class_at(int k) {
+    if (k < 0 || k >= s_count || s_foreign[k].loads != rac2_program_loads()) {
+        return 0;
+    }
+    return s_foreign[k].at;
+}
+
+/* A moby of foreign class k at `to` with the port's own pvars `pvars` (as spawn_one, the rest from
+ * its level's first moby of the class; left where it is put, not set on the floor). */
+gaddr rac2_foreign_spawn(int k, const float to[3], gaddr pvars) {
+    if (k < 0 || k >= s_count) {
+        return 0;
+    }
+    return spawn_class(k, to, pvars, 0);
+}
+
+static gaddr spawn_class(int k, const float to[3], gaddr own_pvars, int on_floor) {
     static gaddr room;
     static uint32_t room_loads;
     static int used;
@@ -458,7 +510,7 @@ static gaddr spawn_one(int k, const float to[3]) {
     uint32_t pv_size = 0, inner_count = 0;
     if (f->at == 0 || f->loads != rac2_program_loads()
         || openrac_game_level_record(f->level, f->oclass, rec, &pv, &pv_size, &inner, &inner_count) != 0
-        || pv_size > SPAWN_PVARS) {
+        || (own_pvars == 0 && pv_size > SPAWN_PVARS)) {
         return 0;
     }
     if (room == 0) {
@@ -468,7 +520,7 @@ static gaddr spawn_one(int k, const float to[3]) {
         room_loads = rac2_program_loads();
         used = 0;
     }
-    if (used >= SPAWN_MAX) {
+    if (own_pvars == 0 && used >= SPAWN_MAX) {
         return 0;
     }
     const gaddr m = func_0029EFD0(f->oclass);
@@ -480,10 +532,13 @@ static gaddr spawn_one(int k, const float to[3]) {
         func_0029F338(m);
         return 0;
     }
-    const gaddr pvars = room + (gaddr)used++ * SPAWN_PVARS;
-    memcpy(G(pvars), pv, pv_size);
-    for (uint32_t i = 0; i < inner_count; ++i) {
-        GREF(uint32_t, pvars + inner[i]) += pvars;
+    gaddr pvars = own_pvars;
+    if (pvars == 0) {
+        pvars = room + (gaddr)used++ * SPAWN_PVARS;
+        memcpy(G(pvars), pv, pv_size);
+        for (uint32_t i = 0; i < inner_count; ++i) {
+            GREF(uint32_t, pvars + inner[i]) += pvars;
+        }
     }
     uint32_t w;
     float scale;
@@ -519,7 +574,7 @@ static gaddr spawn_one(int k, const float to[3]) {
      * its wander home +0x2E0 here. Its first update (state 0, func_L02_003CE4D0) deletes a moby whose
      * target is -1 and reads that entry of the level's table (D_L02_001B3200, 48 bytes each): it starts
      * with this level's first, and is freed once that update has run (rac2_foreign_flush). */
-    if (f->oclass == 2638 && pv_size >= 0x2ECu) {
+    if (f->oclass == 2638 && pv_size >= 0x2ECu && own_pvars == 0) {
         GREF(int32_t, pvars + 0x210u) = 0;
         /* Not in a drop ship (+0x214: its first update then hides it, +0x34 |= 0x41, with no
          * collision, and waits in state 13 for a ship this level has not): out on the ground. */
@@ -531,9 +586,11 @@ static gaddr spawn_one(int k, const float to[3]) {
         }
     }
     memcpy(G(m + MOBY_POS), to, 12);
-    const gaddr base = GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableBase));
-    float at[3] = {to[0], to[1], to[2]};
-    (void)rac2_moby_relocate((int32_t)((m - base) / MOBY_SIZE), at, 0u);
+    if (on_floor) {
+        const gaddr base = GREF(gaddr, OPENRAC_DATA(RAC2_g_mobyTableBase));
+        float at[3] = {to[0], to[1], to[2]};
+        (void)rac2_moby_relocate((int32_t)((m - base) / MOBY_SIZE), at, 0u);
+    }
     func_002A0F48(m);
     return m;
 }

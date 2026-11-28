@@ -69,6 +69,21 @@ openrac_gadget_info	name	112	char[96]
 openrac_gadget_info	description	208	char[96]
 openrac_gadget_info	icon	304	int32_t
 openrac_gadget_info	host_item	308	int32_t
+openrac_glider_event	(size)	24	-
+openrac_glider_event	size	0	uint32_t
+openrac_glider_event	kind	4	int32_t
+openrac_glider_event	pad	8	int32_t
+openrac_glider_event	position	12	float[3]
+openrac_glider_pad	(size)	52	-
+openrac_glider_pad	size	0	uint32_t
+openrac_glider_pad	flags	4	uint32_t
+openrac_glider_pad	level	8	int32_t
+openrac_glider_pad	position	12	float[3]
+openrac_glider_pad	yaw	24	float
+openrac_glider_pad	landing	28	float[3]
+openrac_glider_pad	landing_radius	40	float
+openrac_glider_pad	landing_height	44	float
+openrac_glider_pad	item	48	int32_t
 openrac_graphics	(size)	64	-
 openrac_graphics	size	0	uint32_t
 openrac_graphics	backend	4	uint32_t
@@ -508,6 +523,7 @@ openrac_camera_script_fn	(typedef)	-	void (*)(void *, int, int)
 openrac_frame_fn	(typedef)	-	void (*)(void *)
 openrac_gaddr	(typedef)	-	uint32_t
 openrac_gadget_fn	(typedef)	-	void (*)(void *, const openrac_gadget_event *)
+openrac_glider_fn	(typedef)	-	void (*)(void *, const openrac_glider_event *)
 openrac_hero_anim_fn	(typedef)	-	int (*)(void *, const openrac_hero_anim_request *)
 openrac_hit_fn	(typedef)	-	int (*)(void *, const openrac_hit *)
 openrac_menu_fn	(typedef)	-	int (*)(void *, const openrac_menu_frame *)

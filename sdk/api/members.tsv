@@ -251,3 +251,7 @@ hero_anim_frames	hero	1.125	experimental
 hero_play_anim	hero	1.125	experimental
 hero_anim_filter	hero	1.125	experimental
 moby_layer_at	visuals	1.126	experimental
+hero_seq_import	hero	1.127	experimental
+glider_pad_add	world	1.127	experimental
+glider_pad_remove	world	1.127	experimental
+on_glider	world	1.127	experimental

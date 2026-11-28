@@ -114,9 +114,14 @@ struct Rac2Class {
     std::uint8_t map[16] = {};
 };
 
-bool rac2_level_class(int level, int oclass, Rac2Class* out) {
-    static int core_level = -1;
-    static std::vector<std::uint8_t> index, core;
+// The last level's core index and core data (rac2_level_class, rac2_level_hero_seq), read once.
+int g_rac2_core_level = -1;
+std::vector<std::uint8_t> g_rac2_index, g_rac2_core;
+
+bool rac2_level_core(int level) {
+    int& core_level = g_rac2_core_level;
+    std::vector<std::uint8_t>& index = g_rac2_index;
+    std::vector<std::uint8_t>& core = g_rac2_core;
     assets::disc::IsoImage* iso = rac2_iso();
     if (iso == nullptr) {
         return false;
@@ -146,6 +151,76 @@ bool rac2_level_class(int level, int oclass, Rac2Class* out) {
             }
             core_level = level;
         }
+        return true;
+    } catch (const std::exception& e) {
+        log::warn("level {}'s core cannot be read from the disc image: {}", level, e.what());
+        core_level = -1;
+        index.clear();
+        core.clear();
+        return false;
+    }
+}
+
+// Where a block of level `level`'s core that starts at `at` ends: the next block's start (the
+// index's sections, its moby, tie and shrub classes, and the hero's seqs), or the core's end.
+std::uint64_t rac2_core_block_end(std::uint32_t at) {
+    const std::vector<std::uint8_t>& index = g_rac2_index;
+    std::uint64_t end = g_rac2_core.size();
+    const auto bound = [&](std::uint64_t b) {
+        if (b > at && b < end) {
+            end = b;
+        }
+    };
+    for (std::size_t w : {0x08, 0x0C, 0x10, 0x14, 0x24, 0x60}) {
+        bound(rac2_word(index, w));
+    }
+    const std::size_t tables[3][2] = {{0x18, 0x20}, {0x20, 0x20}, {0x28, 0x30}};
+    for (const auto& t : tables) {
+        const std::uint32_t n = rac2_word(index, t[0]), first = rac2_word(index, t[0] + 4);
+        for (std::uint32_t i = 0; i < n && first + (i + 1) * t[1] <= index.size(); ++i) {
+            bound(rac2_word(index, first + i * t[1]));
+        }
+    }
+    const std::uint32_t seqs = rac2_word(index, 0x78);
+    for (std::uint32_t s = 0; s < 256 && seqs != 0 && seqs + (s + 1) * 4ull <= index.size(); ++s) {
+        bound(rac2_word(index, seqs + s * 4));
+    }
+    return end;
+}
+
+// Seq `seq` of the hero's class as level `level`'s core holds it (LoadLevelArchiveResources: the
+// index's +0x78, a word a seq, each its block's offset in the core or 0 for none; the class's own
+// count of seqs bounds it). The block's pointers are offsets from its start
+// (relocate_asset_entry_pointers, func_00293260), so it works anywhere once relocated.
+bool rac2_level_hero_seq(int level, int seq, std::vector<std::uint8_t>* out) {
+    if (seq < 0 || seq > 255 || !rac2_level_core(level)) {
+        return false;
+    }
+    const std::vector<std::uint8_t>& index = g_rac2_index;
+    const std::vector<std::uint8_t>& core = g_rac2_core;
+    const std::uint32_t seqs = rac2_word(index, 0x78);
+    if (seqs == 0 || seqs + (seq + 1) * 4ull > index.size()) {
+        return false;
+    }
+    const std::uint32_t at = rac2_word(index, seqs + seq * 4u);
+    if (at == 0 || at >= core.size()) {
+        return false;
+    }
+    const std::uint64_t end = rac2_core_block_end(at);
+    if (end - at < 0x20) {
+        return false;
+    }
+    out->assign(core.begin() + at, core.begin() + static_cast<std::ptrdiff_t>(end));
+    return true;
+}
+
+bool rac2_level_class(int level, int oclass, Rac2Class* out) {
+    if (!rac2_level_core(level)) {
+        return false;
+    }
+    const std::vector<std::uint8_t>& index = g_rac2_index;
+    const std::vector<std::uint8_t>& core = g_rac2_core;
+    try {
         const std::uint32_t count = rac2_word(index, 0x18), table = rac2_word(index, 0x1C);
         std::size_t record = SIZE_MAX;
         for (std::uint32_t i = 0; i < count && table + (i + 1) * 0x20ull <= index.size(); ++i) {
@@ -516,6 +591,46 @@ extern "C" int openrac_game_level_class(
     (void)bytes;
     (void)size;
     (void)map;
+    return -1;
+#endif
+}
+
+extern "C" int openrac_game_level_hero_seq(int level, int seq, const uint8_t** bytes, uint32_t* size) {
+#ifdef OPENRAC_HAS_DISC
+    // Each seq read once a run.
+    struct Seq {
+        int level, seq;
+        std::vector<std::uint8_t> bytes;
+    };
+    static std::vector<Seq> seqs;
+    if (std::string(openrac_game.game) != "rac2" || bytes == nullptr || size == nullptr) {
+        return -1;
+    }
+    const Seq* found = nullptr;
+    for (const Seq& s : seqs) {
+        if (s.level == level && s.seq == seq) {
+            found = &s;
+        }
+    }
+    if (found == nullptr) {
+        Seq s{level, seq, {}};
+        if (rac2_level_hero_seq(level, seq, &s.bytes)) {
+            log::info("level {}'s hero seq {}: {} bytes read from the disc image", level, seq, s.bytes.size());
+        }
+        seqs.push_back(std::move(s));
+        found = &seqs.back();
+    }
+    if (found->bytes.empty()) {
+        return -1;
+    }
+    *bytes = found->bytes.data();
+    *size = static_cast<uint32_t>(found->bytes.size());
+    return 0;
+#else
+    (void)level;
+    (void)seq;
+    (void)bytes;
+    (void)size;
     return -1;
 #endif
 }

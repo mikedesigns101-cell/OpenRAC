@@ -804,8 +804,12 @@ int main(int argc, char** argv) {
            });
     // Going Commando's classes of other levels go in RAM past the console's 32 MiB
     // (rac2/host/foreign_class.c).
-    const bool foreign_classes = std::string_view(openrac_game.game) == "rac2"
-                                 && env::value(env::Var::ForeignClasses).has_value();
+    // A mod's manifest asks for it too ("expanded_ram", interface 1.127: the hero's seqs of other
+    // levels, the Glider).
+    const bool foreign_classes =
+        std::string_view(openrac_game.game) == "rac2"
+        && (env::value(env::Var::ForeignClasses).has_value()
+            || (!g_options.ship_map && mods::wants_expanded_ram(g_options.plugins, g_options.no_mods)));
     if (expanded_streams || foreign_classes) {
         ram_size = GUEST_RAM_EXPANDED_SIZE;
     }

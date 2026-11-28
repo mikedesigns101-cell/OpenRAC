@@ -168,9 +168,12 @@ extern "C" {
  * state untouched, and the seq his state asks for swapped (hero_anim_frames,
  * hero_play_anim, hero_anim_filter), and 1.126 layers of meshes a moby wears
  * over its own model, put on and taken off one by one, the parts they cover
- * hidden (moby_layer_at, openrac_moby_layer).
+ * hidden (moby_layer_at, openrac_moby_layer), and 1.127 the hero's seqs of
+ * another level where his class lacks them, and the game's Glider from a launch
+ * pad in any level (hero_seq_import, glider_pad_add, glider_pad_remove,
+ * on_glider; the manifest's "expanded_ram").
  */
-#define OPENRAC_MOD_API_MINOR 126
+#define OPENRAC_MOD_API_MINOR 127
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2325,6 +2328,51 @@ typedef struct openrac_hero_anim_request {
 
 typedef int (*openrac_hero_anim_fn)(void* user, const openrac_hero_anim_request* request);
 
+/* The item openrac_glider_pad.item names to need the game's Glider (Going Commando). Since 1.127. */
+#define OPENRAC_GLIDER_ITEM 21
+
+/* A launch pad for the game's Glider in a level (openrac_api.glider_pad_add): in level `level`, at
+ * `position` facing `yaw` (radians about z: the way the glider takes off). The flight lands where
+ * the glider comes within `landing_radius` (across) of `landing` and at most `landing_height` above
+ * it. `item`: the item the hero has to own to take off (OPENRAC_GLIDER_ITEM; -1 none). `flags`: 0.
+ * Since 1.127. */
+typedef struct openrac_glider_pad {
+    /* sizeof(openrac_glider_pad), set by the mod. */
+    uint32_t size;
+    uint32_t flags;
+    int32_t level;
+    float position[3];
+    float yaw;
+    float landing[3];
+    float landing_radius;
+    float landing_height;
+    int32_t item;
+} openrac_glider_pad;
+
+/* openrac_glider_event.kind: the hero onto a pad and off it; X on a pad without the item; the
+ * take-off; the landing in the pad's zone; a crash into a wall (he is let go and falls); a fall into
+ * what the level kills with (water, a pit: the game's own death follows); the flight ended another
+ * way (a cut scene, a death). Since 1.127. */
+#define OPENRAC_GLIDER_ON_PAD 1
+#define OPENRAC_GLIDER_OFF_PAD 2
+#define OPENRAC_GLIDER_REFUSED 3
+#define OPENRAC_GLIDER_LAUNCH 4
+#define OPENRAC_GLIDER_LAND 5
+#define OPENRAC_GLIDER_CRASH 6
+#define OPENRAC_GLIDER_KILLED 7
+#define OPENRAC_GLIDER_ABORT 8
+
+/* What happened at one of the mod's pads (openrac_api.on_glider): which, and where the hero (or the
+ * glider) was. Since 1.127. */
+typedef struct openrac_glider_event {
+    uint32_t size;
+    int32_t kind;
+    int32_t pad;
+    float position[3];
+} openrac_glider_event;
+
+typedef void (*openrac_glider_fn)(void* user, const openrac_glider_event* event);
+
 typedef struct openrac_api {
     /* sizeof(openrac_api) as the port was built: a newer port's is larger. Since 1.0. */
     uint32_t size;
@@ -3952,6 +4000,28 @@ typedef struct openrac_api {
      * OPENRAC_MOBY_LAYERED_MAX mobys already wearing layers, or OPENRAC_HOOK_UNKNOWN (no moby there,
      * a model not the mod's, bad numbers). Since 1.126. */
     int (*moby_layer_at)(openrac_mod* mod, uint32_t address, int index, const openrac_moby_layer* layer);
+
+    /* Asks for seq `seq` of the hero's class as level `level` has it, in every level whose own class
+     * lacks it, from now on: read from the player's disc at each load (Siberius, level 7, has all of
+     * them; Oozla lacks 56 of 157), so hero_anim_frames, hero_play_anim and the anim filter see it.
+     * Needs the game's RAM past 32 MiB: the mod's manifest says "expanded_ram": true. The last level
+     * asked for a seq wins. Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN (bad numbers, the RAM
+     * not expanded, that level has no such seq, a game without it). Since 1.127. */
+    int (*hero_seq_import)(openrac_mod* mod, int level, int seq);
+    /* Puts a launch pad for the game's Glider in a level (Going Commando: the game's own glider and
+     * pad, read from Tabora on the player's disc, and the hero's flying seqs): each load of its level
+     * has it. Standing on it, owning `item`, X takes off; the stick steers; the flight ends in the
+     * pad's landing zone, against a wall (he falls) or in water. Not in Tabora, Dobbo or Grelbin
+     * (they have their own) nor in a level whose hero cannot ride (Maktar). Needs "expanded_ram".
+     * Returns the pad's number (0 or more), or OPENRAC_HOOK_UNKNOWN. Since 1.127. */
+    int (*glider_pad_add)(openrac_mod* mod, const openrac_glider_pad* pad);
+    /* Takes one of the mod's pads away from the next load of its level. Returns OPENRAC_HOOK_OK or
+     * OPENRAC_HOOK_UNKNOWN. Since 1.127. */
+    int (*glider_pad_remove)(openrac_mod* mod, int pad);
+    /* Registers `fn`, called before the frame callbacks with each thing that happens at the mod's
+     * pads (openrac_glider_event). Only while the mod loads. Returns OPENRAC_HOOK_OK,
+     * OPENRAC_HOOK_TOO_LATE or OPENRAC_HOOK_UNKNOWN. Since 1.127. */
+    int (*on_glider)(openrac_mod* mod, openrac_glider_fn fn, void* user);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

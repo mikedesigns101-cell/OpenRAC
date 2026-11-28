@@ -48,6 +48,27 @@ void rac2_play_frame(void);
 void rac2_foreign_tick(void);
 /* After the moby loop (weapon_shots.c): the foreign classes' updates it noted (foreign_class.c). */
 void rac2_foreign_flush(void);
+/* The port's own classes of other levels (foreign_class.c): class `oclass` of level `level`
+ * registered at each load of level `in` (-1 every level), its index or -1; its copy this load (0
+ * none); a moby of it at `to` with the port's pvars (0 none made). */
+int rac2_foreign_want(int level, int oclass, int in);
+uint32_t rac2_foreign_class_at(int k);
+uint32_t rac2_foreign_spawn(int k, const float to[3], uint32_t pvars);
+/* The hero's seqs of other levels (hero_seqs.c, interface 1.127): asked for (0 or -1), whether a
+ * seq here is a copy, forgotten (the mods' unload), and their frame (rac2_play_frame). */
+int rac2_hero_seq_import(int level, int seq);
+int rac2_hero_seq_imported(int seq);
+void rac2_hero_seqs_reset(void);
+void rac2_hero_seqs_tick(void);
+/* The game's Glider in any level (glider.c, interface 1.127): openrac_game_play's calls, the frame
+ * (rac2_play_frame) and the mods' unload. */
+struct openrac_game_glider_pad;
+struct openrac_game_glider_event;
+int rac2_glider_pad_add(const struct openrac_game_glider_pad* pad);
+int rac2_glider_pad_remove(int id);
+int rac2_glider_events(struct openrac_game_glider_event* out, int max);
+void rac2_glider_tick(void);
+void rac2_glider_reset(void);
 /* The mods' gadgets (mod_gadgets.c): their records written once a level's program is in (level.c),
  * their frame (rac2_play_frame), openrac_game_play's calls, and their texts for Text_ById (a game
  * address, 0 for an id that is not theirs). */

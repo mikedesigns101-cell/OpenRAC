@@ -349,6 +349,11 @@ One of the mod's pages of the game's own menus (Mod::ui_page): set what it shows
 | `bool has_moby_layers() const` | Since 1.126: whether the port draws layers of meshes over a moby (moby_layer_at). |
 | `int moby_layer_at(std::uint32_t address, int index, const openrac_moby_layer &layer) const` | Since 1.126: puts `layer` on the moby at `address` in its layer `index` (layer.model -1 takes it off). Returns OPENRAC_HOOK_OK, _TAKEN, _FULL or _UNKNOWN. |
 | `int moby_layer_skinned(std::uint32_t address, int index, int model, const std::uint32_t *hide_joints = nullptr) const` | Since 1.126: a skinned mesh `model` posed by the moby's joints, worn in layer `index`, hiding the moby's own joints set in `hide_joints` (OPENRAC_MOBY_LAYER_JOINT_WORDS words, or null). |
+| `bool has_glider() const` | Since 1.127: whether the port imports the hero's seqs of other levels and puts the game's Glider in any level (hero_seq_import, glider_pad_add, glider_pad_remove, on_glider). |
+| `int hero_seq_import(int level, int seq) const` | Since 1.127: seq `seq` of the hero's class as level `level` has it, wherever his class lacks it (the manifest's "expanded_ram"). Returns OPENRAC_HOOK_OK or _UNKNOWN. |
+| `int glider_pad_add(const openrac_glider_pad &pad) const` | Since 1.127: a launch pad for the game's Glider (openrac_glider_pad). Returns the pad's number or OPENRAC_HOOK_UNKNOWN. |
+| `int glider_pad_remove(int pad) const` | Since 1.127: takes the mod's pad `pad` away from the next load of its level. |
+| `int on_glider(openrac_glider_fn fn, void *user) const` | Since 1.127: `fn` called with each thing that happens at the mod's pads. Only while the mod loads. |
 | `int moby_layer_off(std::uint32_t address, int index) const` | Since 1.126: takes off the mod's layer `index` of the moby at `address`. |
 | `int moby_model_at_posed(std::uint32_t address, int model) const` | Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or _UNKNOWN. |
 | `bool has_particle_texture_register() const` | Since 1.33: whether the port registers particle textures (particle_texture_register). |

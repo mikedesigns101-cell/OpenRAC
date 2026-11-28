@@ -852,5 +852,10 @@ int api_hero_anim_frames(int seq);
 int api_hero_play_anim(openrac_mod* mod, int seq, int frame, float blend_ticks, float speed, std::uint32_t flags);
 int api_hero_anim_filter(openrac_mod* mod, openrac_hero_anim_fn fn, void* user);
 void hero_anim_reset();
+// The hero's seqs of another level and the game's Glider in any level (1.127, glider.cpp).
+int api_hero_seq_import(openrac_mod* mod, int level, int seq);
+int api_glider_pad_add(openrac_mod* mod, const openrac_glider_pad* pad);
+int api_glider_pad_remove(openrac_mod* mod, int pad);
+int api_on_glider(openrac_mod* mod, openrac_glider_fn fn, void* user);
 
 }  // namespace openrac::mods::detail

@@ -645,6 +645,13 @@ bool parse_manifest(std::string_view source, Manifest& m, std::string& error) {
         }
         m.vulkan_queue = queue->second.boolean();
     }
+    if (const auto ram = v.members().find("expanded_ram"); ram != v.members().end()) {
+        if (!is_bool(ram->second) || !m.has_api || (m.api_major == 1 && m.api_minor < 127)) {
+            error = "\"expanded_ram\" must be a boolean on a mod targeting interface 1.127 or later";
+            return false;
+        }
+        m.expanded_ram = ram->second.boolean();
+    }
     if (m.vulkan_device && can_declare_vulkan && !m.vulkan_queue) {
         error = "\"vulkan_device\" requires \"vulkan_queue\": true from interface 1.20";
         return false;

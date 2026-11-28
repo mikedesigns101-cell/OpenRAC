@@ -105,6 +105,7 @@ enum class Var : std::uint16_t {
     Give,
     GlApi,
     GlHideExtensions,
+    GliderLog,
     GlProgramCache,
     Gpu,
     GpuBake,

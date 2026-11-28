@@ -1142,6 +1142,10 @@ void fill_api(const Host& host) {
     g_api.hero_anim_frames = api_hero_anim_frames;
     g_api.hero_play_anim = api_hero_play_anim;
     g_api.hero_anim_filter = api_hero_anim_filter;
+    g_api.hero_seq_import = api_hero_seq_import;
+    g_api.glider_pad_add = api_glider_pad_add;
+    g_api.glider_pad_remove = api_glider_pad_remove;
+    g_api.on_glider = api_on_glider;
     g_api.moby_skin_at = api_moby_skin_at;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
@@ -1843,6 +1847,25 @@ VulkanStartup vulkan_startup(const fs::path& list_path, bool purist) {
     return startup;
 }
 
+bool wants_expanded_ram(const fs::path& list_path, bool purist) {
+    std::string text;
+    std::vector<ListEntry> list;
+    std::string error;
+    if (purist || !read_text(list_path, text) || !parse_list(text, list, error)) {
+        return false;
+    }
+    const fs::path folder = list_path.parent_path();
+    for (const ListEntry& e : list) {
+        std::string manifest_text;
+        Manifest manifest;
+        if (e.enabled && read_text(folder / e.id / "openrac-mod.json", manifest_text)
+            && parse_manifest(manifest_text, manifest, error) && manifest.expanded_ram) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool vulkan_needs_game_thread() {
     return g_vulkan_queue_declared
            || (g_views_mod != nullptr && g_views_mod->manifest.api_minor < 20);
@@ -1882,6 +1905,8 @@ void run_frame_callbacks() {
     follow_saves();
     // The mods' gadgets (1.124): their events and the model in the hand, before the frame callbacks.
     gadgets_frame();
+    // The game's Glider of the mods' pads (1.127): its events.
+    glider_frame();
     update_native_weapons();
     for (const FrameCallback& c : g_frames) {
         c.fn(c.user);
@@ -2174,6 +2199,7 @@ void reset() {
     g_settings_callbacks.clear();
     g_list_seen.reset();
     gadgets_reset();
+    glider_reset();
     detail::hero_anim_reset();
     reset_save_data();
     g_list_wait = 0;

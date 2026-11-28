@@ -188,6 +188,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `hero_anim_frames` | 1.125 | experimental | no | yes | no |
 | `hero_play_anim` | 1.125 | experimental | part | yes | part |
 | `hero_anim_filter` | 1.125 | experimental | no | yes | no |
+| `hero_seq_import` | 1.127 | experimental | part | yes | part |
 
 ## figures
 
@@ -236,6 +237,9 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `moby_set_joint_poses` | 1.35 | experimental | yes | yes | yes |
 | `moby_uid` | 1.35 | experimental | yes | no | no |
 | `moby_relocate` | 1.121 | experimental | part | yes | part |
+| `glider_pad_add` | 1.127 | experimental | no | yes | no |
+| `glider_pad_remove` | 1.127 | experimental | no | yes | no |
+| `on_glider` | 1.127 | experimental | no | yes | no |
 
 ## visuals
 

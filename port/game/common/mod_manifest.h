@@ -137,6 +137,10 @@ struct Manifest {
     // mod or one of an older interface.
     bool vulkan_device = false;
     bool vulkan_queue = false;  // Native Vulkan access requires game-thread rendering (1.20).
+    // "expanded_ram" (interface 1.127): the game's RAM past the console's 32 MiB, for what the port
+    // reads from other levels of the disc into it (Going Commando: classes, the hero's seqs, the
+    // Glider). Read before the game's memory is made (mods::wants_expanded_ram).
+    bool expanded_ram = false;
     // "multiplayer" (interface 1.14): an OPENRAC_PARTY_MOD_* value, gameplay when it says nothing.
     int party = 0;
 };
