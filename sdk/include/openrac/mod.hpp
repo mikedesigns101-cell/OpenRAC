@@ -400,7 +400,7 @@ struct UiItem {
 
     static UiItem text(std::string label) {
         UiItem item;
-        item.kind = OPENRAC_GUI_TEXT;
+        item.kind = OPENRAC_UI_TEXT;
         item.label = std::move(label);
         return item;
     }

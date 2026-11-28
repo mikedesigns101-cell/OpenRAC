@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "game_protos.h"
 #include "openrac/game_host.h"
@@ -206,16 +207,50 @@ static void draw_box(const openrac_game_gui_element* e) {
  * is, from that base, and the native quads' view scale the game draws it at (0: as it is then). */
 typedef struct sprite_entry {
     const char* name;
-    uint32_t pointer_at;
+    uint32_t at;     /* from the base: the object (direct) or where its pointer is */
+    int pointer;     /* 1: `at` holds a pointer to the object */
     float view_scale;
+    uint32_t colour; /* the game's own (a GS word: alpha 0 to 128), for an element's rgba 0 */
 } sprite_entry;
 
+/* The places were read with OPENRAC_GAME_UI_LOG=sprites (GuiSpriteElementDraw's objects, the probe's
+ * `+offset`) in Oozla and Maktar, NTSC-U v1.01; the help box's frame pieces are text_box_draw_frame's.
+ * Same order as OPENRAC_GUI_SPRITE_* (openrac_mod.h). */
 static const sprite_entry k_sprites[] = {
-    {NULL, 0, 0.0f},
-    {"frame_end", 0x36F28u + 0x220Cu, 0.62f},    /* OPENRAC_GUI_SPRITE_FRAME_END */
-    {"frame_corner", 0x36F28u + 0x2210u, 0.62f}, /* OPENRAC_GUI_SPRITE_FRAME_CORNER */
+    {NULL, 0, 0, 0.0f, 0},
+    {"frame_end", 0x36F28u + 0x220Cu, 1, 0.62f, 0x75F0C070u},    /* FRAME_END */
+    {"frame_corner", 0x36F28u + 0x2210u, 1, 0.62f, 0x75F0C070u}, /* FRAME_CORNER */
+    {"pause_plate_fill", 0x1C040u, 0, 0.0f, 0x60442D00u},        /* PAUSE_PLATE_FILL */
+    {"pause_plate_frame", 0x1C100u, 0, 0.0f, 0x55F0C070u},       /* PAUSE_PLATE_FRAME */
+    {"hud_left_fill", 0x8F30u, 0, 0.0f, 0x60442D00u},            /* HUD_LEFT_FILL */
+    {"hud_left_frame", 0x90F0u, 0, 0.0f, 0x55F0C070u},           /* HUD_LEFT_FRAME */
+    {"hud_right_fill", 0x93C0u, 0, 0.0f, 0x60442D00u},           /* HUD_RIGHT_FILL */
+    {"hud_right_frame", 0x9590u, 0, 0.0f, 0x55F0C070u},          /* HUD_RIGHT_FRAME */
+    {"hud_health_icon", 0x9B00u, 0, 0.0f, 0x80001EFFu},          /* HUD_HEALTH_ICON */
+    {"top_plate_fill", 0xC1E0u, 0, 0.0f, 0x60442D00u},           /* TOP_PLATE_FILL */
+    {"top_plate_frame", 0xC670u, 0, 0.0f, 0x55F0C070u},          /* TOP_PLATE_FRAME */
+    {"corner_fill", 0xDD50u, 0, 0.0f, 0x80EFDFC3u},              /* CORNER_FILL */
+    {"corner_frame", 0xDC50u, 0, 0.0f, 0x55F0C070u},             /* CORNER_FRAME */
+    {"vendor_list_fill", 0xDE10u, 0, 0.0f, 0x60442D00u},         /* VENDOR_LIST_FILL */
+    {"vendor_list_frame", 0xE170u, 0, 0.0f, 0x55F0C070u},        /* VENDOR_LIST_FRAME */
+    {"vendor_list_inner", 0xE760u, 0, 0.0f, 0x55F0C070u},        /* VENDOR_LIST_INNER */
+    {"vendor_arrows", 0xF5C0u, 0, 0.0f, 0x80FFDE8Du},            /* VENDOR_ARROWS */
+    {"vendor_cursor", 0xF930u, 0, 0.0f, 0x70FFFEEDu},            /* VENDOR_CURSOR */
+    {"bracket_end", 0x191D0u, 0, 0.0f, 0x60F0C070u},             /* BRACKET_END */
+    {"bracket_line", 0x19410u, 0, 0.0f, 0x60F0C070u},            /* BRACKET_LINE */
 };
 #define SPRITES ((int)(sizeof k_sprites / sizeof k_sprites[0]))
+
+/* A native quads object's header (NativeDrawHeaderView): its quad and texture counts and its vertex
+ * and quad tables, sane. */
+static int object_looks_right(gaddr obj) {
+    if (obj == 0 || !in_ram(obj) || (obj & 3u) != 0) {
+        return 0;
+    }
+    const int quads = GREF(int16_t, obj + 2u), textures = GREF(int16_t, obj + 6u);
+    return quads > 0 && quads < 4096 && textures >= 0 && textures <= 16 && in_ram(GREF(gaddr, obj + 16u))
+           && in_ram(GREF(gaddr, obj + 20u));
+}
 
 static gaddr sprite_object(int id, float* view) {
     const gaddr base = GREF(gaddr, RESIDENT);
@@ -226,14 +261,14 @@ static gaddr sprite_object(int id, float* view) {
      * base, as the probe logs it, drawn as it is. */
     if (id >= 0x10000 && id < 0x10000 + 0x40000 && ui_log() == 2) {
         *view = 0.0f;
-        return base + (gaddr)(id - 0x10000);
+        return object_looks_right(base + (gaddr)(id - 0x10000)) ? base + (gaddr)(id - 0x10000) : 0;
     }
     if (id <= 0 || id >= SPRITES) {
         return 0;
     }
-    const gaddr obj = GREF(gaddr, base + k_sprites[id].pointer_at);
+    const gaddr obj = k_sprites[id].pointer ? GREF(gaddr, base + k_sprites[id].at) : base + k_sprites[id].at;
     *view = k_sprites[id].view_scale;
-    return obj != 0 && in_ram(obj) ? obj : 0;
+    return object_looks_right(obj) ? obj : 0;
 }
 
 static void draw_sprite(const openrac_game_gui_element* e) {
@@ -242,7 +277,8 @@ static void draw_sprite(const openrac_game_gui_element* e) {
     if (obj == 0) {
         return;
     }
-    const uint32_t colour = gs_colour(e->rgba == 0 ? 0xFF808080u : e->rgba);
+    const uint32_t own = e->id > 0 && e->id < SPRITES ? k_sprites[e->id].colour : 0x80808080u;
+    const uint32_t colour = e->rgba == 0 ? own : gs_colour(e->rgba);
     float saved = 0.0f;
     if (view != 0.0f) {
         saved = GREF(float, VIEW_SCALE);
@@ -630,6 +666,22 @@ int rac2_game_sound_play(int bank, int index, float volume) {
 /* ---- The draw ---- */
 #define ELEMENTS 256
 static openrac_game_gui_element s_elements[ELEMENTS];
+
+/* The window draws a record (a text's glyph, a flat box) where the display list's tag at the cursor
+ * it was recorded at is reached. With nothing written there after it, the frame's DoGifPaging puts
+ * its jump to the texture uploads at that very place, which the paging's first tag reaches first:
+ * the record would be drawn before the sprites ahead of it in the list. An empty DMA tag (cnt, no
+ * quadwords; VIF NOPs) written at the cursor keeps the records at their place in the list. */
+static void list_hold(void) {
+    const gaddr at = GREF(gaddr, RAC2_LIST_CURSOR);
+    if (openrac_frame_ram_cursor(at) == UINT32_MAX) {
+        return;
+    }
+    const gaddr ram = openrac_guest_ram_address(at);
+    GREF(uint64_t, ram) = 0x10000000ull;
+    GREF(uint64_t, ram + 8u) = 0;
+    GREF(gaddr, RAC2_LIST_CURSOR) = at + 16u;
+}
 static unsigned s_draws;
 
 static void draw_elements(void) {
@@ -638,9 +690,11 @@ static void draw_elements(void) {
     if (n <= 0 && s_box_count == 0) {
         return;
     }
-    rac2_anchor();
+    /* The game's box drew its records at the cursor: they stay where they are (list_hold). */
+    list_hold();
     for (int i = 0; i < n; ++i) {
         const openrac_game_gui_element* e = &s_elements[i];
+        rac2_anchor();
         switch (e->kind) {
             case OPENRAC_GUI_TEXT:
                 draw_text(e);
@@ -659,10 +713,14 @@ static void draw_elements(void) {
             default:
                 break;
         }
+        /* What this element recorded stays here in the list, after what came before it. */
+        list_hold();
     }
     for (int i = 0; i < BOXES; ++i) {
         if (s_boxes[i].used && s_boxes[i].state != 0) {
+            rac2_anchor();
             box_draw(&s_boxes[i]);
+            list_hold();
         }
     }
     if (ui_log() && (s_draws++ % 120u) == 0u) {
@@ -697,26 +755,42 @@ static int seen_once(gaddr key) {
     return 1;
 }
 
+/* Each object the first time, and every 2 seconds every element of one frame (a dump), with what
+ * GuiSpriteElementDraw passes to func_00300A00. */
 void rac2_game_ui_probe_sprite(gaddr element) {
     if (ui_log() < 2) {
         return;
     }
     const gaddr obj = (gaddr)GREF(int32_t, element + 64u);
-    if (obj == 0 || !seen_once(obj)) {
+    if (obj == 0 || GREF(float, (gaddr)GREF(int32_t, element + 16u)) == 0.0f) {
+        return;
+    }
+    static clock_t dump_start;
+    static unsigned dump_number;
+    const clock_t now = clock();
+    int dump = 0;
+    if (now - dump_start > 2 * CLOCKS_PER_SEC) {
+        dump_start = now;
+        ++dump_number;
+        dump = 1;
+    } else if (now - dump_start < CLOCKS_PER_SEC / 200) {
+        dump = 1;
+    }
+    const int first = seen_once(obj);
+    if (!first && !dump) {
         return;
     }
     const gaddr place = (gaddr)GREF(int32_t, element);
     const gaddr scale = (gaddr)GREF(int32_t, element + 4u);
     const gaddr base = GREF(gaddr, RESIDENT);
     fprintf(stderr,
-            "[ui] sprite object %08x (resident +%x) element %08x at %.1f %.1f scale %.3f %.3f frame %.3f colour %08x "
-            "level %d\n",
-            (unsigned)obj, (unsigned)(obj - base), (unsigned)element, (double)GREF(float, place),
-            (double)GREF(float, place + 4u), (double)GREF(float, scale), (double)GREF(float, scale + 4u),
+            "[ui] %s%u sprite +%x element %08x at %.2f %.2f scale %.3f %.3f frame %.4f colour %08x level %d view %.3f\n",
+            first ? "first " : "dump ", dump_number, (unsigned)(obj - base), (unsigned)element,
+            (double)GREF(float, place), (double)GREF(float, place + 4u), (double)GREF(float, scale),
+            (double)(GREF(float, scale + 4u) * GREF(float, MENU_SCALE)),
             (double)GREF(float, (gaddr)GREF(int32_t, element + 0x38u)),
-            (unsigned)GREF(uint32_t, (gaddr)GREF(int32_t, element + 12u)), openrac_game_loaded_overlay());
-    fprintf(stderr, "[ui]   view scale %.3f, menu scale %.3f\n", (double)GREF(float, VIEW_SCALE),
-            (double)GREF(float, MENU_SCALE));
+            (unsigned)GREF(uint32_t, (gaddr)GREF(int32_t, element + 12u)), openrac_game_loaded_overlay(),
+            (double)GREF(float, VIEW_SCALE));
 }
 
 void rac2_game_ui_probe_icon(int key, int index, int tex) {
