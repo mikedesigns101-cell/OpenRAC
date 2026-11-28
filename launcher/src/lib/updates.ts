@@ -13,6 +13,7 @@ import {
   type UpdateChannel,
   type UpdateSource,
 } from "./api";
+import { COMMANDO } from "./commando";
 
 export interface UpdateInfo {
   version: string;
@@ -338,7 +339,7 @@ export async function checkForUpdate(
           version: update.version,
           tag: `v${update.version}`,
           url: source.page,
-          name: `OpenRAC Launcher v${update.version}`,
+          name: `${COMMANDO.on ? COMMANDO.name : "OpenRAC Launcher"} v${update.version}`,
           body: update.body ?? "",
           publishedAt: update.date ?? "",
           canInstallDirectly: true,

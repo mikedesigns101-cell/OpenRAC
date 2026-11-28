@@ -611,47 +611,52 @@
           bind:checked={draft.checkUpdates}
         />
       </label>
-      <label class="setting">
-        <span class="text">
-          <strong>Look for mod updates at start</strong>
-          <small
-            >Once a day, for the mods you added from a link. The Mods tab still looks when you ask.</small
-          >
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          class="switch"
-          disabled={!supports(app.info, "updates")}
-          bind:checked={draft.checkModUpdates}
-        />
-      </label>
-      <label class="setting">
-        <span class="text">
-          <strong>{SETTINGS_TEXT.autoUpdate}</strong>
-          <small>{SETTINGS_TEXT.autoUpdateLine}</small>
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          class="switch"
-          disabled={!supports(app.info, "updates")}
-          bind:checked={draft.autoUpdateMods}
-        />
-      </label>
-      <label class="setting">
-        <span class="text">
-          <strong>{SETTINGS_TEXT.cleanUp}</strong>
-          <small>{SETTINGS_TEXT.cleanUpLine}</small>
-        </span>
-        <input
-          type="checkbox"
-          role="switch"
-          class="switch"
-          bind:checked={draft.cleanupUnusedDeps}
-        />
-      </label>
-      {#if app.info?.updateChannels && supports(app.info, "updates")}
+      <!-- OpenRAC: Commando: its one mod comes with the launcher and is updated with it (lib/commando.ts),
+           and it follows the releases of its own repository alone: no index, no channels, no branches. -->
+      {#if !COMMANDO.on}
+        <label class="setting">
+          <span class="text">
+            <strong>Look for mod updates at start</strong>
+            <small
+              >Once a day, for the mods you added from a link. The Mods tab still looks when you
+              ask.</small
+            >
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            class="switch"
+            disabled={!supports(app.info, "updates")}
+            bind:checked={draft.checkModUpdates}
+          />
+        </label>
+        <label class="setting">
+          <span class="text">
+            <strong>{SETTINGS_TEXT.autoUpdate}</strong>
+            <small>{SETTINGS_TEXT.autoUpdateLine}</small>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            class="switch"
+            disabled={!supports(app.info, "updates")}
+            bind:checked={draft.autoUpdateMods}
+          />
+        </label>
+        <label class="setting">
+          <span class="text">
+            <strong>{SETTINGS_TEXT.cleanUp}</strong>
+            <small>{SETTINGS_TEXT.cleanUpLine}</small>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            class="switch"
+            bind:checked={draft.cleanupUnusedDeps}
+          />
+        </label>
+      {/if}
+      {#if app.info?.updateChannels && supports(app.info, "updates") && !COMMANDO.on}
         <div class="setting">
           <span class="text">
             <strong>Channel</strong>
@@ -706,7 +711,7 @@
         <button
           class="link"
           disabled={looked === "looking" || !supports(app.info, "updates")}
-          onclick={() => void checkNow()}>Check now</button
+          onclick={() => void checkNow()}>{COMMANDO.on ? "Check for updates" : "Check now"}</button
         >
         {#if looked === "looking"}· Looking…{:else if app.update?.missingBuild}· {app.update.name}
           is out, but not yet for this system.
