@@ -7,6 +7,8 @@
 #include "mod_api/internal.h"
 #include "renderer/textures/sharp_cells.h"
 
+#include <set>
+
 using namespace openrac;
 
 namespace openrac::mods::detail {
@@ -706,6 +708,64 @@ int api_moby_model_at(openrac_mod* mod, std::uint32_t address, const openrac_mob
     std::copy(m->matrix, m->matrix + 16, s.matrix.begin());
     s.hidden = false;
     s.game_pose = (m->flags & OPENRAC_MODEL_GAME_POSE) != 0;
+    return OPENRAC_HOOK_OK;
+}
+
+// Interface 1.126: a layer on the moby at `address`, drawn over its own model with its pose. One
+// mod's a layer; gone with the level load or the class at the address.
+int api_moby_layer_at(
+    openrac_mod* mod, std::uint32_t address, int index, const openrac_moby_layer* layer
+) {
+    if (mod == nullptr || g_play == nullptr || layer == nullptr
+        || layer->size < sizeof(openrac_moby_layer) || index < 0
+        || index >= OPENRAC_MOBY_LAYERS_MAX || (layer->flags & ~OPENRAC_MODEL_GAME_POSE) != 0
+        || !std::all_of(layer->matrix, layer->matrix + 16, [](float f) { return std::isfinite(f); })) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    const std::int32_t oclass =
+        address != 0 && g_play->moby_class_at != nullptr ? g_play->moby_class_at(address) : -1;
+    const std::lock_guard<std::mutex> lock(g_props_lock);
+    const std::uint32_t loads = loads_now();
+    // Another level's layers, and the ones whose moby's class changed, are no one's.
+    std::erase_if(g_layer_models, [&](const auto& e) {
+        return e.second.loads != loads || (e.first.first == address && e.second.oclass != oclass);
+    });
+    const auto key = std::make_pair(static_cast<gaddr>(address), index);
+    const auto now = g_layer_models.find(key);
+    if (now != g_layer_models.end() && now->second.mod != mod) {
+        return OPENRAC_HOOK_TAKEN;
+    }
+    if (layer->model < 0) {
+        if (now != g_layer_models.end()) {
+            g_layer_models.erase(now);
+        }
+        return OPENRAC_HOOK_OK;
+    }
+    const Model* model = own_model(mod, layer->model);
+    if (model == nullptr || address == 0 || oclass < 0) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    // A moby new to layers: as many as the renderer keeps keys for.
+    const bool worn = std::any_of(g_layer_models.begin(), g_layer_models.end(), [&](const auto& e) {
+        return e.first.first == address;
+    });
+    if (!worn) {
+        std::set<gaddr> mobys;
+        for (const auto& e : g_layer_models) {
+            mobys.insert(e.first.first);
+        }
+        if (mobys.size() >= OPENRAC_MOBY_LAYERED_MAX) {
+            return OPENRAC_HOOK_FULL;
+        }
+    }
+    LayerModel& l = g_layer_models[key];
+    l.mod = mod;
+    l.oclass = oclass;
+    l.loads = loads;
+    l.mesh = model->mesh;
+    std::copy(layer->matrix, layer->matrix + 16, l.matrix.begin());
+    l.game_pose = (layer->flags & OPENRAC_MODEL_GAME_POSE) != 0;
+    std::copy(layer->hide_joints, layer->hide_joints + OPENRAC_MOBY_LAYER_JOINT_WORDS, l.hide.begin());
     return OPENRAC_HOOK_OK;
 }
 

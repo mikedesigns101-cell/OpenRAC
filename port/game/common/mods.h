@@ -460,6 +460,22 @@ std::vector<MobySkinDraw> moby_skins_drawn();
 // thread.
 std::vector<MobyModelDraw> moby_models_drawn();
 
+// A layer a mod put on a moby (openrac_api.moby_layer_at, interface 1.126): the moby by its address
+// and the class it had, the layer's number, its mesh (one of the level's prop meshes, by path), its
+// matrix, whether the moby's joints pose it, and the joints of the moby's own model it covers.
+struct MobyLayerDraw {
+    std::uint32_t address = 0;
+    int oclass = -1;
+    int index = 0;
+    std::filesystem::path mesh;
+    std::array<float, 16> matrix{};
+    bool game_pose = false;
+    std::array<std::uint32_t, OPENRAC_MOBY_LAYER_JOINT_WORDS> hide{};
+};
+
+// The mods' layers of this level load, by address then layer. From any thread.
+std::vector<MobyLayerDraw> moby_layers_drawn();
+
 // The looks mods gave weapons' shots (openrac_api.weapon_look, interface 1.29) on the particle
 // records the game made for them (their mobys, blasts and guns), by record address (each look's
 // moby is the record's address), read once a tick. From the game's thread.

@@ -166,9 +166,11 @@ extern "C" {
  * save (gadget_register, gadget_give, gadget_equip, gadget_count, gadget_info,
  * gadget_held, on_gadget), and 1.125 the hero's animations from a mod with his
  * state untouched, and the seq his state asks for swapped (hero_anim_frames,
- * hero_play_anim, hero_anim_filter).
+ * hero_play_anim, hero_anim_filter), and 1.126 layers of meshes a moby wears
+ * over its own model, put on and taken off one by one, the parts they cover
+ * hidden (moby_layer_at, openrac_moby_layer).
  */
-#define OPENRAC_MOD_API_MINOR 125
+#define OPENRAC_MOD_API_MINOR 126
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -1322,6 +1324,31 @@ typedef struct openrac_moby_model {
  * the mesh's), so a mesh rigged on the exported skeleton and then moved in its bind pose still follows
  * it. A mesh without a skin is drawn rigid, as without the flag. Since 1.120. */
 #define OPENRAC_MODEL_GAME_POSE 0x4u
+
+/* openrac_api.moby_layer_at: the layers a moby may wear at once, numbered 0 to this minus 1, and the
+ * mobys that may wear any at once in a level. Since 1.126. */
+#define OPENRAC_MOBY_LAYERS_MAX 8
+#define OPENRAC_MOBY_LAYERED_MAX 32
+/* The joints openrac_moby_layer.hide_joints names: one bit each, joint j in word j / 32, bit j % 32. */
+#define OPENRAC_MOBY_LAYER_JOINT_WORDS 8
+
+/* A mesh a moby wears over its own model in one of its layers (openrac_api.moby_layer_at): a piece of
+ * armour, a glove, a boot. `model` is a handle from model_create, or -1 to take the layer off.
+ * `matrix` is as openrac_moby_model's. `flags` is 0 or OPENRAC_MODEL_GAME_POSE (a skinned mesh on the
+ * class's skeleton, posed by the moby's joints; without it the mesh is drawn rigid with the moby).
+ * `hide_joints`: the joints of the moby's own model (its class's, or the mesh moby_model_at gives
+ * it) this layer covers; while the layer is worn each is drawn shrunk to a point at its joint, so the
+ * part weighted to it (a hand under a glove) is not seen through the layer; the layers' joints add up,
+ * and a layer taken off gives them back. All bits set hides the moby's own model, its layers still
+ * drawn. Since 1.126. */
+typedef struct openrac_moby_layer {
+    /* sizeof(openrac_moby_layer), set by the mod. */
+    uint32_t size;
+    uint32_t flags;
+    int32_t model;
+    float matrix[16];
+    uint32_t hide_joints[OPENRAC_MOBY_LAYER_JOINT_WORDS];
+} openrac_moby_layer;
 
 /* openrac_api.moby_relocate's flags. HOMES: the places of its own in its pvars that were at its old
  * place (where it wanders, backs off, turns back to) go with it. FREE: for the classes the port knows
@@ -3914,6 +3941,17 @@ typedef struct openrac_api {
      * while the mod loads. Returns OPENRAC_HOOK_OK, OPENRAC_HOOK_TOO_LATE after the load, or
      * OPENRAC_HOOK_UNKNOWN (a game without it). Since 1.125. */
     int (*hero_anim_filter)(openrac_mod* mod, openrac_hero_anim_fn fn, void* user);
+
+    /* Puts `layer` on the moby at `address` in its layer `index` (0 to OPENRAC_MOBY_LAYERS_MAX - 1),
+     * or takes it off (layer->model -1): a mesh drawn over the moby's own model (its class's, or the
+     * one moby_model_at gives it) with the moby's pose, so several can be worn at once (a chest plate,
+     * gloves, boots), each put on and taken off alone. The joints of the moby's own model it covers
+     * (layer->hide_joints) are shrunk while it is worn. A layer goes with the level load, or when the
+     * class at the address changes. A layer index is one mod's: another mod's live one answers
+     * OPENRAC_HOOK_TAKEN. Returns OPENRAC_HOOK_OK, _TAKEN, OPENRAC_HOOK_FULL with
+     * OPENRAC_MOBY_LAYERED_MAX mobys already wearing layers, or OPENRAC_HOOK_UNKNOWN (no moby there,
+     * a model not the mod's, bad numbers). Since 1.126. */
+    int (*moby_layer_at)(openrac_mod* mod, uint32_t address, int index, const openrac_moby_layer* layer);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

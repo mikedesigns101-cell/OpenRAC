@@ -285,6 +285,7 @@ std::map<int, SlotModel> g_slot_models;
 std::map<std::pair<int, std::uint32_t>, ClassModel> g_class_models;
 // By address (interface 1.33): the mobys the level's own list may not hold, the game reads their class.
 std::map<gaddr, SlotModel> g_address_models;
+std::map<std::pair<gaddr, int>, LayerModel> g_layer_models;
 
 std::vector<VisualSet> g_visuals;
 std::vector<int> g_visual_classes;
@@ -594,6 +595,7 @@ void fill_motion_api(openrac_api& api, const Host& host) {
     api.particle_spawn_ex = api_particle_spawn_ex;
     api.particle_texture_register = api_particle_texture_register;
     api.moby_model_at = api_moby_model_at;
+    api.moby_layer_at = api_moby_layer_at;
     api.sound_load = api_sound_load;
     api.sound_play = api_sound_play;
     api.sound_set = api_sound_set;
@@ -1000,9 +1002,51 @@ void drop_gone_address_models() {
     }
 }
 
+// The layers of mobys whose class at their address changed (or whose level went) are no one's
+// (interface 1.126). Once a tick, on the game thread; nothing to read most ticks.
+void drop_gone_layer_models() {
+    std::vector<std::pair<gaddr, LayerModel>> held;
+    {
+        const std::lock_guard<std::mutex> lock(g_props_lock);
+        if (g_layer_models.empty()) {
+            return;
+        }
+        for (const auto& [key, l] : g_layer_models) {
+            held.emplace_back(key.first, l);
+        }
+    }
+    std::map<gaddr, std::int32_t> classes;
+    for (const auto& [address, l] : held) {
+        if (!classes.contains(address)) {
+            classes[address] = g_play != nullptr && g_play->moby_class_at != nullptr
+                                   ? g_play->moby_class_at(address)
+                                   : -1;
+        }
+    }
+    const std::uint32_t loads = loads_now();
+    const std::lock_guard<std::mutex> lock(g_props_lock);
+    std::erase_if(g_layer_models, [&](const auto& e) {
+        const auto c = classes.find(e.first.first);
+        return e.second.loads != loads || (c != classes.end() && c->second != e.second.oclass);
+    });
+}
+
+std::vector<MobyLayerDraw> moby_layers_drawn() {
+    std::vector<MobyLayerDraw> out;
+    const std::lock_guard<std::mutex> lock(g_props_lock);
+    const std::uint32_t loads = loads_now();
+    for (const auto& [key, l] : g_layer_models) {
+        if (l.mod != nullptr && l.loads == loads) {
+            out.push_back({key.first, l.oclass, key.second, l.mesh, l.matrix, l.game_pose, l.hide});
+        }
+    }
+    return out;
+}
+
 void play_update() {
     drop_gone_slot_models();
     drop_gone_address_models();
+    drop_gone_layer_models();
     drop_stale_joint_sets();
     // The music's gains went with their level: back at full.
     const std::uint32_t loads = loads_now();
@@ -1119,6 +1163,7 @@ void reset_play() {
         g_models.fill(Model{});
         g_slot_models.clear();
         g_class_models.clear();
+        g_layer_models.clear();
 
         // No prop is left to need its mesh; the scene lets it go with its level.
         if (!g_prop_meshes.empty()) {

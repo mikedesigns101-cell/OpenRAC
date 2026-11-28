@@ -195,6 +195,12 @@ openrac_moby_deletion	by_class	8	int32_t
 openrac_moby_deletion	by_mod	12	int32_t
 openrac_moby_deletion	oclass	16	int32_t
 openrac_moby_deletion	loads	20	uint32_t
+openrac_moby_layer	(size)	108	-
+openrac_moby_layer	size	0	uint32_t
+openrac_moby_layer	flags	4	uint32_t
+openrac_moby_layer	model	8	int32_t
+openrac_moby_layer	matrix	12	float[16]
+openrac_moby_layer	hide_joints	76	uint32_t[8]
 openrac_moby_model	(size)	76	-
 openrac_moby_model	size	0	uint32_t
 openrac_moby_model	flags	4	uint32_t

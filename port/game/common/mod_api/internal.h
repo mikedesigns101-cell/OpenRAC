@@ -260,6 +260,19 @@ struct SlotModel {
     bool game_pose = false;  // OPENRAC_MODEL_GAME_POSE (interface 1.120)
 };
 
+// A layer a mod put on a moby (interface 1.126, moby_layer_at): whose, the moby (its address and
+// class when it was put on), the mesh, how it is placed and posed, and the joints of the moby's own
+// model it covers.
+struct LayerModel {
+    const openrac_mod* mod = nullptr;
+    int oclass = -1;
+    std::uint32_t loads = 0;
+    std::filesystem::path mesh;
+    std::array<float, 16> matrix{};
+    bool game_pose = false;
+    std::array<std::uint32_t, OPENRAC_MOBY_LAYER_JOINT_WORDS> hide{};
+};
+
 // What a mod drew the mobys of a class with in one scope (interface 1.33): whose, the mesh, how it is
 // placed and posed, and the level load.
 struct ClassModel {
@@ -437,6 +450,7 @@ extern std::array<Model, OPENRAC_COMMANDO_MODELS_MAX> g_models;
 extern std::map<int, SlotModel> g_slot_models;
 extern std::map<std::pair<int, std::uint32_t>, ClassModel> g_class_models;
 extern std::map<gaddr, SlotModel> g_address_models;
+extern std::map<std::pair<gaddr, int>, LayerModel> g_layer_models;  // by address and layer (1.126)
 extern std::map<std::pair<int, std::uint32_t>, ClassMaterial> g_class_materials;
 extern std::mutex g_camera_visibility_lock;
 extern std::map<const openrac_mod*, std::uint32_t> g_camera_visibility;
@@ -508,6 +522,9 @@ int api_moby_model_class(
     openrac_mod* mod, int oclass, std::uint32_t scope, const openrac_moby_model* m
 );
 int api_moby_model_at(openrac_mod* mod, std::uint32_t address, const openrac_moby_model* m);
+int api_moby_layer_at(
+    openrac_mod* mod, std::uint32_t address, int index, const openrac_moby_layer* layer
+);
 int api_particle_spawn_ex(openrac_mod* mod, const openrac_particle_spawn* spawn);
 int api_particle_texture_register(openrac_mod* mod, const openrac_particle_texture* texture);
 int api_camera_visibility_bypass(openrac_mod* mod, int enabled);

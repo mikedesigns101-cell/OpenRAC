@@ -1905,7 +1905,23 @@ TickMobys pose_mobys(
         const std::vector<renderer::Mat4>* rebind = nullptr;
         // Its last pose repeated (a far moby on its off frame, OPENRAC_POSE_HALF).
         bool reuse = false;
+        // Its layers (interface 1.126): the first of its LayerJobs and how many, the model its own
+        // instance is drawn with, and the joints of that model its layers cover (drawn shrunk to a
+        // point at the joint).
+        std::size_t layer_first = 0;
+        std::size_t layer_count = 0;
+        std::uint32_t mesh = 0;
+        bool hides = false;
+        std::array<std::uint32_t, OPENRAC_MOBY_LAYER_JOINT_WORDS> hide{};
     };
+    // A layer's instance to pose with its moby's pose: where it is, its joints and its rebind.
+    struct LayerJob {
+        bool target = false;
+        std::size_t index = 0;
+        int joints = 0;
+        const std::vector<renderer::Mat4>* rebind = nullptr;
+    };
+    std::vector<LayerJob> layer_jobs;
     // The last pose of each moby, for the far ones posed every other frame; forgotten with the level.
     if (g_pose_cache_level != g->loaded) {
         g_pose_cache.clear();
@@ -2041,6 +2057,15 @@ TickMobys pose_mobys(
     // The mobys the mods draw with textures of their own (interface 1.120): the model made for each
     // (frontend/moby_textures.cpp), by address and by class and scope.
     const TexturedModels textured = textured_models_now();
+    // The layers the mods put on mobys (interface 1.126): by address, the first of its layers in the
+    // list (by address, then layer) and how many. Each moby wearing some is drawn with one instance
+    // more a layer, keyed 0xFFFFF000 + 8 x (its number among this frame's) + its layer.
+    const std::vector<mods::MobyLayerDraw> layer_draws = mods::moby_layers_drawn();
+    std::unordered_map<std::uint32_t, std::pair<std::size_t, std::size_t>> layers_of;
+    for (std::size_t i = 0; i < layer_draws.size(); ++i) {
+        ++layers_of.try_emplace(layer_draws[i].address, i, std::size_t{0}).first->second.second;
+    }
+    std::uint32_t layered_mobys = 0;
     for (std::size_t index = 0; index < state.mobys.size(); ++index) {
         bool light_only = false;
         const host::LiveMoby& m = state.mobys[index];
@@ -2756,8 +2781,44 @@ TickMobys pose_mobys(
             // 1.8 across a unit ahead: a half angle of 61 degrees, wider than any view the game makes.
             out_of_sight = d < -r || side > d * 1.8f + r * 1.5f;
         }
-        if (animate && joints > 0 && skin == nullptr && !replacement_pose && !out_of_sight) {
-            const bool target = into_texture.contains(m.address) || on_screen.contains(m.address);
+        // Its layers (interface 1.126): the ones set on it with its class, whose meshes the scene
+        // has read, while it is drawn with its class's skeleton (no skin of another model, no
+        // preview pose); OPENRAC_MOBY_LAYERED_MAX mobys a frame.
+        struct Worn {
+            std::uint32_t model = 0;
+            const mods::MobyLayerDraw* draw = nullptr;
+        };
+        std::array<Worn, OPENRAC_MOBY_LAYERS_MAX> worn{};
+        std::size_t worn_count = 0;
+        std::array<std::uint32_t, OPENRAC_MOBY_LAYER_JOINT_WORDS> worn_hide{};
+        bool worn_hides = false;
+        if (const auto found = layers_of.find(m.address); found != layers_of.end() && !classless
+            && skin == nullptr && !replacement_pose && layered_mobys < OPENRAC_MOBY_LAYERED_MAX) {
+            for (std::size_t i = 0; i < found->second.second; ++i) {
+                const mods::MobyLayerDraw& d = layer_draws[found->second.first + i];
+                if (d.oclass != m.class_id || worn_count >= worn.size()) {
+                    continue;
+                }
+                const auto mesh =
+                    std::find_if(g->prop_models.begin(), g->prop_models.end(), [&](const auto& held) {
+                        return held.first == d.mesh;
+                    });
+                if (mesh == g->prop_models.end()) {
+                    continue;
+                }
+                worn[worn_count++] = {mesh->second, &d};
+                for (std::size_t w = 0; w < worn_hide.size(); ++w) {
+                    worn_hide[w] |= d.hide[w];
+                    worn_hides = worn_hides || d.hide[w] != 0;
+                }
+            }
+        }
+        const bool target_moby = into_texture.contains(m.address) || on_screen.contains(m.address);
+        // Each layer's instance follows its moby's: in the targets or in the live list.
+        const std::size_t layer_base = target_moby ? target_mobys.size() : live.size();
+        if (animate && (joints > 0 || worn_count > 0) && skin == nullptr && !replacement_pose
+            && !out_of_sight) {
+            const bool target = target_moby;
             // A far world moby is posed every other frame (half of them on each), its last pose
             // repeated in between: past OPENRAC_POSE_HALF units from the camera (25; 0 poses every
             // moby every frame). The hero and what the game draws with a camera of its own are
@@ -2776,14 +2837,41 @@ TickMobys pose_mobys(
                 }
                 reuse = len2 > half_rate_from * half_rate_from && g_pose_cache.contains(m.address);
             }
-            pose_jobs.push_back(
-                {m.address,
-                 joints,
-                 target,
-                 target ? target_mobys.size() : live.size(),
-                 rebind,
-                 reuse}
-            );
+            PoseJob job{
+                m.address, joints, target, layer_base, rebind, reuse, layer_jobs.size(), worn_count
+            };
+            job.mesh = instance.model;
+            job.hides = worn_hides && joints > 0;
+            job.hide = worn_hide;
+            pose_jobs.push_back(job);
+            for (std::size_t k = 0; k < worn_count; ++k) {
+                const auto& layer_model = g->render.level.models[worn[k].model];
+                LayerJob l{target, layer_base + 1 + k, 0, nullptr};
+                if (worn[k].draw->game_pose && layer_model.joints > 0) {
+                    l.joints = layer_model.joints;
+                    l.rebind = game_pose_rebind(cls->second.first, worn[k].model);
+                }
+                layer_jobs.push_back(l);
+            }
+        }
+        // The moby's place without the mod's mesh matrix on it: where its layers start from.
+        renderer::Mat4 layer_place = instance.matrix;
+        if (worn_count > 0 && mod_model != nullptr) {
+            const auto inverse = renderer::inverse_affine(mod_model->matrix);
+            layer_place = renderer::multiply(instance.matrix, inverse.value_or(renderer::identity()));
+        }
+        // Layer k's instance: the moby's, lit, blended and coloured as it, with the layer's mesh.
+        const auto layer_instance = [&](std::size_t k, const scene::Instance& base) {
+            scene::Instance l = base;
+            l.model = worn[k].model;
+            l.matrix = renderer::multiply(layer_place, worn[k].draw->matrix);
+            l.world_sphere = {};
+            l.palette = -1;
+            l.hero_shadow_anchor = false;
+            return l;
+        };
+        if (worn_count > 0) {
+            ++layered_mobys;
         }
         // Only world instances attach to water; menu and render-to-texture previews keep their poses.
         instance.floats_on_water = g->render.profile->floats_on_water(m.class_id)
@@ -2797,10 +2885,23 @@ TickMobys pose_mobys(
             }
             target_mobys.back().camera.focal_x = frame_focal[0];
             target_mobys.back().camera.focal_y = frame_focal[1];
+            // Its layers, drawn with it into the same target (same address, same camera).
+            const Kept::TargetMoby base_target = target_mobys.back();
+            for (std::size_t k = 0; k < worn_count; ++k) {
+                Kept::TargetMoby layer = base_target;
+                layer.instance = layer_instance(k, base_target.instance);
+                target_mobys.push_back(layer);
+            }
             continue;
         }
         if (const auto t = on_screen.find(m.address); t != on_screen.end()) {
             target_mobys.push_back({m.address, instance, *t->second, true});
+            const Kept::TargetMoby base_target = target_mobys.back();
+            for (std::size_t k = 0; k < worn_count; ++k) {
+                Kept::TargetMoby layer = base_target;
+                layer.instance = layer_instance(k, base_target.instance);
+                target_mobys.push_back(layer);
+            }
             continue;
         }
         const bool owned_by_hero = hero_rig.owns(m.address);
@@ -2917,6 +3018,18 @@ TickMobys pose_mobys(
         }
         live.push_back(instance);
         live_addresses.push_back(m.address);
+        // Its layers (interface 1.126), right after it: posed below with its pose.
+        for (std::size_t k = 0; k < worn_count; ++k) {
+            if (per_view) {
+                live_views.push_back(drawn_views);
+            }
+            live.push_back(layer_instance(k, instance));
+            live_addresses.push_back(
+                0xFFFFF000u + 8u * (layered_mobys - 1u)
+                + static_cast<std::uint32_t>(worn[k].draw->index)
+            );
+            live_joints.push_back(0);
+        }
     }
     if (!only_own_camera && !under_menu && presenting_infobot
         && infobot_presentation.special_item) {
@@ -3210,12 +3323,8 @@ TickMobys pose_mobys(
         if (pose.empty()) {
             continue;
         }
-        scene::Instance& instance = job.target ? target_mobys[job.index].instance : live[job.index];
-        instance.palette = static_cast<int>(palette.size());
-        if (!job.target) {
-            live_joints[job.index] = job.joints;
-        }
-        for (int j = 0; j < job.joints; ++j) {
+        // Joint j's matrix of the game's pose, times a mesh's rebind.
+        const auto joint_columns = [&](int j, const std::vector<renderer::Mat4>* rebind) {
             // Columns: the images of the axes, then the translation, which the palette has in
             // packed units (the mesh is in packed units / 1024).
             scene::LevelScene::JointColumns c{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
@@ -3232,10 +3341,52 @@ TickMobys pose_mobys(
                 c[14] = f[3][2] / 1024.0f;
                 c[15] = 1.0f;
             }
-            if (job.rebind != nullptr && static_cast<std::size_t>(j) < job.rebind->size()) {
-                c = renderer::multiply(c, (*job.rebind)[static_cast<std::size_t>(j)]);
+            if (rebind != nullptr && static_cast<std::size_t>(j) < rebind->size()) {
+                c = renderer::multiply(c, (*rebind)[static_cast<std::size_t>(j)]);
             }
-            palette.push_back(c);
+            return c;
+        };
+        if (job.joints > 0) {
+            scene::Instance& instance =
+                job.target ? target_mobys[job.index].instance : live[job.index];
+            instance.palette = static_cast<int>(palette.size());
+            if (!job.target) {
+                live_joints[job.index] = job.joints;
+            }
+            const auto& bones = g->render.level.models[job.mesh].bones;
+            for (int j = 0; j < job.joints; ++j) {
+                scene::LevelScene::JointColumns c = joint_columns(j, job.rebind);
+                // Covered by a layer (interface 1.126): shrunk to a point at the joint (its bind
+                // frame's origin, where the pose takes it), so what is weighted to it is not seen.
+                const std::size_t u = static_cast<std::size_t>(j);
+                if (job.hides && u < 32u * job.hide.size()
+                    && (job.hide[u / 32u] >> (u % 32u) & 1u) != 0) {
+                    renderer::Vec3 at{c[12], c[13], c[14]};
+                    if (u < bones.size() && !bones[u].name.empty()) {
+                        at = renderer::transform_point(
+                            c, {bones[u].bind[12], bones[u].bind[13], bones[u].bind[14]}
+                        );
+                    }
+                    c = scene::LevelScene::JointColumns{0, 0, 0, 0, 0, 0, 0, 0,     0,
+                                                        0, 0, 0, at[0], at[1], at[2], 1};
+                }
+                palette.push_back(c);
+            }
+        }
+        // Its layers', each with its own rebind (interface 1.126).
+        for (std::size_t n = 0; n < job.layer_count; ++n) {
+            const LayerJob& l = layer_jobs[job.layer_first + n];
+            if (l.joints <= 0) {
+                continue;
+            }
+            scene::Instance& layer = l.target ? target_mobys[l.index].instance : live[l.index];
+            layer.palette = static_cast<int>(palette.size());
+            if (!l.target) {
+                live_joints[l.index] = l.joints;
+            }
+            for (int j = 0; j < l.joints; ++j) {
+                palette.push_back(joint_columns(j, l.rebind));
+            }
         }
     }
     if (per_view) {

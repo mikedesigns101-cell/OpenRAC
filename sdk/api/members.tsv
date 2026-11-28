@@ -250,3 +250,4 @@ on_gadget	hero	1.124	experimental
 hero_anim_frames	hero	1.125	experimental
 hero_play_anim	hero	1.125	experimental
 hero_anim_filter	hero	1.125	experimental
+moby_layer_at	visuals	1.126	experimental

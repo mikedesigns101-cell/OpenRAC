@@ -248,3 +248,4 @@
 246	hero_anim_frames	1952	int (*)(int)
 247	hero_play_anim	1960	int (*)(openrac_mod *, int, int, float, float, uint32_t)
 248	hero_anim_filter	1968	int (*)(openrac_mod *, openrac_hero_anim_fn, void *)
+249	moby_layer_at	1976	int (*)(openrac_mod *, uint32_t, int, const openrac_moby_layer *)

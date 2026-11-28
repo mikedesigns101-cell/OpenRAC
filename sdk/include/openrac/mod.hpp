@@ -2258,6 +2258,47 @@ public:
       return m_api->hero_anim_filter(m_handle, fn, user);
     }
 
+    // Since 1.126: whether the port draws layers of meshes over a moby (moby_layer_at).
+    bool has_moby_layers() const {
+      return m_api->api_minor >= 126 &&
+             m_api->size >= offsetof(openrac_api, moby_layer_at) + sizeof(void *);
+    }
+
+    // Since 1.126: puts `layer` on the moby at `address` in its layer `index` (layer.model -1 takes it
+    // off). Returns OPENRAC_HOOK_OK, _TAKEN, _FULL or _UNKNOWN.
+    int moby_layer_at(std::uint32_t address, int index, const openrac_moby_layer &layer) const {
+      if (!has_moby_layers()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->moby_layer_at(m_handle, address, index, &layer);
+    }
+
+    // Since 1.126: a skinned mesh `model` posed by the moby's joints, worn in layer `index`, hiding
+    // the moby's own joints set in `hide_joints` (OPENRAC_MOBY_LAYER_JOINT_WORDS words, or null).
+    int moby_layer_skinned(std::uint32_t address, int index, int model,
+                           const std::uint32_t *hide_joints = nullptr) const {
+      openrac_moby_layer layer{};
+      layer.size = sizeof layer;
+      layer.flags = OPENRAC_MODEL_GAME_POSE;
+      layer.model = model;
+      for (int i = 0; i < 16; ++i) {
+        layer.matrix[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+      }
+      for (int w = 0; hide_joints != nullptr && w < OPENRAC_MOBY_LAYER_JOINT_WORDS; ++w) {
+        layer.hide_joints[w] = hide_joints[w];
+      }
+      return moby_layer_at(address, index, layer);
+    }
+
+    // Since 1.126: takes off the mod's layer `index` of the moby at `address`.
+    int moby_layer_off(std::uint32_t address, int index) const {
+      openrac_moby_layer layer{};
+      layer.size = sizeof layer;
+      layer.model = -1;
+      layer.matrix[0] = layer.matrix[5] = layer.matrix[10] = layer.matrix[15] = 1.0f;
+      return moby_layer_at(address, index, layer);
+    }
+
     // Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own
     // joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the
     // mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or
