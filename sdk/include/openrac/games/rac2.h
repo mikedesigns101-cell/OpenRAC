@@ -158,12 +158,15 @@ typedef uint32_t (*openrac_rac2_Item_VersionColor)(int32_t kind);
  * in game memory, under the port's own texts; the vendor's list asks it for its upgrade entries'
  * label (0x325F, "Mega") and its dialog for the item's name. A replacement returns a game address:
  * for a text of its own it writes into one of the port's slots, which this lookup (the game function
- * by name, not the original) gives for ids OPENRAC_RAC2_TEXT_SLOT to + 7, 96 bytes each with the
- * ending 0. */
+ * by name, not the original) gives for ids OPENRAC_RAC2_TEXT_SLOT to + 31 (to + 7 before 1.124), 96
+ * bytes each with the ending 0. */
 #define OPENRAC_RAC2_HOOK_Text_ById "Text_ById"
 #define OPENRAC_RAC2_SIG_Text_ById "i32(i32)"
 #define OPENRAC_RAC2_TEXT_SLOT 0x7F10
 #define OPENRAC_RAC2_TEXT_SLOTS 8
+/* The slots on a port of interface 1.124 or newer (OpenRAC Commando's); OPENRAC_RAC2_TEXT_SLOTS on
+ * one before it. */
+#define OPENRAC_RAC2_TEXT_SLOTS_1124 32
 #define OPENRAC_RAC2_TEXT_SLOT_BYTES 96
 typedef int32_t (*openrac_rac2_Text_ById)(int32_t id);
 

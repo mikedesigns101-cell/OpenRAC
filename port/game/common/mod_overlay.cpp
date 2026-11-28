@@ -136,11 +136,11 @@ struct State {
 State s;
 
 // The mods' gadgets' icons (1.124) where the game's 2D put them: the game gives each icon's corner
-// and size (the icon widget's, hud_draw_sprite_gradient's) in its 512 x 448 picture, a 4:3 column in
+// and size (the icon widget's, hud_draw_sprite_gradient's) in its 512 x 416 picture, a 4:3 column in
 // the middle of the frame; the overlay's picture is 512 x 448 over the frame's whole width, a
-// picture's size in units down (a game unit across is 4/3 * 448 / 512 of them). Checked in captures
-// of the quick select ring and the pause menu's grids. The game's colour is 0xAABBGGRR with 0x80
-// full; the overlay's 0xRRGGBBAA.
+// picture's size in units down (a game unit across is 4/3 * 448 / 512 of them, one down 448 / 416).
+// Checked in captures of the quick select ring and the pause menu's grids. The game's colour is
+// 0xAABBGGRR with 0x80 full; the overlay's 0xRRGGBBAA.
 void draw_gadget_icons(renderer::ui::OverlayList& list, const std::vector<mods::GadgetIcon>& icons) {
     if (icons.empty()) {
         return;
@@ -149,7 +149,7 @@ void draw_gadget_icons(renderer::ui::OverlayList& list, const std::vector<mods::
     const float column = (4.0f / 3.0f) / list.aspect();
     const auto channel = [](std::uint32_t c) { return std::min<std::uint32_t>(255u, c * 2u); };
     for (const mods::GadgetIcon& i : icons) {
-        const float down = renderer::ui::kOverlayHeight / 448.0f;
+        const float down = renderer::ui::kOverlayHeight / 416.0f;
         const float x = renderer::ui::kOverlayWidth * 0.5f
                         + (i.x + 0.5f * i.w - renderer::ui::kOverlayWidth * 0.5f) * column;
         const float y = (i.y + 0.5f * i.h) * down;

@@ -200,7 +200,7 @@ type Item_VersionColorFn = (kind: number) -> number
 
 ### `Text_ByIdFn`
 
-rac2.text.by_id (Text_ById) i32(i32): The game's text of an id: the address of its string in game memory, which every label, name and description the game prints asks (the vendor's list its upgrade entries' label, 0x325F, "Mega"; its dialog the item's name). Under the port's own texts (host/options.c). For a text of its own a replacement writes into one of the port's eight slots, 96 bytes each with the ending 0, which this lookup gives for ids 0x7F10 to 0x7F17 (call the game function by name, not the original), and returns that address. A replacement that calls the original gets the game's.
+rac2.text.by_id (Text_ById) i32(i32): The game's text of an id: the address of its string in game memory, which every label, name and description the game prints asks (the vendor's list its upgrade entries' label, 0x325F, "Mega"; its dialog the item's name). Under the port's own texts (host/options.c). For a text of its own a replacement writes into one of the port's 32 slots (eight before 1.124), 96 bytes each with the ending 0, which this lookup gives for ids 0x7F10 to 0x7F2F (call the game function by name, not the original), and returns that address. A replacement that calls the original gets the game's.
 
 ```lua
 type Text_ByIdFn = (id: number) -> number

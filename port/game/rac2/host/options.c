@@ -132,10 +132,11 @@ static gaddr page_buffers(void) {
  * of eight, by the row (below). */
 static int video_text(int id);
 
-/* The mods' text slots (rac2.text.by_id, sdk/include/openrac/games/rac2.h): ids 0x7F10 to 0x7F17,
- * TEXT_BYTES each, in game memory the port owns. */
+/* The mods' text slots (rac2.text.by_id, sdk/include/openrac/games/rac2.h): ids 0x7F10 to 0x7F2F
+ * (the first eight since 1.104, the rest since 1.124), TEXT_BYTES each, in game memory the port
+ * owns. The mods' gadgets' names are the port's own, from 0x7F80 (mod_gadgets.c). */
 #define TEXT_MOD_SLOT 0x7F10
-#define TEXT_MOD_SLOTS 8
+#define TEXT_MOD_SLOTS 32
 static gaddr mod_slots;
 
 gaddr func_00288FB8(int id) {
