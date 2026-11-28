@@ -75,5 +75,8 @@ width the 2D column takes. `camera_view` is unchanged (the game's own camera, be
 ## Cost
 
 Each marked moby is drawn twice (once only with `OPENRAC_XRAY_ALWAYS`) with a program of its own,
-one draw a primitive; a frame without marks draws nothing more. Measured figures: see the branch's
-hand-over (`relevo-xray.md`).
+one draw a primitive; a frame without marks draws nothing more (its picture is the same pixel for
+pixel). Measured in Going Commando's Maktar (3414x1920, scene + submit + GPU, two runs each, other
+games running on the machine): 0 marks 10.80 and 9.02 ms, 4 marks 10.36 and 11.04 ms, 16 marks
+10.31 and 10.02 ms, within the spread between runs; 16 marks add about 50 draw calls and 40 000
+triangles.
