@@ -577,7 +577,7 @@ mod tests {
         }
 
         fn openrac(&self) -> PathBuf {
-            self.home.join("OpenRAC")
+            self.home.join(crate::detect::HOME_FOLDER)
         }
 
         fn settle(&self, config: &mut Config) {

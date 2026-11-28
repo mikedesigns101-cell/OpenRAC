@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenRAC Launcher",
-  "version": "1.1.1",
-  "identifier": "dev.openrac.launcher",
+  "productName": "OpenRAC Commando",
+  "version": "0.1.0",
+  "identifier": "dev.commandoprotocol.launcher",
   "build": {
     "beforeDevCommand": "yarn dev",
     "devUrl": "http://localhost:1430",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "OpenRAC Launcher",
+        "title": "OpenRAC: Commando",
         "width": 1200,
         "height": 780,
         "minWidth": 960,
@@ -32,7 +32,7 @@
     "active": true,
     "targets": "all",
     "category": "Game",
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -65,13 +65,13 @@
   },
   "plugins": {
     "deep-link": {
-      "desktop": { "schemes": ["openrac"] },
-      "mobile": [{ "scheme": ["openrac"], "appLink": false }]
+      "desktop": { "schemes": ["openrac-commando"] },
+      "mobile": [{ "scheme": ["openrac-commando"], "appLink": false }]
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNFMTdGQjg0QzA0Q0YwMjMKUldRajhFekFoUHNYUHFmRzV4MFd3SitERElmRU5GendwOWdqTm5UcjliNm5MMllNU2dGQTE2K0gK",
       "endpoints": [
-        "https://github.com/OpenRAC/OpenRAC/releases/latest/download/latest.json"
+        "https://github.com/mikedesigns101-cell/OpenRAC/releases/latest/download/latest.json"
       ]
     }
   }

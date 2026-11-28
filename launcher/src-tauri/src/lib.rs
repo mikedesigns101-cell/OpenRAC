@@ -209,7 +209,7 @@ fn relaunch_app(app: AppHandle) {
 
 /// The app's identifier (tauri.conf.json), which names its per-user config folder.
 #[cfg(target_os = "linux")]
-const IDENTIFIER: &str = "dev.openrac.launcher";
+const IDENTIFIER: &str = "dev.commandoprotocol.launcher";
 
 /// This start's draw check (core webkit.rs), when it has one: Linux, Safe rendering off, and not a
 /// second start.

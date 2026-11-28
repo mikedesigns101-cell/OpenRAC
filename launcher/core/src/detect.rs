@@ -344,18 +344,22 @@ pub fn home_dir() -> Option<PathBuf> {
     }
 }
 
-/// The default OpenRAC folder in the user's home directory:
-/// - Linux: `/home/<user>/OpenRAC`
-/// - macOS: `/Users/<user>/OpenRAC`
-/// - Windows: `C:\Users\<user>\OpenRAC` (via `%USERPROFILE%`)
+/// The install folder's name in the home directory. OpenRAC: Commando keeps its own, beside the
+/// OpenRAC Launcher's `OpenRAC`, so that the two launchers never share a set-up, a mod list or saves.
+pub const HOME_FOLDER: &str = "OpenRAC Commando";
+
+/// The default install folder in the user's home directory ([`HOME_FOLDER`]):
+/// - Linux: `/home/<user>/OpenRAC Commando`
+/// - macOS: `/Users/<user>/OpenRAC Commando`
+/// - Windows: `C:\Users\<user>\OpenRAC Commando` (via `%USERPROFILE%`)
 pub fn default_openrac_dir() -> Option<PathBuf> {
-    home_dir().map(|h| h.join("OpenRAC"))
+    home_dir().map(|h| h.join(HOME_FOLDER))
 }
 
-/// Ensures the default OpenRAC folder exists in a given home directory.
+/// Ensures the default install folder exists in a given home directory.
 /// Checks if it already exists; if not, creates it.
 pub fn ensure_openrac_dir_in(home: &Path) -> Result<PathBuf, String> {
-    let dir = home.join("OpenRAC");
+    let dir = home.join(HOME_FOLDER);
     if !dir.exists() {
         std::fs::create_dir_all(&dir).map_err(|e| format!("cannot create {}: {e}", dir.display()))?;
     }
@@ -583,7 +587,7 @@ mod tests {
     fn creates_openrac_folder_in_home_if_missing_and_preserves_existing() {
         let temp = tempfile::tempdir().unwrap();
         let home = temp.path();
-        let expected = home.join("OpenRAC");
+        let expected = home.join(HOME_FOLDER);
         assert!(!expected.exists());
 
         // First call creates the folder
