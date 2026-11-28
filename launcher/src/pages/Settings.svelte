@@ -35,6 +35,8 @@
   import { applyAccent } from "$lib/themes";
   import { channelName, devBranches } from "$lib/updates";
 
+  import commandoIcon from "../assets/commando-icon.png";
+
   let { setup = false }: { setup?: boolean } = $props();
 
   /** The saved settings; this page only shows once they are loaded. */
@@ -331,11 +333,22 @@
 <div class="page">
   {#if setup}
     <section class="welcome rise">
-      <Logo mark height={72} label="" />
-      <div>
-        <h1>Welcome to OpenRAC</h1>
-        <p class="muted">Play the Ratchet &amp; Clank games natively, with your own discs.</p>
-      </div>
+      {#if COMMANDO.on}
+        <img src={commandoIcon} alt="" width="72" height="72" class="commando-welcome" />
+        <div>
+          <h1>Welcome to {COMMANDO.name}</h1>
+          <p class="muted">
+            Ratchet &amp; Clank: Going Commando, played natively from your own disc, with
+            {COMMANDO.mod.name}.
+          </p>
+        </div>
+      {:else}
+        <Logo mark height={72} label="" />
+        <div>
+          <h1>Welcome to OpenRAC</h1>
+          <p class="muted">Play the Ratchet &amp; Clank games natively, with your own discs.</p>
+        </div>
+      {/if}
     </section>
 
     <!-- One question; what the launcher found by itself waits under "Found for you". -->
@@ -1173,6 +1186,11 @@
 
   .about {
     font-size: 0.75rem;
+  }
+
+  .commando-welcome {
+    flex: none;
+    border-radius: 16px;
   }
 
   .commando-about p {
