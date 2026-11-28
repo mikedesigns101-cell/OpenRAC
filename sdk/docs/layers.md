@@ -65,5 +65,10 @@ class's, or the one `moby_model_at` gives it), which has to be skinned for them 
 ## Cost
 
 The moby's pose is worked out once: each layer adds its joints' matrices (one copy and multiply
-each) and its own draw calls. Measured in Going Commando with Ratchet: see the port's commit for
-the frame costs.
+each) and its own draw calls. Measured in Going Commando with Ratchet standing in Maktar (3414x1920,
+six 300-frame samples each, scene + submit + GPU): nothing 9.40 ms, one whole suit with
+`moby_model_at` 9.57 ms, a base without its chest and four layers 9.83 ms, within the spread between
+runs; the scene's CPU part 4.47, 4.53 and 4.59 ms.
+
+In the menus that draw a moby into a picture of their own, its layers follow it into that picture;
+Going Commando's pause menu draws no 3D hero, so there it has nothing to show.
