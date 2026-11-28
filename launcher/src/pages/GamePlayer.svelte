@@ -830,4 +830,14 @@
     text-align: center;
     max-width: 640px;
   }
+
+  /* Commando Protocol's theme: its accent (--tx2, --amber) is the icon's red, which on quiet text
+     reads as an error. "Last played…" and the year wear the hologram's blue and grey instead. */
+  :global(html[data-theme="commando"]) .line.last {
+    color: var(--lav);
+  }
+
+  :global(html[data-theme="commando"]) .title small {
+    color: var(--soft);
+  }
 </style>
