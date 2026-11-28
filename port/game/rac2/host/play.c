@@ -505,7 +505,7 @@ static int hero_play_anim(int seq, int frame, float blend_ticks, float speed, in
         s_anim.loads = rac2_program_loads();
         s_anim.ticks = 0;
         s_anim.last_key = -1;
-        s_anim.limit = (int)((float)(frames + (int)blend_ticks) * 2.0f / speed) + 30;
+        s_anim.limit = (int)((float)(frames + (int)blend_ticks) * 4.0f / speed) + 30;
     }
     return 0;
 }
