@@ -883,11 +883,22 @@ void a_mods_data_goes_with_the_saves(const fs::path& plugins, const fs::path& di
             (std::istreambuf_iterator<char>(again)), std::istreambuf_iterator<char>()
         );
         CHECK(kept.find("\"data\": \"eHl6\"") != std::string::npos);
+        // A mod not loaded now keeps its data, as it came (no version: none written).
+        CHECK(kept.find("\"gone\": {\"data\": \"AA==\"}") != std::string::npos);
     }
     g_save_slot = 3;
     mods::frame();
     mods::frame();
     CHECK(seen(13103) == 1 && seen(13200 + 'x') == 1 && seen(13301) == 1);
+    // Saved again while that game plays: the mod not loaded keeps its data still.
+    openrac_game_save_written(save3.string().c_str(), 1);
+    {
+        std::ifstream again(save3.string() + ".moddata", std::ios::binary);
+        const std::string kept(
+            (std::istreambuf_iterator<char>(again)), std::istreambuf_iterator<char>()
+        );
+        CHECK(kept.find("\"gone\": {\"data\": \"AA==\"}") != std::string::npos);
+    }
 
     // While the level loads nothing changes; a new game (no save for it) starts with none.
     g_records.clear();

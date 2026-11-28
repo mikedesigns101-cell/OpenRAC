@@ -250,10 +250,16 @@ void unload();
 // The mods' frame callbacks, after each game tick.
 extern bool g_frame_callbacks;
 void run_frame_callbacks();
+// The game in progress followed (the mods' data kept with the saves) even with no frame callbacks:
+// with no mod loaded, the data of the mods of a save played goes back into the saves the game writes.
+extern bool g_follow_saves;
+void follow_saves_only();
 
 inline void frame() {
     if (g_frame_callbacks) {
         run_frame_callbacks();
+    } else if (g_follow_saves) {
+        follow_saves_only();
     }
 }
 

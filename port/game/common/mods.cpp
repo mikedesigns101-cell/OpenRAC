@@ -20,6 +20,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string_view>
 #include <utility>
@@ -110,6 +111,7 @@ namespace openrac::mods {
 using namespace detail;
 
 bool g_frame_callbacks = false;
+bool g_follow_saves = false;
 
 namespace detail {
 
@@ -766,6 +768,11 @@ std::vector<SaveDataCallback> g_save_data_callbacks;
 // and how many such reads there were and which one the game in progress took.
 std::map<std::string, std::vector<std::uint8_t>, std::less<>> g_save_data;
 std::map<std::string, std::vector<std::uint8_t>, std::less<>> g_save_read_data;
+// The version each entry of the save read whole last was written with: an entry of a mod not loaded
+// now goes back into the saves the game writes as it came (a game played without a mod keeps the
+// mod's data for when it is back).
+std::map<std::string, std::string, std::less<>> g_save_read_versions;
+std::map<std::string, std::string, std::less<>> g_save_versions;
 int g_save_read_slot = -1;
 fs::path g_save_read_path;  // the save read whole last
 std::uint32_t g_save_reads = 0;
@@ -836,10 +843,13 @@ void save_written(const char* path, int players) {
     const bool pending = g_save_reads != g_save_taken && !g_save_read_path.empty()
                          && fs::equivalent(fs::path(path), g_save_read_path, e);
     const auto& source = pending ? g_save_read_data : g_save_data;
+    const auto& versions = pending ? g_save_read_versions : g_save_versions;
     std::string members;
+    std::set<std::string, std::less<>> owned;
     for (const auto& loaded : g_loaded) {
         // The mod's own data, and its gadgets' (1.124: the keys of those the hero owns).
         for (const std::string& key : {loaded->id, gadgets_save_key(loaded.get())}) {
+            owned.insert(key);
             const auto data = source.find(key);
             if (data == source.end() || data->second.empty()) {
                 continue;
@@ -852,6 +862,22 @@ void save_written(const char* path, int players) {
                 mods::quoted(base64(data->second))
             );
         }
+    }
+    // The data of mods not loaded now (the game played without them): kept as it came, with the
+    // version it was written with, so the mod finds it again when it is back.
+    for (const auto& [key, bytes] : source) {
+        if (owned.contains(key) || bytes.empty()) {
+            continue;
+        }
+        const auto version = versions.find(key);
+        members += std::format(
+            "{}\n    {}: {{{}\"data\": {}}}",
+            members.empty() ? "" : ",",
+            mods::quoted(key),
+            version == versions.end() ? std::string()
+                                      : std::format("\"version\": {}, ", mods::quoted(version->second)),
+            mods::quoted(base64(bytes))
+        );
     }
     if (members.empty() || players == 0) {
         fs::remove(file, e);
@@ -878,6 +904,7 @@ void save_written(const char* path, int players) {
 // kept aside until the game plays that save (follow_saves).
 void save_read(const char* path, int slot) {
     g_save_read_data.clear();
+    g_save_read_versions.clear();
     g_save_read_slot = slot;
     g_save_read_path = path;
     ++g_save_reads;
@@ -901,6 +928,9 @@ void save_read(const char* path, int slot) {
             continue;
         }
         g_save_read_data[id] = std::move(bytes);
+        if (entry["version"].is_string()) {
+            g_save_read_versions[id] = entry["version"].string();
+        }
     }
 }
 
@@ -908,6 +938,7 @@ void save_read(const char* path, int slot) {
 // after takes none), and a save read before is not its; the mods are told at the next tick.
 void new_game() {
     g_save_data.clear();
+    g_save_versions.clear();
     g_save_taken = g_save_reads;
     g_save_playing = -1;
     g_save_new_game = true;
@@ -945,11 +976,13 @@ void follow_saves() {
         g_save_taken = g_save_reads;
         g_save_playing = slot;
         g_save_data = g_save_read_data;
+        g_save_versions = g_save_read_versions;
         log::info("the mods' data of save {} taken ({} mods)", slot, g_save_data.size());
         tell_save_data();
     } else if (slot < 0 && g_save_playing >= 0) {
         g_save_playing = -1;
         g_save_data.clear();
+        g_save_versions.clear();
         log::info("a new game: the mods' data starts empty");
         tell_save_data();
     } else if (slot >= 0) {
@@ -961,6 +994,8 @@ void reset_save_data() {
     g_save_data_callbacks.clear();
     g_save_data.clear();
     g_save_read_data.clear();
+    g_save_read_versions.clear();
+    g_save_versions.clear();
     g_save_read_slot = -1;
     g_save_read_path.clear();
     g_save_reads = 0;
@@ -1207,6 +1242,7 @@ void set_loaded_mods_json() {
     openrac_game_save_written = save_written;
     openrac_game_save_read = save_read;
     openrac_game_new_game = new_game;
+    g_follow_saves = true;
 }
 
 void write_status(const Host& host, const std::vector<Outcome>& outcomes) {
@@ -1899,6 +1935,11 @@ int rac1_weapon_hud_icon(int native_icon) {
                                  : base + static_cast<int>(weapon->def.presentation);
 }
 
+// mods.h frame(): with no frame callbacks (no mod loaded), only the game in progress is followed.
+void follow_saves_only() {
+    follow_saves();
+}
+
 void run_frame_callbacks() {
     restore_weapon_grid_if_left();
     // The game in progress first (1.16): a mod's frame callback then sees its new data.
@@ -2223,6 +2264,7 @@ void reset() {
     g_in_tick_boundary = false;
     g_state_restored = false;
     g_frame_callbacks = false;
+    g_follow_saves = false;
     if (g_host != nullptr && g_host->pad_hook != nullptr) {
         *g_host->pad_hook = nullptr;
     }
