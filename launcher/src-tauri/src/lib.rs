@@ -3394,6 +3394,30 @@ fn prepare_environment() {
         tune_webkit(settle_safe_rendering());
         ensure_wayland_cursor_fallback();
     }
+    #[cfg(windows)]
+    own_data_home();
+}
+
+/// OpenRAC: Commando's data home, apart from the OpenRAC Launcher's. The game keeps its settings,
+/// controls and the mods' own files in %LOCALAPPDATA%\openrac (port/game/common/program/options.cpp,
+/// data_home), and this launcher reads them there too (core saves::data_home): with the OpenRAC
+/// Launcher on the same computer, the two would share them. So this launcher, and every program it
+/// starts, sees LOCALAPPDATA as <LOCALAPPDATA>\dev.commandoprotocol.launcher\home, whose openrac\
+/// is the data home of OpenRAC: Commando alone. The system's own folders (the webview's data, the
+/// installer's folder) come from Windows' known folders, not from this variable, and stay as they
+/// are. A launcher started by this one (a restart after an update) already has it.
+#[cfg(windows)]
+fn own_data_home() {
+    const OWN: &str = "dev.commandoprotocol.launcher";
+    let Some(local) = std::env::var_os("LOCALAPPDATA").filter(|v| !v.is_empty()) else { return };
+    let local = PathBuf::from(local);
+    if local.ends_with(std::path::Path::new(OWN).join("home")) {
+        return;
+    }
+    let home = local.join(OWN).join("home");
+    if std::fs::create_dir_all(&home).is_ok() {
+        std::env::set_var("LOCALAPPDATA", home);
+    }
 }
 
 /// The launcher's plugins, registered in this order: one instance, links, the file dialogs, the
