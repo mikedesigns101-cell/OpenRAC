@@ -46,11 +46,18 @@ export const MOD_MODELS = "mod-models";
  */
 export function commandoConfig(config: Config): Config | null {
   if (!COMMANDO.on) return null;
-  // The saves: a folder of this launcher's own, in its install folder, unless the player chose one
-  // (Settings): the game's default, <data home>/memcard, is the OpenRAC Launcher's too, and a
-  // modded game's saves are kept apart from the unmodded game's.
+  // The saves: <install folder>/saves, unless the player chose a folder (Settings). Not the data
+  // home's memcard/ (src-tauri's own_data_home keeps it apart from the OpenRAC Launcher's, but it is
+  // in the app's data, which the uninstaller may delete), and not <install folder>/memcard: the
+  // launcher moves a memcard/ found in the install folder away at every start (core saves.rs,
+  // INSTALL_FOLDERS), as 0.1.0's default was.
+  const oldDefault = config.installDir ? joinPath(config.installDir, "memcard") : null;
   const saveDir =
-    config.saveDir ?? (config.installDir ? joinPath(config.installDir, "memcard") : null);
+    config.saveDir && config.saveDir !== oldDefault
+      ? config.saveDir
+      : config.installDir
+        ? joinPath(config.installDir, "saves")
+        : null;
 
   if (config.playWithMods && !config.discordRpc && !config.developer && saveDir === config.saveDir)
     return null;
