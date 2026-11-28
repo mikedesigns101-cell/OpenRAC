@@ -56,9 +56,11 @@ class's, or the one `moby_model_at` gives it), which has to be skinned for them 
 - At most `OPENRAC_MOBY_LAYERED_MAX` (32) mobys wear layers at once: a 33rd answers
   `OPENRAC_HOOK_FULL`.
 - A layer is drawn while its moby is, with its light, colour, blending and the mods' materials on
-  it, and casts the hero's shadow when its moby does. In the game's menus that draw a moby into a
-  picture of their own (the pause menu's 3D hero) its layers are drawn into the same picture, when
-  that moby is the one the layers were set on.
+  it, and casts the hero's shadow when its moby does. A moby a menu draws into a picture of its own
+  takes its layers into that picture (not yet seen in a game: a menu's 3D hero is a moby of the
+  menu's, at its own address, which the mod has to put the layers on).
+- A moby hidden with `moby_model_at`'s OPENRAC_MODEL_HIDE_NATIVE is not drawn at all, its layers
+  with it: to keep only the layers, set all of a layer's `hide_joints` instead.
 - A moby drawn as another model with its animations (`moby_skin_at`) or as a shop preview wears no
   layers.
 
@@ -70,5 +72,3 @@ six 300-frame samples each, scene + submit + GPU): nothing 9.40 ms, one whole su
 `moby_model_at` 9.57 ms, a base without its chest and four layers 9.83 ms, within the spread between
 runs; the scene's CPU part 4.47, 4.53 and 4.59 ms.
 
-In the menus that draw a moby into a picture of their own, its layers follow it into that picture;
-Going Commando's pause menu draws no 3D hero, so there it has nothing to show.
