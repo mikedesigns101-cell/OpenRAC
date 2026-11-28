@@ -551,13 +551,39 @@ void rac2_gadgets_save_strip(void) {
 
 void rac2_gadgets_save_restore(void);
 
-/* Save_Serialize (SavePack, func_0029ADA0; a hook point too): every save the game writes, and the
- * port's captures of it (play.c's save_capture). */
+/* The lent ids are out of the game's arrays while any of the two packers runs (one may call the
+ * other): taken out at the outer call's start, put back at its end. */
+static int s_strip_depth;
+
+static void strip_enter(void) {
+    if (s_strip_depth++ == 0) {
+        rac2_gadgets_save_strip();
+    }
+}
+
+static void strip_leave(void) {
+    if (--s_strip_depth == 0) {
+        rac2_gadgets_save_restore();
+    }
+}
+
+/* Save_Serialize (save_build_packet, func_0029ADA0; a hook point too): the packet of the save the
+ * port's captures read (play.c's save_capture). */
 void func_0029ADA0__hooked(gaddr out);
 void func_0029ADA0(gaddr out) {
-    rac2_gadgets_save_strip();
+    strip_enter();
     func_0029ADA0__hooked(out);
-    rac2_gadgets_save_restore();
+    strip_leave();
+}
+
+/* save_pack_records (func_0029AF98): what MemcardSave writes to the card, the save's records copied
+ * from the game's arrays (g_save_record_layout_main and _slot). */
+int func_0029AF98__game(gaddr buffer, int slot, gaddr records);
+int func_0029AF98(gaddr buffer, int slot, gaddr records) {
+    strip_enter();
+    const int size = func_0029AF98__game(buffer, slot, records);
+    strip_leave();
+    return size;
 }
 
 /* Gui_DrawIcon (hud_draw_colored_quad_widget, func_00336828; a hook point too): an icon widget of

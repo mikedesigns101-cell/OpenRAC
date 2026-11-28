@@ -445,6 +445,7 @@ func_002821C0	gfx	DrawEffectStrip	wrap	part_draw_glint_effect: a level's water a
 func_002FD3F0	gfx	AddGSRegister	wrap	VU1_addGSregister: its TEX0, TEX1, CLAMP, ALPHA and TEST sets kept as native values for the strips (host/strips.c).
 func_00280CE0	gfx	QueueVuState	wrap	font_queue_vu_state: the view's fog line kept for the strips (host/strips.c).
 func_0029BB90	save	SaveSerialize	wrap	SavePack: the mods' gadgets' lent item ids taken out of what the save holds while it is written, and put back (host/mod_gadgets.c).
+func_0029BD88	save	SavePackRecords	wrap	save_pack_records: what MemcardSave writes to the card; the mods' gadgets' lent item ids taken out while it copies the game's arrays, and put back (host/mod_gadgets.c).
 func_00337630	draw	GuiDrawIcon	wrap	hud_draw_colored_quad_widget: a mod gadget's icon key drawn as the mod's picture (host/mod_gadgets.c).
 func_0028EDF0	draw	GetIconFrame	wrap	GetIconFrame: a mod gadget's icon key answered as its host gadget's for any other reader (host/mod_gadgets.c).
 func_003380B8	menu	DrawItemGrid	wrap	DrawItemGrid: the Gadgets grid's free cell drawn while a mod gadget owned is in it (host/mod_gadgets.c).
