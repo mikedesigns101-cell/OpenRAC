@@ -2022,19 +2022,9 @@ TickMobys pose_mobys(
     for (std::size_t i = 0; i < xray_marks.size(); ++i) {
         xray_of.emplace(xray_marks[i].address, std::make_pair(&xray_marks[i], std::uint32_t(i + 1)));
     }
-    const std::size_t xray_forced_from = state.mobys.size();
-    for (const mods::MobyXrayDraw& mark : xray_marks) {
-        if (std::any_of(state.mobys.begin(), state.mobys.end(), [&](const host::LiveMoby& m) {
-                return m.address == mark.address;
-            })) {
-            continue;
-        }
-        const std::size_t before = state.mobys.size();
-        g->render.profile->add_moby(ram, mark.address, state.mobys);
-        if (state.mobys.size() == before) {
-            continue;
-        }
-        const host::LiveMoby& m = state.mobys[before];
+    // In the camera's sight as the poses' cull has it (a half angle of 61 degrees) and within the
+    // mark's distance.
+    const auto xray_reach = [&](const host::LiveMoby& m, const mods::MobyXrayDraw& mark) {
         float v[3], d = 0.0f, len2 = 0.0f;
         for (int a = 0; a < 3; ++a) {
             v[a] = m.matrix[12 + a] - state.camera_position[a];
@@ -2043,13 +2033,35 @@ TickMobys pose_mobys(
         }
         const float r = std::max(m.world_sphere[3], 4.0f);
         const float side = std::sqrt(std::max(len2 - d * d, 0.0f));
-        // In sight as the poses' cull has it (a half angle of 61 degrees), and near enough.
-        const bool in_sight = d >= -r && side <= d * 1.8f + r * 1.5f;
-        if (!in_sight || std::sqrt(len2) > mark.max_distance + r) {
+        return d >= -r && side <= d * 1.8f + r * 1.5f && std::sqrt(len2) <= mark.max_distance + r;
+    };
+    const std::size_t xray_forced_from = state.mobys.size();
+    // For OPENRAC_XRAY_LOG: each mark as it went (L listed by the game, A added, S out of sight or
+    // too far, R unreadable) with its mode byte.
+    std::string xray_why;
+    for (const mods::MobyXrayDraw& mark : xray_marks) {
+        const unsigned mode = mark.address + 0x35 <= ram.size() ? ram[mark.address + 0x34] : 0xFFu;
+        if (std::any_of(state.mobys.begin(), state.mobys.end(), [&](const host::LiveMoby& m) {
+                return m.address == mark.address;
+            })) {
+            xray_why += std::format(" {:#x}:L/{:#x}", mark.address, mode);
+            continue;
+        }
+        const std::size_t before = state.mobys.size();
+        g->render.profile->add_moby(ram, mark.address, state.mobys);
+        if (state.mobys.size() == before) {
+            xray_why += std::format(" {:#x}:R/{:#x}", mark.address, mode);
+            continue;
+        }
+        if (!xray_reach(state.mobys[before], mark)) {
             state.mobys.resize(before);
+            xray_why += std::format(" {:#x}:S/{:#x}", mark.address, mode);
+        } else {
+            xray_why += std::format(" {:#x}:A/{:#x}", mark.address, mode);
         }
     }
     std::vector<XrayRange> xray_ranges;
+    std::vector<char> xray_only_ranges;  // each range's moby is drawn for its silhouette alone
     std::size_t xray_forced_live = static_cast<std::size_t>(-1);
     openrac_infobot_presentation infobot_presentation{};
     const bool presenting_infobot =
@@ -2181,6 +2193,16 @@ TickMobys pose_mobys(
                 drawn_views = seen.views;
             } else {
                 distance_fade = fade_from(state, game_distance_view);
+            }
+        }
+        // A marked moby the game's own draw leaves out here (its distance test) but in the camera's
+        // sight within the mark's distance (interface 1.128): posed for its silhouette alone.
+        bool xray_only = false;
+        if (!distance_fade) {
+            if (const auto marked = xray_of.find(m.address);
+                marked != xray_of.end() && xray_reach(m, *marked->second.first)) {
+                distance_fade = std::uint8_t{0x80};
+                xray_only = true;
             }
         }
         if (!distance_fade) {
@@ -2974,7 +2996,7 @@ TickMobys pose_mobys(
         }
         live_joints.push_back(instance.palette >= 0 ? joints : 0);
         if (every_shadow && g->render.profile->shadow_directions() != 0
-            && openrac_game_has_level(g->loaded) && animate && !extra
+            && openrac_game_has_level(g->loaded) && animate && !extra && !xray_only
             && instance.moby_light[3] < 1.5f && instance.tint[3] > 0.0f) {
             const auto directions = OPENRAC_DATA(g->render.profile->shadow_directions());
             const auto cast =
@@ -3065,6 +3087,7 @@ TickMobys pose_mobys(
         }
         // A marked moby (interface 1.128): its instance and its layers' for its silhouette.
         if (const auto marked = xray_of.find(m.address); marked != xray_of.end() && !light_only) {
+            xray_only_ranges.push_back(xray_only || index >= xray_forced_from ? 1 : 0);
             xray_ranges.push_back(
                 {live.size(),
                  1 + worn_count,
@@ -3456,31 +3479,60 @@ TickMobys pose_mobys(
     }
     // The marked mobys the game did not draw (interface 1.128): posed above with the others, they
     // leave `live` for their silhouette alone. What the loop's end put after them moves down.
+    // Those the game's own draw left out here (xray_only) too, wherever they are in `live`.
     std::vector<scene::XrayDraw> xray_extra;
-    if (xray_forced_end > xray_forced_live) {
+    std::vector<char> drop(xray_marks.empty() ? 0 : live.size(), 0);
+    for (std::size_t i = xray_forced_live; i < xray_forced_end && i < drop.size(); ++i) {
+        drop[i] = 1;
+    }
+    for (std::size_t k = 0; k < xray_ranges.size(); ++k) {
+        if (xray_only_ranges[k] != 0) {
+            for (std::size_t i = xray_ranges[k].first;
+                 i < xray_ranges[k].first + xray_ranges[k].count && i < drop.size();
+                 ++i) {
+                drop[i] = 1;
+            }
+        }
+    }
+    if (std::find(drop.begin(), drop.end(), char{1}) != drop.end()) {
         std::vector<XrayRange> kept;
-        for (const XrayRange& r : xray_ranges) {
-            if (r.first >= xray_forced_live) {
-                for (std::size_t i = r.first; i < r.first + r.count && i < xray_forced_end; ++i) {
+        for (std::size_t k = 0; k < xray_ranges.size(); ++k) {
+            const XrayRange& r = xray_ranges[k];
+            if (r.first < drop.size() && drop[r.first] != 0) {
+                for (std::size_t i = r.first; i < r.first + r.count && i < live.size(); ++i) {
                     xray_extra.push_back({live[i], r.rgba, r.flags, r.number});
                 }
             } else {
                 kept.push_back(r);
             }
         }
+        // Where each kept instance goes once the dropped ones are out.
+        std::vector<std::size_t> moved(live.size(), 0);
+        std::size_t next = 0;
+        for (std::size_t i = 0; i < live.size(); ++i) {
+            moved[i] = next;
+            next += drop[i] == 0 ? 1 : 0;
+        }
+        for (XrayRange& r : kept) {
+            r.first = moved[r.first];
+        }
         xray_ranges = std::move(kept);
         const auto cut = [&](auto& v) {
-            if (v.size() >= xray_forced_end) {
-                v.erase(
-                    v.begin() + static_cast<std::ptrdiff_t>(xray_forced_live),
-                    v.begin() + static_cast<std::ptrdiff_t>(xray_forced_end)
-                );
+            if (v.size() != drop.size()) {
+                return;
             }
+            std::size_t w = 0;
+            for (std::size_t i = 0; i < v.size(); ++i) {
+                if (drop[i] == 0) {
+                    v[w++] = std::move(v[i]);
+                }
+            }
+            v.resize(w);
         };
-        cut(live);
         cut(live_addresses);
         cut(live_joints);
         cut(live_views);
+        cut(live);
     }
     // OPENRAC_XRAY_LOG=1: once a second, the marks and how many the game drew or the port added.
     static const bool xray_log = [] {
@@ -3489,11 +3541,13 @@ TickMobys pose_mobys(
     }();
     if (xray_log && g->index % 60 == 0 && world_ran) {
         log::info(
-            "[xray] frame {}: {} marks, {} instances drawn by the game, {} posed for the silhouette alone",
+            "[xray] frame {}: {} marks, {} instances drawn by the game, {} posed for the silhouette "
+            "alone;{}",
             g->index,
             xray_marks.size(),
             xray_ranges.size(),
-            xray_extra.size()
+            xray_extra.size(),
+            xray_why
         );
     }
     return {
