@@ -185,6 +185,9 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `gadget_info` | 1.124 | experimental | no | yes | no |
 | `gadget_held` | 1.124 | experimental | no | yes | no |
 | `on_gadget` | 1.124 | experimental | yes | yes | yes |
+| `hero_anim_frames` | 1.125 | experimental | no | yes | no |
+| `hero_play_anim` | 1.125 | experimental | part | yes | part |
+| `hero_anim_filter` | 1.125 | experimental | no | yes | no |
 
 ## figures
 

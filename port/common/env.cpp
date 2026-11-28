@@ -236,6 +236,10 @@ constexpr std::array<Variable, kVariableCount> kVariables = {{
     {Var::HdrFrame, "OPENRAC_HDR_FRAME",
      Kind::Flag, Truth::Set, "off",
      "Vulkan: the HDR frame (half floats) without an HDR screen, shown clamped as SDR, to compare"},
+    {Var::HeroAnimProbe, "OPENRAC_HERO_ANIM_PROBE",
+     Kind::Text, Truth::NotAFlag, "none",
+     "Going Commando: ITEM[,ITEM...]: each item given and put in the hand in turn, 300 frames each, "
+     "and every hero animation the game starts logged with the item in the hand (rac2/host/play.c; a test)"},
     {Var::HeroShadow, "OPENRAC_HERO_SHADOW",
      Kind::Flag, Truth::Set, "off",
      "the hero's own shadow map, without the sun's cascades"},

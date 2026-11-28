@@ -102,6 +102,12 @@ openrac_held_piece	frame	52	uint32_t
 openrac_held_piece	next_frame	56	uint32_t
 openrac_held_piece	anim_time	60	float
 openrac_held_piece	anim_speed	64	float
+openrac_hero_anim_request	(size)	20	-
+openrac_hero_anim_request	size	0	uint32_t
+openrac_hero_anim_request	seq	4	int32_t
+openrac_hero_anim_request	frame	8	int32_t
+openrac_hero_anim_request	item	12	int32_t
+openrac_hero_anim_request	state	16	int32_t
 openrac_hit	(size)	44	-
 openrac_hit	size	0	uint32_t
 openrac_hit	victim	4	int32_t
@@ -496,6 +502,7 @@ openrac_camera_script_fn	(typedef)	-	void (*)(void *, int, int)
 openrac_frame_fn	(typedef)	-	void (*)(void *)
 openrac_gaddr	(typedef)	-	uint32_t
 openrac_gadget_fn	(typedef)	-	void (*)(void *, const openrac_gadget_event *)
+openrac_hero_anim_fn	(typedef)	-	int (*)(void *, const openrac_hero_anim_request *)
 openrac_hit_fn	(typedef)	-	int (*)(void *, const openrac_hit *)
 openrac_menu_fn	(typedef)	-	int (*)(void *, const openrac_menu_frame *)
 openrac_metal_detect_fn	(typedef)	-	int (*)(void *, int, int)

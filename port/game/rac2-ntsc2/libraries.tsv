@@ -449,3 +449,4 @@ func_0029BD88	save	SavePackRecords	wrap	save_pack_records: what MemcardSave writ
 func_00337630	draw	GuiDrawIcon	wrap	hud_draw_colored_quad_widget: a mod gadget's icon key drawn as the mod's picture (host/mod_gadgets.c).
 func_0028EDF0	draw	GetIconFrame	wrap	GetIconFrame: a mod gadget's icon key answered as its host gadget's for any other reader (host/mod_gadgets.c).
 func_003380B8	menu	DrawItemGrid	wrap	DrawItemGrid: the Gadgets grid's free cell drawn while a mod gadget owned is in it (host/mod_gadgets.c).
+func_L00_002D2508	anim	SetHeroAnimation	wrap	set_hero_animation: a mod's hero animation held while its HOLD lasts (the state's calls kept for its end) and the mods' filter of the seq the state asks for (host/play.c, interface 1.125).

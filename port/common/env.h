@@ -120,6 +120,7 @@ enum class Var : std::uint16_t {
     HazeLog,
     Hdr,
     HdrFrame,
+    HeroAnimProbe,
     HeroShadow,
     Hidden,
     HidePasses,

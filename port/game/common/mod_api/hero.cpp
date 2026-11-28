@@ -4,6 +4,9 @@
 // The mods' interface, area "hero": the api_<member> functions of the openrac_api members
 // sdk/api/members.tsv puts in this area, and what only they use.
 
+#include <cmath>
+#include <vector>
+
 #include "mod_api/internal.h"
 
 using namespace openrac;
@@ -145,6 +148,79 @@ int api_hero_set_pose(openrac_mod* mod, const openrac_pose* pose) {
 
 // Any mod may turn the hero's joints (ports before took them only from the holder of his update
 // hook): its offsets replace its own last ones and are composed with the other mods' (g_joint_sets).
+// ---- The hero's animations from a mod (1.125) ----
+//
+// hero_play_anim starts a seq with his state untouched (the game's part: rac2/host/play.c); the
+// filters, in load order, may swap the seq his state asks for: the game calls
+// openrac_game_hero_anim_filter, set while any mod has one.
+
+namespace {
+
+struct HeroAnimFilter {
+    openrac_mod* mod = nullptr;
+    openrac_hero_anim_fn fn = nullptr;
+    void* user = nullptr;
+};
+
+std::vector<HeroAnimFilter> g_hero_anim_filters;
+
+int run_hero_anim_filters(int seq, int frame, std::int32_t item, std::int32_t state) {
+    for (const HeroAnimFilter& f : g_hero_anim_filters) {
+        openrac_hero_anim_request r{};
+        r.size = sizeof r;
+        r.seq = seq;
+        r.frame = frame;
+        r.item = item;
+        r.state = state;
+        const int to = f.fn(f.user, &r);
+        if (to >= 0 && g_play != nullptr && g_play->hero_anim_frames != nullptr
+            && g_play->hero_anim_frames(to) > 0) {
+            seq = to;
+        }
+    }
+    return seq;
+}
+
+}  // namespace
+
+int api_hero_anim_frames(int seq) {
+    if (g_play == nullptr || g_play->hero_anim_frames == nullptr || seq < 0 || seq > 255) {
+        return 0;
+    }
+    return g_play->hero_anim_frames(seq);
+}
+
+int api_hero_play_anim(openrac_mod* mod, int seq, int frame, float blend_ticks, float speed, std::uint32_t flags) {
+    std::int32_t level = -1;
+    if (mod == nullptr || g_play == nullptr || g_play->hero_play_anim == nullptr || seq < 0 || seq > 255
+        || frame < 0 || !std::isfinite(blend_ticks) || blend_ticks < 0.0f || blend_ticks > 600.0f
+        || !std::isfinite(speed) || speed <= 0.0f || speed > 16.0f
+        || (flags & ~OPENRAC_HERO_ANIM_HOLD) != 0u || !in_level(phase_now(&level))) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    return g_play->hero_play_anim(seq, frame, blend_ticks, speed, (flags & OPENRAC_HERO_ANIM_HOLD) != 0u ? 1 : 0)
+                   == 0
+               ? OPENRAC_HOOK_OK
+               : OPENRAC_HOOK_UNKNOWN;
+}
+
+int api_hero_anim_filter(openrac_mod* mod, openrac_hero_anim_fn fn, void* user) {
+    if (mod == nullptr || fn == nullptr || g_play == nullptr || g_play->hero_play_anim == nullptr) {
+        return OPENRAC_HOOK_UNKNOWN;
+    }
+    if (mod != g_loading) {
+        return OPENRAC_HOOK_TOO_LATE;
+    }
+    g_hero_anim_filters.push_back({mod, fn, user});
+    openrac_game_hero_anim_filter = run_hero_anim_filters;
+    return OPENRAC_HOOK_OK;
+}
+
+void hero_anim_reset() {
+    openrac_game_hero_anim_filter = nullptr;
+    g_hero_anim_filters.clear();
+}
+
 int api_hero_set_joints(openrac_mod* mod, const openrac_joint_offset* joints, int count) {
     if (mod == nullptr || g_play == nullptr || g_play->hero_moby == nullptr
         || g_joint_offsets == nullptr || count < 0 || count > OPENRAC_JOINT_OFFSETS_MAX

@@ -247,3 +247,6 @@ gadget_count	hero	1.124	experimental
 gadget_info	hero	1.124	experimental
 gadget_held	hero	1.124	experimental
 on_gadget	hero	1.124	experimental
+hero_anim_frames	hero	1.125	experimental
+hero_play_anim	hero	1.125	experimental
+hero_anim_filter	hero	1.125	experimental

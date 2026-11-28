@@ -309,6 +309,9 @@ static int hero_pose(openrac_game_pose* out) {
 /* The ticks a new seq blends in over, as set_hero_animation's callers pass. */
 #define HERO_SET_BLEND 4.0f
 
+/* The port's own call of set_hero_animation (below: the wrapper does not keep it or filter it). */
+static int s_anim_own;
+
 static int hero_set_pose(const openrac_game_pose* pose) {
     const gaddr moby = hero_moby();
     if (moby == 0 || GREF(uint8_t, HERO_VEHICLE) != 0) {
@@ -316,11 +319,13 @@ static int hero_set_pose(const openrac_game_pose* pose) {
     }
     const int frames = seq_frames(moby, pose->seq);
     if (frames > 0 && pose->seq != GREF(uint8_t, moby + MOBY_TARGET_SEQ)) {
+        s_anim_own = 1;
         func_L00_002D2168(
             (int)pose->seq,
             (int)pose->frame < frames ? (int)pose->frame : frames - 1,
             HERO_SET_BLEND
         );
+        s_anim_own = 0;
     }
     /* A queued seq or frame his last state asked for is for that state's animation. */
     func_L00_002D24B8();
@@ -359,6 +364,227 @@ static int hero_set_pose(const openrac_game_pose* pose) {
     func_L00_002AFBC0();
     func_L00_002A7748();
     return 1;
+}
+
+/* ---- The hero's animations for a mod (openrac_api.hero_play_anim, the anim filter; 1.125) ----
+ *
+ * set_hero_animation (func_L00_002D2168: seq, key, blend ticks) is what every state of the hero's
+ * calls to start an animation; the port wraps it. A mod's animation is started through it with the
+ * hero's state untouched; held (`hold`), the state's own calls are kept aside, not started, until the
+ * held seq reaches its last key, his state changes, the level reloads or he has a vehicle; then the
+ * last one kept is started, so a state that waits on its own animation gets it. The mods' filter
+ * (openrac_game_hero_anim_filter) may swap the seq a state asks for (a weapon's fire by its item).
+ * With no mod animation and no filter, the wrapper only calls the game's. */
+
+static struct {
+    int holding;
+    int seq;
+    int32_t state;
+    uint32_t loads;
+    int ticks;
+    int limit;    /* the most ticks it is held: its keys over its speed, and a margin */
+    int last_key; /* the key shown the tick before: a lower one is a loop back */
+    int kept; /* a state's call kept aside: its seq, key and blend */
+    int kept_seq;
+    int kept_frame;
+    float kept_blend;
+} s_anim;
+static int s_anim_probe = -1; /* OPENRAC_HERO_ANIM_PROBE read: its items, or none */
+static int32_t s_probe_items[16];
+static int s_probe_count;
+static int s_probe_frames;
+static uint32_t s_probe_loads;
+/* The probe's watch each tick: a set_hero_animation call seen since the tick before, and the hero's
+ * and the hand's seq the tick before. */
+static int s_probe_called;
+static int s_probe_seq = -1;
+static int s_probe_state = -1;
+static int s_probe_hand = -1;
+
+static int32_t hand_item(void) {
+    return GREF(gaddr, HERO_ITEM_MOBY) != 0 ? GREF(int32_t, HERO_ITEM_ID) : -1;
+}
+
+void func_L00_002D2168__game(int seq, int frame, float blend);
+void func_L00_002D2168(int seq, int frame, float blend) {
+    if (s_anim_probe > 0) {
+        s_probe_called = 1;
+        fprintf(stderr, "[hero anim] tick %d seq %d key %d blend %.2f state %d item %d%s%s\n",
+            s_probe_frames, seq, frame, (double)blend, GREF(int32_t, HERO_STATE), hand_item(),
+            s_anim_own ? " (mod)" : "", s_anim.holding && !s_anim_own ? " (kept)" : "");
+    }
+    if (!s_anim_own) {
+        if (s_anim.holding) {
+            s_anim.kept = 1;
+            s_anim.kept_seq = seq;
+            s_anim.kept_frame = frame;
+            s_anim.kept_blend = blend;
+            return;
+        }
+        if (openrac_game_hero_anim_filter != NULL && hero_moby() != 0) {
+            const int to = openrac_game_hero_anim_filter(seq, frame, hand_item(), GREF(int32_t, HERO_STATE));
+            const int frames = to != seq && to >= 0 ? seq_frames(hero_moby(), (uint32_t)to) : 0;
+            if (frames > 0) {
+                seq = to;
+                frame = frame < frames ? frame : frames - 1;
+            }
+        }
+    }
+    func_L00_002D2168__game(seq, frame, blend);
+}
+
+static int hero_anim_frames(int seq) {
+    const gaddr moby = hero_moby();
+    return moby != 0 && seq >= 0 ? seq_frames(moby, (uint32_t)seq) : 0;
+}
+
+/* The held animation's end: its last key reached, his state changed, a reload or a vehicle. */
+static void hero_anim_release(int start_kept) {
+    const int kept = s_anim.kept;
+    s_anim.holding = 0;
+    s_anim.kept = 0;
+    if (start_kept && kept && hero_moby() != 0 && GREF(uint8_t, HERO_VEHICLE) == 0) {
+        func_L00_002D2168(s_anim.kept_seq, s_anim.kept_frame, s_anim.kept_blend);
+    }
+}
+
+static void hero_anim_frame(void) {
+    if (!s_anim.holding) {
+        return;
+    }
+    const gaddr moby = hero_moby();
+    if (moby == 0 || s_anim.loads != rac2_program_loads()) {
+        hero_anim_release(0);
+        return;
+    }
+    ++s_anim.ticks;
+    const int frames = seq_frames(moby, (uint32_t)s_anim.seq);
+    const uint8_t seq = GREF(uint8_t, moby + MOBY_SEQ);
+    const uint8_t target = GREF(uint8_t, moby + MOBY_TARGET_SEQ);
+    const int key = GREF(uint8_t, moby + MOBY_FRAME);
+    const int ours = seq == target && seq == (uint8_t)s_anim.seq;
+    /* Its last key, or a key lower than the tick before's (a looping seq at a speed that steps over
+     * the last key goes back to the first), or held longer than its keys take. */
+    const int ended = (ours && (key + 1 >= frames || (s_anim.last_key >= 0 && key < s_anim.last_key)))
+                      || s_anim.ticks > s_anim.limit;
+    if (ours) {
+        s_anim.last_key = key;
+    }
+    /* Another seq shown (not a blend into ours) after its first ticks: something else started it. */
+    const int replaced = s_anim.ticks > 2 && target != (uint8_t)s_anim.seq;
+    if (ended || replaced || GREF(int32_t, HERO_STATE) != s_anim.state || GREF(uint8_t, HERO_VEHICLE) != 0) {
+        if (s_anim_probe > 0) {
+            fprintf(stderr, "[hero anim] held seq %d released after %d ticks (key %d of %d, %s)\n", s_anim.seq,
+                s_anim.ticks, key, frames,
+                ended ? "ended" : replaced ? "replaced" : GREF(uint8_t, HERO_VEHICLE) != 0 ? "vehicle" : "state");
+        }
+        hero_anim_release(1);
+    }
+}
+
+static int hero_play_anim(int seq, int frame, float blend_ticks, float speed, int hold) {
+    const gaddr moby = hero_moby();
+    const int frames = moby != 0 && seq >= 0 ? seq_frames(moby, (uint32_t)seq) : 0;
+    if (frames <= 0 || GREF(uint8_t, HERO_VEHICLE) != 0 || !(speed > 0.0f) || !(blend_ticks >= 0.0f)) {
+        return -1;
+    }
+    if (s_anim.holding) {
+        s_anim.holding = 0; /* a held one replaced: the state's call kept stays kept */
+    } else {
+        s_anim.kept = 0;
+    }
+    s_anim_own = 1;
+    func_L00_002D2168(seq, frame < 0 ? 0 : (frame < frames ? frame : frames - 1),
+        blend_ticks > 0.0f ? blend_ticks : 1.0f);
+    s_anim_own = 0;
+    GREF(float, HERO_ANIM_SPEED) = speed;
+    if (hold) {
+        s_anim.holding = 1;
+        s_anim.seq = seq;
+        s_anim.state = GREF(int32_t, HERO_STATE);
+        s_anim.loads = rac2_program_loads();
+        s_anim.ticks = 0;
+        s_anim.last_key = -1;
+        s_anim.limit = (int)((float)(frames + (int)blend_ticks) * 2.0f / speed) + 30;
+    }
+    return 0;
+}
+
+/* OPENRAC_HERO_ANIM_PROBE=ITEM[,ITEM...]: from 60 frames into play, each item owned, given ammo and
+ * asked into the hand in turn, 300 frames each; the wrapper logs every animation started. */
+static void hero_anim_probe(void) {
+    if (s_anim_probe < 0) {
+        s_anim_probe = 0;
+        const char* env = openrac_env_string("OPENRAC_HERO_ANIM_PROBE");
+        for (const char* p = env; p != NULL && *p != '\0' && s_probe_count < 16;) {
+            char* end = NULL;
+            const long v = strtol(p, &end, 10);
+            if (end == p) {
+                break;
+            }
+            if (v > 0 && v < 56) {
+                s_probe_items[s_probe_count++] = (int32_t)v;
+            }
+            p = *end == ',' ? end + 1 : end;
+        }
+        s_anim_probe = s_probe_count > 0 ? 1 : 0;
+        if (s_anim_probe) {
+            fprintf(stderr, "[hero anim] probe: %d items\n", s_probe_count);
+        }
+    }
+    if (s_anim_probe <= 0 || hero_moby() == 0 || GREF(int32_t, GAME_STATE) != STATE_PLAY) {
+        return;
+    }
+    if (s_probe_loads != rac2_program_loads()) {
+        s_probe_loads = rac2_program_loads();
+        s_probe_frames = 0;
+        /* The seqs his class has in this level, with their keys. */
+        const int count = GREF(uint8_t, GREF(gaddr, hero_moby() + MOBY_CLASS) + CLASS_SEQ_COUNT);
+        fprintf(stderr, "[hero anim] level %d: %d seqs; keys:", openrac_game_loaded_overlay(), count);
+        for (int s = 0; s < count; ++s) {
+            fprintf(stderr, " %d=%d", s, seq_frames(hero_moby(), (uint32_t)s));
+        }
+        fprintf(stderr, "\n");
+    }
+    ++s_probe_frames;
+    {
+        /* The hero's seq changed with no call of set_hero_animation since the tick before: started
+         * another way. His state's changes, and the hand moby's seq when it changes. */
+        const gaddr moby = hero_moby();
+        const int seq = GREF(uint8_t, moby + MOBY_TARGET_SEQ);
+        const int32_t state = GREF(int32_t, HERO_STATE);
+        if (seq != s_probe_seq && !s_probe_called && s_probe_seq >= 0) {
+            fprintf(stderr, "[hero anim] tick %d seq %d -> %d outside set_hero_animation (state %d item %d)\n",
+                s_probe_frames, s_probe_seq, seq, state, hand_item());
+        }
+        if (state != s_probe_state) {
+            fprintf(stderr, "[hero anim] tick %d state %d -> %d (seq %d item %d)\n", s_probe_frames, s_probe_state,
+                state, seq, hand_item());
+        }
+        const gaddr hand = GREF(gaddr, HERO_ITEM_MOBY);
+        const int hand_seq = hand != 0 ? GREF(uint8_t, hand + MOBY_TARGET_SEQ) : -1;
+        if (hand_seq != s_probe_hand) {
+            fprintf(stderr, "[hero anim] tick %d hand moby %08x seq %d -> %d key %d (item %d)\n", s_probe_frames,
+                (unsigned)hand, s_probe_hand, hand_seq, hand != 0 ? GREF(uint8_t, hand + MOBY_FRAME) : -1,
+                hand_item());
+        }
+        s_probe_seq = seq;
+        s_probe_state = state;
+        s_probe_hand = hand_seq;
+        s_probe_called = 0;
+    }
+    if (s_probe_frames < 60 || (s_probe_frames - 60) % 300 != 0) {
+        return;
+    }
+    const int i = (s_probe_frames - 60) / 300;
+    if (i >= s_probe_count) {
+        return;
+    }
+    const int32_t item = s_probe_items[i];
+    GREF(uint8_t, RAC2_ADDR(0x001A7AF8u) + (gaddr)item) = 1;      /* g_inventoryOwned */
+    GREF(int32_t, RAC2_ADDR(0x00139688u) + 4u * (gaddr)item) = 99; /* its ammo */
+    const int r = func_002AD860(item);
+    fprintf(stderr, "[hero anim] probe: tick %d item %d asked into the hand: %d\n", s_probe_frames, item, r);
 }
 
 static int32_t slot_of(gaddr moby);
@@ -825,6 +1051,8 @@ void rac2_play_frame(void) {
     rac2_copy_arenas_tick();
     rac2_foreign_tick();
     rac2_gadgets_frame();
+    hero_anim_probe();
+    hero_anim_frame();
     follow_motion();
     play_trace();
 }
@@ -893,6 +1121,8 @@ static openrac_game_play play = {
     .gadget_hand_moby = rac2_gadget_hand_moby,
     .gadget_equip = rac2_gadget_equip,
     .gadget_events = rac2_gadget_events,
+    .hero_anim_frames = hero_anim_frames,
+    .hero_play_anim = hero_play_anim,
 };
 
 void rac2_install_play(void) {

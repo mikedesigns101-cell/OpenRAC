@@ -830,5 +830,10 @@ int api_gadget_count();
 int api_gadget_info(int gadget, openrac_gadget_info* out);
 int api_gadget_held();
 int api_on_gadget(openrac_mod* mod, openrac_gadget_fn fn, void* user);
+// The hero's animations from a mod (1.125, hero.cpp); hero_anim_reset at the mods' unload.
+int api_hero_anim_frames(int seq);
+int api_hero_play_anim(openrac_mod* mod, int seq, int frame, float blend_ticks, float speed, std::uint32_t flags);
+int api_hero_anim_filter(openrac_mod* mod, openrac_hero_anim_fn fn, void* user);
+void hero_anim_reset();
 
 }  // namespace openrac::mods::detail

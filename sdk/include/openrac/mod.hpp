@@ -2226,6 +2226,38 @@ public:
       return m_api->on_gadget(m_handle, fn, user);
     }
 
+    // Since 1.125: whether the port starts the hero's animations for a mod with his state untouched
+    // (hero_anim_frames, hero_play_anim, hero_anim_filter).
+    bool has_hero_anim() const {
+      return m_api->api_minor >= 125 &&
+             m_api->size >= offsetof(openrac_api, hero_anim_filter) + sizeof(void *);
+    }
+
+    // Since 1.125: the keys of the hero's animation `seq` in the level loaded, 0 for none (never start
+    // one with 0: it hangs the game).
+    int hero_anim_frames(int seq) const { return has_hero_anim() ? m_api->hero_anim_frames(seq) : 0; }
+
+    // Since 1.125: starts the hero's animation `seq` at key `frame`, his state untouched; `hold`: his
+    // state's own animations wait until it ends or his state changes. Returns OPENRAC_HOOK_OK or
+    // _UNKNOWN.
+    int hero_play_anim(int seq, int frame = 0, float blend_ticks = 4.0f, float speed = 1.0f,
+                       bool hold = false) const {
+      if (!has_hero_anim()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->hero_play_anim(m_handle, seq, frame, blend_ticks, speed,
+                                   hold ? OPENRAC_HERO_ANIM_HOLD : 0u);
+    }
+
+    // Since 1.125: `fn(user, request)` each time the hero's state starts an animation; it returns the
+    // seq to start instead, or request->seq (only while the mod loads).
+    int hero_anim_filter(openrac_hero_anim_fn fn, void *user = nullptr) const {
+      if (!has_hero_anim()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->hero_anim_filter(m_handle, fn, user);
+    }
+
     // Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own
     // joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the
     // mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or

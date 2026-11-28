@@ -976,7 +976,21 @@ typedef struct openrac_game_play {
     int32_t (*gadget_hand_moby)(void);
     int (*gadget_equip)(int slot);
     int (*gadget_events)(openrac_game_gadget_event* out, int max);
+    /* The hero's animations for a mod (openrac_api.hero_anim_frames, hero_play_anim, interface
+     * 1.125): hero_anim_frames the keys of seq `seq` in his class in the level loaded (0: none, or
+     * no hero); hero_play_anim starts it at key `frame`, blending in over `blend_ticks` ticks, at
+     * `speed` (1 the game's), his state untouched; with `hold` the state's own animations wait until
+     * its last key or a change of his state (then the state's last one is started). 0 done, -1 no
+     * hero, a vehicle, or a seq his class has not. NULLs for a game without them. */
+    int (*hero_anim_frames)(int seq);
+    int (*hero_play_anim)(int seq, int frame, float blend_ticks, float speed, int hold);
 } openrac_game_play;
+
+/* Set by the mods' layer (interface 1.125), called by the game each time the hero's state starts an
+ * animation (Going Commando: set_hero_animation): the seq to start instead of `seq` (key `frame`,
+ * the item in his hand `item`, -1 none, his state `state`), or `seq` itself. A seq his class has not
+ * is ignored. NULL: the game's. */
+extern int (*openrac_game_hero_anim_filter)(int seq, int frame, int32_t item, int32_t state);
 
 /* Set by the mods' layer, called by the game's 2D: a gadget's icon at (x, y), `w` by `h` in the
  * game's 2D, colour `rgba` (the game's 0xAABBGGRR, 0x80 full); 1 when the mods' layer draws it (a

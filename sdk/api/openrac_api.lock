@@ -245,3 +245,6 @@
 243	gadget_info	1928	int (*)(int, openrac_gadget_info *)
 244	gadget_held	1936	int (*)(void)
 245	on_gadget	1944	int (*)(openrac_mod *, openrac_gadget_fn, void *)
+246	hero_anim_frames	1952	int (*)(int)
+247	hero_play_anim	1960	int (*)(openrac_mod *, int, int, float, float, uint32_t)
+248	hero_anim_filter	1968	int (*)(openrac_mod *, openrac_hero_anim_fn, void *)

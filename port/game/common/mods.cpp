@@ -52,6 +52,9 @@ extern "C" void (*openrac_game_new_game)(void) = nullptr;
 /* The mods' gadgets' icons in the game's 2D (game_host.h): set by mod_api/gadgets.cpp. */
 extern "C" int (*openrac_game_gadget_icon)(int slot, float x, float y, float w, float h,
                                             std::uint32_t rgba) = nullptr;
+/* The mods' filter of the hero's animations (game_host.h, 1.125): set by mod_api/hero.cpp. */
+extern "C" int (*openrac_game_hero_anim_filter)(int seq, int frame, std::int32_t item,
+                                                std::int32_t state) = nullptr;
 using namespace openrac;
 
 std::uint32_t overlay_bit(int phase) {
@@ -1136,6 +1139,9 @@ void fill_api(const Host& host) {
     g_api.gadget_info = api_gadget_info;
     g_api.gadget_held = api_gadget_held;
     g_api.on_gadget = api_on_gadget;
+    g_api.hero_anim_frames = api_hero_anim_frames;
+    g_api.hero_play_anim = api_hero_play_anim;
+    g_api.hero_anim_filter = api_hero_anim_filter;
     g_api.moby_skin_at = api_moby_skin_at;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
@@ -2168,6 +2174,7 @@ void reset() {
     g_settings_callbacks.clear();
     g_list_seen.reset();
     gadgets_reset();
+    detail::hero_anim_reset();
     reset_save_data();
     g_list_wait = 0;
     g_list_unwritten_said = false;

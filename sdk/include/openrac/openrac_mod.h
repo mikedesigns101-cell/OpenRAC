@@ -164,9 +164,11 @@ extern "C" {
  * (OPENRAC_RELOCATE_NEAREST; the table is unchanged), and 1.124 a mod's own
  * gadgets as items of the game's: in its menus and the hand, used, kept with the
  * save (gadget_register, gadget_give, gadget_equip, gadget_count, gadget_info,
- * gadget_held, on_gadget).
+ * gadget_held, on_gadget), and 1.125 the hero's animations from a mod with his
+ * state untouched, and the seq his state asks for swapped (hero_anim_frames,
+ * hero_play_anim, hero_anim_filter).
  */
-#define OPENRAC_MOD_API_MINOR 124
+#define OPENRAC_MOD_API_MINOR 125
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2280,6 +2282,22 @@ typedef struct openrac_gadget_event {
 
 typedef void (*openrac_gadget_fn)(void* user, const openrac_gadget_event* event);
 
+/* openrac_api.hero_play_anim's flags: the hero's state's own animations wait until this one ends or
+ * his state changes. Since 1.125. */
+#define OPENRAC_HERO_ANIM_HOLD 0x1u
+
+/* An animation the hero's state starts (openrac_api.hero_anim_filter): the seq and key it asks
+ * for, the item in his hand (-1 none) and his state (the game's number). Since 1.125. */
+typedef struct openrac_hero_anim_request {
+    uint32_t size;
+    int32_t seq;
+    int32_t frame;
+    int32_t item;
+    int32_t state;
+} openrac_hero_anim_request;
+
+typedef int (*openrac_hero_anim_fn)(void* user, const openrac_hero_anim_request* request);
+
 typedef struct openrac_api {
     /* sizeof(openrac_api) as the port was built: a newer port's is larger. Since 1.0. */
     uint32_t size;
@@ -3872,6 +3890,30 @@ typedef struct openrac_api {
      * loads. Returns OPENRAC_HOOK_OK, OPENRAC_HOOK_TOO_LATE after the load, or OPENRAC_HOOK_UNKNOWN.
      * Since 1.124. */
     int (*on_gadget)(openrac_mod* mod, openrac_gadget_fn fn, void* user);
+
+    /* The keys of animation `seq` of the hero's class in the level loaded, 0 when it has none there
+     * (or no hero): ask before hero_play_anim or a filter's answer, as the hero's animations are not
+     * all in every level and starting one his class has not hangs the game. Since 1.125. */
+    int (*hero_anim_frames)(int seq);
+
+    /* Starts the hero's animation `seq` at key `frame`, blending in over `blend_ticks` ticks (0:
+     * at once), at `speed` (1 the game's own; the speed lasts until his state sets another), without
+     * changing his state: he goes on moving and shooting as the game says. With
+     * OPENRAC_HERO_ANIM_HOLD in `flags`, the animations his state starts meanwhile wait until this one
+     * reaches its last key or his state changes (a jump, a hit), and the last of them starts then.
+     * Any mod may call it, on the game's thread, in a level. Returns OPENRAC_HOOK_OK, or
+     * OPENRAC_HOOK_UNKNOWN for a seq his class has not here (hero_anim_frames 0), a vehicle or ship
+     * driving him, no hero, bad numbers, or a game without it. Since 1.125. */
+    int (*hero_play_anim)(openrac_mod* mod, int seq, int frame, float blend_ticks, float speed, uint32_t flags);
+
+    /* Calls `fn(user, request)` on the game's thread each time the hero's state starts an animation
+     * (Going Commando: set_hero_animation, his every state's; a weapon's fire too), with the seq it
+     * asks for, the key, the item in his hand and his state; `fn` returns the seq to start instead,
+     * or request->seq to leave it. A seq his class has not in the level is ignored (the state's
+     * starts). The mods' filters run in load order, each given the seq the one before chose. Only
+     * while the mod loads. Returns OPENRAC_HOOK_OK, OPENRAC_HOOK_TOO_LATE after the load, or
+     * OPENRAC_HOOK_UNKNOWN (a game without it). Since 1.125. */
+    int (*hero_anim_filter)(openrac_mod* mod, openrac_hero_anim_fn fn, void* user);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *
