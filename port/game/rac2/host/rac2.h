@@ -48,6 +48,22 @@ void rac2_play_frame(void);
 void rac2_foreign_tick(void);
 /* After the moby loop (weapon_shots.c): the foreign classes' updates it noted (foreign_class.c). */
 void rac2_foreign_flush(void);
+/* The mods' gadgets (mod_gadgets.c): their records written once a level's program is in (level.c),
+ * their frame (rac2_play_frame), openrac_game_play's calls, and their texts for Text_ById (a game
+ * address, 0 for an id that is not theirs). */
+void rac2_gadgets_program_loaded(void);
+void rac2_gadgets_frame(void);
+struct openrac_game_gadget;
+struct openrac_game_gadget_event;
+int rac2_gadget_define(int slot, const struct openrac_game_gadget* g);
+int rac2_gadget_owned(int slot, int owned);
+int rac2_gadget_held(void);
+int32_t rac2_gadget_item(int slot);
+int32_t rac2_gadget_hand_moby(void);
+int rac2_gadget_equip(int slot);
+int rac2_gadget_events(struct openrac_game_gadget_event* out, int max);
+uint32_t rac2_gadget_text(int id);
+#define RAC2_GADGETS 6
 /* The play calls' table installed (play.c, from rac2_install_tools). */
 void rac2_install_play(void);
 /* The mods' pages in the title's main menu (mod_pages.c): the table installed (from

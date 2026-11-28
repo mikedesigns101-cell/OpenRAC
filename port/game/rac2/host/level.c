@@ -67,6 +67,8 @@ gaddr func_00131CB8(void) {
         /* The Insomniac Museum is level 21 to the game and to the disc's table, and its program, the
          * catalogue's and the export's numbers are the 30 its archive says. */
         loaded_level = level == MUSEUM ? MUSEUM_PROGRAM : level;
+        /* The mods' gadgets' records in this program's copy of the item table, before it runs. */
+        rac2_gadgets_program_loaded();
     }
     return entry;
 }

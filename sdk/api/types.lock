@@ -42,6 +42,33 @@ openrac_effect_tint	rgb	16	float[3]
 openrac_effect_tint	saturation	28	float
 openrac_effect_tint	texture	32	int32_t[2]
 openrac_effect_tint	width	40	float
+openrac_gadget	(size)	120	-
+openrac_gadget	size	0	uint32_t
+openrac_gadget	key	8	const char *
+openrac_gadget	name	16	const char *
+openrac_gadget	description	24	const char *
+openrac_gadget	host_item	32	int32_t
+openrac_gadget	icon	36	int32_t
+openrac_gadget	mesh	40	const char *
+openrac_gadget	mesh_matrix	48	float[16]
+openrac_gadget	flags	112	uint32_t
+openrac_gadget_event	(size)	36	-
+openrac_gadget_event	size	0	uint32_t
+openrac_gadget_event	gadget	4	int32_t
+openrac_gadget_event	kind	8	int32_t
+openrac_gadget_event	position	12	float[3]
+openrac_gadget_event	direction	24	float[3]
+openrac_gadget_info	(size)	312	-
+openrac_gadget_info	size	0	uint32_t
+openrac_gadget_info	gadget	4	int32_t
+openrac_gadget_info	item	8	int32_t
+openrac_gadget_info	flags	12	uint32_t
+openrac_gadget_info	mod	16	char[64]
+openrac_gadget_info	key	80	char[32]
+openrac_gadget_info	name	112	char[96]
+openrac_gadget_info	description	208	char[96]
+openrac_gadget_info	icon	304	int32_t
+openrac_gadget_info	host_item	308	int32_t
 openrac_graphics	(size)	64	-
 openrac_graphics	size	0	uint32_t
 openrac_graphics	backend	4	uint32_t
@@ -468,6 +495,7 @@ openrac_weapon_shot	speed	56	float
 openrac_camera_script_fn	(typedef)	-	void (*)(void *, int, int)
 openrac_frame_fn	(typedef)	-	void (*)(void *)
 openrac_gaddr	(typedef)	-	uint32_t
+openrac_gadget_fn	(typedef)	-	void (*)(void *, const openrac_gadget_event *)
 openrac_hit_fn	(typedef)	-	int (*)(void *, const openrac_hit *)
 openrac_menu_fn	(typedef)	-	int (*)(void *, const openrac_menu_frame *)
 openrac_metal_detect_fn	(typedef)	-	int (*)(void *, int, int)

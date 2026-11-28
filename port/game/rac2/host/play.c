@@ -824,6 +824,7 @@ void rac2_play_frame(void) {
     rac2_shots_frame();
     rac2_copy_arenas_tick();
     rac2_foreign_tick();
+    rac2_gadgets_frame();
     follow_motion();
     play_trace();
 }
@@ -884,6 +885,14 @@ static openrac_game_play play = {
     .moby_status = rac2_moby_status,
     .weapon_record = rac2_weapon_record,
     .weapon_ignore_culling = rac2_weapon_ignore_culling,
+    .gadget_slots = RAC2_GADGETS,
+    .gadget_define = rac2_gadget_define,
+    .gadget_owned = rac2_gadget_owned,
+    .gadget_held = rac2_gadget_held,
+    .gadget_item = rac2_gadget_item,
+    .gadget_hand_moby = rac2_gadget_hand_moby,
+    .gadget_equip = rac2_gadget_equip,
+    .gadget_events = rac2_gadget_events,
 };
 
 void rac2_install_play(void) {

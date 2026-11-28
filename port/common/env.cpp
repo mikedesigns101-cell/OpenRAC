@@ -176,6 +176,10 @@ constexpr std::array<Variable, kVariableCount> kVariables = {{
     {Var::FxDump, "OPENRAC_FX_DUMP",
      Kind::Integer, Truth::NotAFlag, "none",
      "with OPENRAC_DEBUG, each effect quad of the 100 frames from this one, in the log"},
+    {Var::GadgetProbe, "OPENRAC_GADGET_PROBE",
+     Kind::Text, Truth::NotAFlag, "none",
+     "Going Commando: HOST[:FRAME]: a mod gadget defined without a mod on host item HOST, given once "
+     "a level plays and asked into the hand FRAME frames in (rac2/host/mod_gadgets.c; a test)"},
     {Var::GamesRoot, "OPENRAC_GAMES_ROOT",
      Kind::Path, Truth::NotAFlag, "<install>/active",
      "the folder the installed games sit in (<game>/data each), for the mods' game_data_dir; beside --data when not given"},

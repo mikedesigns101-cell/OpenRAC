@@ -240,3 +240,10 @@ moby_textures_at	visuals	1.120	experimental
 moby_textures_class	visuals	1.120	experimental
 moby_relocate	world	1.121	experimental
 moby_skin_at	visuals	1.122	experimental
+gadget_register	hero	1.124	experimental
+gadget_give	hero	1.124	experimental
+gadget_equip	hero	1.124	experimental
+gadget_count	hero	1.124	experimental
+gadget_info	hero	1.124	experimental
+gadget_held	hero	1.124	experimental
+on_gadget	hero	1.124	experimental

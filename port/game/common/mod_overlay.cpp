@@ -135,6 +135,33 @@ struct State {
 
 State s;
 
+// The mods' gadgets' icons (1.124) where the game's 2D put them: the game gives each icon's corner
+// and size (the icon widget's, hud_draw_sprite_gradient's) in its 512 x 448 picture, a 4:3 column in
+// the middle of the frame; the overlay's picture is 512 x 448 over the frame's whole width, a
+// picture's size in units down (a game unit across is 4/3 * 448 / 512 of them). Checked in captures
+// of the quick select ring and the pause menu's grids. The game's colour is 0xAABBGGRR with 0x80
+// full; the overlay's 0xRRGGBBAA.
+void draw_gadget_icons(renderer::ui::OverlayList& list, const std::vector<mods::GadgetIcon>& icons) {
+    if (icons.empty()) {
+        return;
+    }
+    list.set_blend(OPENRAC_OVERLAY_BLEND_ALPHA);
+    const float column = (4.0f / 3.0f) / list.aspect();
+    const auto channel = [](std::uint32_t c) { return std::min<std::uint32_t>(255u, c * 2u); };
+    for (const mods::GadgetIcon& i : icons) {
+        const float down = renderer::ui::kOverlayHeight / 448.0f;
+        const float x = renderer::ui::kOverlayWidth * 0.5f
+                        + (i.x + 0.5f * i.w - renderer::ui::kOverlayWidth * 0.5f) * column;
+        const float y = (i.y + 0.5f * i.h) * down;
+        const std::uint32_t r = channel(i.rgba & 0xFFu);
+        const std::uint32_t g = channel((i.rgba >> 8) & 0xFFu);
+        const std::uint32_t b = channel((i.rgba >> 16) & 0xFFu);
+        const std::uint32_t a = channel((i.rgba >> 24) & 0xFFu);
+        list.image(i.image, x, y, i.w * (4.0f / 3.0f) * renderer::ui::kOverlayHeight / 512.0f, i.h * down,
+            0.0f, r << 24 | g << 16 | b << 8 | a);
+    }
+}
+
 }  // namespace
 
 void draw(
@@ -147,11 +174,14 @@ void draw(
     int height,
     float aspect
 ) {
-    if (!mods::overlay_wanted(phase)) {
+    // The mods' gadgets' icons (1.124): drawn where the game's 2D put them, over every phase.
+    const std::vector<mods::GadgetIcon> icons = mods::gadget_icons();
+    const bool mods_draw = mods::overlay_wanted(phase);
+    if (!mods_draw && icons.empty()) {
         return;
     }
     // A level in play is drawn over only with its world, as on_overlay always was.
-    if (phase == OPENRAC_OVERLAY_PLAYING && !has_camera) {
+    if (phase == OPENRAC_OVERLAY_PLAYING && !has_camera && icons.empty()) {
         return;
     }
     // A menu's frame has a camera that matches its picture only where the world is drawn live under
@@ -162,7 +192,10 @@ void draw(
     Frame frame{projects ? &camera : nullptr, &s.list};
     const openrac_overlay overlay =
         table_for(frame, phase, OPENRAC_OVERLAY_LAYER_TOP, s.list.aspect());
-    mods::run_overlays(overlay);
+    if (mods_draw && (phase != OPENRAC_OVERLAY_PLAYING || has_camera)) {
+        mods::run_overlays(overlay);
+    }
+    draw_gadget_icons(s.list, icons);
     run_graphics([&] {
         s.draw.draw(framebuffer, width, height, s.list.vertices(), s.list.batches());
     });

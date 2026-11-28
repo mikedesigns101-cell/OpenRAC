@@ -822,4 +822,13 @@ std::filesystem::path model_mesh(const openrac_mod* mod, int handle);
 // A live moby moved to another place of its level (interface 1.121, moby_relocate.cpp).
 int api_moby_relocate(openrac_mod* mod, std::int32_t slot, float position[3], std::uint32_t flags);
 
+// A mod's own gadgets as items of the game's (interface 1.124, gadgets.cpp).
+int api_gadget_register(openrac_mod* mod, const openrac_gadget* gadget);
+int api_gadget_give(openrac_mod* mod, int gadget, int owned);
+int api_gadget_equip(openrac_mod* mod, int gadget);
+int api_gadget_count();
+int api_gadget_info(int gadget, openrac_gadget_info* out);
+int api_gadget_held();
+int api_on_gadget(openrac_mod* mod, openrac_gadget_fn fn, void* user);
+
 }  // namespace openrac::mods::detail

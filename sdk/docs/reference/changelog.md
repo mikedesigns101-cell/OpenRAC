@@ -4,6 +4,10 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.124
+
+Members: `gadget_register`, `gadget_give`, `gadget_equip`, `gadget_count`, `gadget_info`, `gadget_held`, `on_gadget`.
+
 ## 1.123
 
 No new members (the table is unchanged).
@@ -66,7 +70,7 @@ No new members (the table is unchanged).
 
 ## 1.108
 
-A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model), and 1.121 a live moby moved to another place of its level with its sphere, cells and homes, set on the floor (moby_relocate), and 1.122 a moby drawn as another model with that model's own animations, its own class still running (moby_skin_at, openrac_moby_skin), and 1.123 moby_relocate's NEAREST flag: a point with no floor moved to the nearest one with a floor (OPENRAC_RELOCATE_NEAREST; the table is unchanged).
+A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model), and 1.121 a live moby moved to another place of its level with its sphere, cells and homes, set on the floor (moby_relocate), and 1.122 a moby drawn as another model with that model's own animations, its own class still running (moby_skin_at, openrac_moby_skin), and 1.123 moby_relocate's NEAREST flag: a point with no floor moved to the nearest one with a floor (OPENRAC_RELOCATE_NEAREST; the table is unchanged), and 1.124 a mod's own gadgets as items of the game's: in its menus and the hand, used, kept with the save (gadget_register, gadget_give, gadget_equip, gadget_count, gadget_info, gadget_held, on_gadget).
 
 No new members (the table is unchanged).
 

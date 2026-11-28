@@ -49,6 +49,9 @@ extern "C" const char* openrac_game_loaded_mods = "[]";
 extern "C" void (*openrac_game_save_written)(const char* path, int players) = nullptr;
 extern "C" void (*openrac_game_save_read)(const char* path, int slot) = nullptr;
 extern "C" void (*openrac_game_new_game)(void) = nullptr;
+/* The mods' gadgets' icons in the game's 2D (game_host.h): set by mod_api/gadgets.cpp. */
+extern "C" int (*openrac_game_gadget_icon)(int slot, float x, float y, float w, float h,
+                                            std::uint32_t rgba) = nullptr;
 using namespace openrac;
 
 std::uint32_t overlay_bit(int phase) {
@@ -832,17 +835,20 @@ void save_written(const char* path, int players) {
     const auto& source = pending ? g_save_read_data : g_save_data;
     std::string members;
     for (const auto& loaded : g_loaded) {
-        const auto data = source.find(loaded->id);
-        if (data == source.end() || data->second.empty()) {
-            continue;
+        // The mod's own data, and its gadgets' (1.124: the keys of those the hero owns).
+        for (const std::string& key : {loaded->id, gadgets_save_key(loaded.get())}) {
+            const auto data = source.find(key);
+            if (data == source.end() || data->second.empty()) {
+                continue;
+            }
+            members += std::format(
+                "{}\n    {}: {{\"version\": {}, \"data\": {}}}",
+                members.empty() ? "" : ",",
+                mods::quoted(key),
+                mods::quoted(loaded->version),
+                mods::quoted(base64(data->second))
+            );
         }
-        members += std::format(
-            "{}\n    {}: {{\"version\": {}, \"data\": {}}}",
-            members.empty() ? "" : ",",
-            mods::quoted(loaded->id),
-            mods::quoted(loaded->version),
-            mods::quoted(base64(data->second))
-        );
     }
     if (members.empty() || players == 0) {
         fs::remove(file, e);
@@ -905,6 +911,8 @@ void new_game() {
 }
 
 void tell_save_data() {
+    // The mods' gadgets the hero owns follow the game in progress's data (1.124).
+    gadgets_save_changed();
     for (const SaveDataCallback& c : g_save_data_callbacks) {
         c.fn(c.user);
     }
@@ -1121,6 +1129,13 @@ void fill_api(const Host& host) {
     g_api.moby_textures_at = api_moby_textures_at;
     g_api.moby_textures_class = api_moby_textures_class;
     g_api.moby_relocate = api_moby_relocate;
+    g_api.gadget_register = api_gadget_register;
+    g_api.gadget_give = api_gadget_give;
+    g_api.gadget_equip = api_gadget_equip;
+    g_api.gadget_count = api_gadget_count;
+    g_api.gadget_info = api_gadget_info;
+    g_api.gadget_held = api_gadget_held;
+    g_api.on_gadget = api_on_gadget;
     g_api.moby_skin_at = api_moby_skin_at;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
@@ -1859,6 +1874,8 @@ void run_frame_callbacks() {
     restore_weapon_grid_if_left();
     // The game in progress first (1.16): a mod's frame callback then sees its new data.
     follow_saves();
+    // The mods' gadgets (1.124): their events and the model in the hand, before the frame callbacks.
+    gadgets_frame();
     update_native_weapons();
     for (const FrameCallback& c : g_frames) {
         c.fn(c.user);
@@ -1896,7 +1913,8 @@ bool is_mod_code_link(std::string_view url) {
 }
 
 std::uint32_t overlay_phase() {
-    return g_overlays.empty() ? 0u : overlay_phase_now();
+    // A gadget's icon (1.124) is drawn over the frame too, without a mod drawing.
+    return g_overlays.empty() && !gadgets_have_icons() ? 0u : overlay_phase_now();
 }
 
 bool overlay_wanted(std::uint32_t phase) {
@@ -2149,6 +2167,7 @@ void reset() {
     g_frames.clear();
     g_settings_callbacks.clear();
     g_list_seen.reset();
+    gadgets_reset();
     reset_save_data();
     g_list_wait = 0;
     g_list_unwritten_said = false;

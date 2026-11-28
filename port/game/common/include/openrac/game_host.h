@@ -636,6 +636,29 @@ typedef struct openrac_game_effect_tint {
     float width;
 } openrac_game_effect_tint;
 
+/* A mod's gadget as the game is told of it (openrac_game_play.gadget_define): the game's item whose
+ * held model, joint and hero animations it borrows (0: the game's choice), and its name and
+ * description for the game's menus (ASCII). */
+typedef struct openrac_game_gadget {
+    int32_t host_item;
+    const char* name;
+    const char* description;
+} openrac_game_gadget;
+
+/* openrac_game_gadget_event.kind. */
+#define OPENRAC_GAME_GADGET_EQUIPPED 1
+#define OPENRAC_GAME_GADGET_PUT_AWAY 2
+#define OPENRAC_GAME_GADGET_USED 3
+
+/* What happened to a gadget in a frame: in the hand, out of it, its use (the hand's fire button),
+ * with where the hand's model was and the way the hero faced. */
+typedef struct openrac_game_gadget_event {
+    int32_t slot;
+    int32_t kind;
+    float position[3];
+    float direction[3];
+} openrac_game_gadget_event;
+
 typedef struct openrac_game_play {
     /* The levels, by the game's own numbers, and their names. */
     int levels;
@@ -937,7 +960,28 @@ typedef struct openrac_game_play {
      * OPENRAC_RELOCATE_* flags): 0 done (`position` given back where it was put), -1 no such moby or
      * outside a level, -2 no floor under the point (nothing changes). NULL for a game without it. */
     int (*moby_relocate)(int32_t slot, float position[3], uint32_t flags);
+    /* The mods' gadgets as items of the game's (openrac_api.gadget_register; Going Commando:
+     * rac2/host/mod_gadgets.c): `gadget_slots` of them, each lent an item id the game leaves unused.
+     * gadget_define gives slot `slot` its host item, name and description (NULL: undefined), 0 or
+     * -1; gadget_owned sets whether the hero has it (`owned` -1 only asks), its owned state or -1;
+     * gadget_held the slot in his hand, -1 none; gadget_item the item id lent to a slot;
+     * gadget_hand_moby the moby in his hand while a gadget is (0 none); gadget_equip asks it into
+     * his hand, 0 or -1; gadget_events takes the events since the last call (at most `max`), their
+     * count. NULLs and 0 for a game without them. */
+    int gadget_slots;
+    int (*gadget_define)(int slot, const openrac_game_gadget* gadget);
+    int (*gadget_owned)(int slot, int owned);
+    int (*gadget_held)(void);
+    int32_t (*gadget_item)(int slot);
+    int32_t (*gadget_hand_moby)(void);
+    int (*gadget_equip)(int slot);
+    int (*gadget_events)(openrac_game_gadget_event* out, int max);
 } openrac_game_play;
+
+/* Set by the mods' layer, called by the game's 2D: a gadget's icon at (x, y), `w` by `h` in the
+ * game's 2D, colour `rgba` (the game's 0xAABBGGRR, 0x80 full); 1 when the mods' layer draws it (a
+ * picture of the mod's), 0 for the game to draw its host's. NULL: the host's. */
+extern int (*openrac_game_gadget_icon)(int slot, float x, float y, float w, float h, uint32_t rgba);
 
 #define OPENRAC_GAME_CAMERA_END_EASED (-1)
 #define OPENRAC_GAME_CAMERA_END_CUT (-2)

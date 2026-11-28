@@ -551,6 +551,25 @@ bool overlay_wanted(std::uint32_t phase);
 bool overlay_wanted_under_hud(std::uint32_t phase);
 void run_overlays(const openrac_overlay& overlay);
 
+// The mods' gadgets (interface 1.124, mod_api/gadgets.cpp): the icons of theirs the game's 2D asked
+// for in the last tick (a mod's picture at the game's 2D place: corner, size, the game's colour),
+// which the overlay draws over that tick's frames; whether any gadget has an icon (the overlay is
+// then drawn without a mod drawing); once a frame before the mods' frame callbacks (events, the
+// model in the hand); the game in progress took other mods' data (a save loaded, a new game); the
+// key of a mod's gadgets' data among the mods' data; and all of it let go (the mods unloaded).
+struct GadgetIcon {
+    const openrac_mod* owner = nullptr;
+    int image = 0;
+    float x = 0, y = 0, w = 0, h = 0;
+    std::uint32_t rgba = 0;
+};
+std::vector<GadgetIcon> gadget_icons();
+bool gadgets_have_icons();
+void gadgets_frame();
+void gadgets_save_changed();
+std::string gadgets_save_key(const openrac_mod* mod);
+void gadgets_reset();
+
 // The OPENRAC_OVERLAY_* bit of a frame of the game's phase `phase` (OPENRAC_PLAY_*); 0 for a phase
 // nothing is drawn over. openrac_overlay.phase holds this bit, not the game's phase.
 std::uint32_t overlay_bit(int phase);

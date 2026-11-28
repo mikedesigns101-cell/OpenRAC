@@ -161,9 +161,12 @@ extern "C" {
  * a moby drawn as another model with that model's own animations, its own class
  * still running (moby_skin_at, openrac_moby_skin), and 1.123 moby_relocate's
  * NEAREST flag: a point with no floor moved to the nearest one with a floor
- * (OPENRAC_RELOCATE_NEAREST; the table is unchanged).
+ * (OPENRAC_RELOCATE_NEAREST; the table is unchanged), and 1.124 a mod's own
+ * gadgets as items of the game's: in its menus and the hand, used, kept with the
+ * save (gadget_register, gadget_give, gadget_equip, gadget_count, gadget_info,
+ * gadget_held, on_gadget).
  */
-#define OPENRAC_MOD_API_MINOR 123
+#define OPENRAC_MOD_API_MINOR 124
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2204,6 +2207,79 @@ typedef struct openrac_play_query {
 
 typedef void (*openrac_play_query_fn)(void* user, openrac_play_query* query);
 
+/* The longest key, name and description of a gadget (openrac_gadget), with the ending 0. Since
+ * 1.124. */
+#define OPENRAC_GADGET_KEY_MAX 32
+#define OPENRAC_GADGET_TEXT_MAX 96
+
+/* A gadget of a mod's (openrac_api.gadget_register). The mod fills it; nothing is kept but copies.
+ * Since 1.124. */
+typedef struct openrac_gadget {
+    /* sizeof(openrac_gadget), set by the mod. */
+    uint32_t size;
+    /* The mod's own name for it, kept with the save: letters, digits and '_' ("override_chip"). */
+    const char* key;
+    /* Its name in the game's menus (pause list, quick select) and its description (the pause
+     * list's line under it): ASCII, in the game's font; NULL for none. */
+    const char* name;
+    const char* description;
+    /* The game's gadget whose held model class, joint and hero animations it borrows (Going
+     * Commando: an item number held in the hand); 0 for the port's choice, the Electrolyzer (38),
+     * whose model does nothing of its own while held. */
+    int32_t host_item;
+    /* Its icon: a picture of the mod's (overlay_image_create), drawn where the game draws an item's
+     * icon (pause list, quick select); 0 for the host's. */
+    int32_t icon;
+    /* A mesh of the mod's (a .glb in its folder) drawn as the model in the hand, placed by
+     * `mesh_matrix` (column-major, the held moby's space; all 0 for none); NULL for the host's. */
+    const char* mesh;
+    float mesh_matrix[16];
+    /* 0. */
+    uint32_t flags;
+} openrac_gadget;
+
+/* openrac_gadget_info.flags: the hero has it; it is in his hand. Since 1.124. */
+#define OPENRAC_GADGET_OWNED 0x1u
+#define OPENRAC_GADGET_HELD 0x2u
+
+/* A registered gadget, as gadget_info tells it. Since 1.124. */
+typedef struct openrac_gadget_info {
+    /* sizeof(openrac_gadget_info), set by the caller. */
+    uint32_t size;
+    /* Its number, the game's item number lent to it, OPENRAC_GADGET_* flags. */
+    int32_t gadget;
+    int32_t item;
+    uint32_t flags;
+    /* The id of the mod it is of, its key, name and description. */
+    char mod[64];
+    char key[OPENRAC_GADGET_KEY_MAX];
+    char name[OPENRAC_GADGET_TEXT_MAX];
+    char description[OPENRAC_GADGET_TEXT_MAX];
+    /* Its icon's picture (the owner's overlay_image_create id, which only the owner can draw), 0
+     * for none; the host item. */
+    int32_t icon;
+    int32_t host_item;
+} openrac_gadget_info;
+
+/* openrac_gadget_event.kind: in the hero's hand; out of it; used (the hand's fire button pressed
+ * with it in the hand: the game itself does nothing then). Since 1.124. */
+#define OPENRAC_GADGET_EQUIPPED 1
+#define OPENRAC_GADGET_PUT_AWAY 2
+#define OPENRAC_GADGET_USED 3
+
+/* What happened to a gadget (openrac_api.on_gadget): its number, the kind, where the model in the
+ * hand was (or the hero, the game's units) and the way the hero faces (a unit vector, flat). Since
+ * 1.124. */
+typedef struct openrac_gadget_event {
+    uint32_t size;
+    int32_t gadget;
+    int32_t kind;
+    float position[3];
+    float direction[3];
+} openrac_gadget_event;
+
+typedef void (*openrac_gadget_fn)(void* user, const openrac_gadget_event* event);
+
 typedef struct openrac_api {
     /* sizeof(openrac_api) as the port was built: a newer port's is larger. Since 1.0. */
     uint32_t size;
@@ -3750,6 +3826,52 @@ typedef struct openrac_api {
      * model that is not the mod's, an address that is no moby, outside a level, or a port without
      * it. Since 1.122. */
     int (*moby_skin_at)(openrac_mod* mod, uint32_t address, const openrac_moby_skin* s);
+
+    /* Makes `gadget` a gadget of the mod's: an item of the game's own (Going Commando lends it an
+     * item number the game leaves unused), listed in the pause menu's Gadgets page (its one free
+     * cell, the first owned gadget's) and in the quick select once given, held in the hand with the
+     * host gadget's model class and animations, drawn with the mod's mesh, and named in the game's
+     * menus with its name, description and icon. What the hero has is kept with the save, by mod
+     * and key (the save itself never holds the item: a save loads without the mod, the item gone).
+     * Only while the mod loads (openrac_mod_load). Returns the gadget's number (0 up, the same for
+     * the same mod and key on every run), OPENRAC_HOOK_FULL when no item number is left (Going
+     * Commando: six, for all the mods together), OPENRAC_HOOK_TOO_LATE after the load, or
+     * OPENRAC_HOOK_UNKNOWN for a null or short `gadget`, a key that is not one word, a host that is
+     * not a gadget held in the hand, a key the mod gave already, or a game without them. Since
+     * 1.124. */
+    int (*gadget_register)(openrac_mod* mod, const openrac_gadget* gadget);
+
+    /* Gives the hero gadget `gadget` of the mod's (`owned` 1: owned, new and in the quick select,
+     * as the game gives an item) or takes it away (0: out of the menus, and out of his hand). On the
+     * game's thread. Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for a gadget that is not the
+     * mod's. Since 1.124. */
+    int (*gadget_give)(openrac_mod* mod, int gadget, int owned);
+
+    /* Asks the gadget of the mod's into the hero's hand, as choosing it in the quick select does (it
+     * is there a few frames later; on_gadget says when). On the game's thread, in a level. Returns
+     * OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for a gadget that is not the mod's or not owned, the
+     * game refusing (a scene), or outside a level. Since 1.124. */
+    int (*gadget_equip)(openrac_mod* mod, int gadget);
+
+    /* How many gadgets the mods registered (numbers 0 to count - 1), 0 for a game without them.
+     * Since 1.124. */
+    int (*gadget_count)(void);
+
+    /* Fills `out` (its size set by the caller) with gadget `gadget`: whose it is, its key, name,
+     * description, icon, the item number lent to it and whether the hero has it and holds it
+     * (OPENRAC_GADGET_OWNED, OPENRAC_GADGET_HELD). Any mod may ask (a menu of its own lists them).
+     * Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN for no such gadget or a short `out`. Since
+     * 1.124. */
+    int (*gadget_info)(int gadget, openrac_gadget_info* out);
+
+    /* The gadget in the hero's hand, -1 for none (or a game item). Since 1.124. */
+    int (*gadget_held)(void);
+
+    /* Calls `fn(user, event)` on the game's thread, before the mods' frame callbacks, for each
+     * event of the mod's own gadgets (OPENRAC_GADGET_EQUIPPED, _PUT_AWAY, _USED). Only while the mod
+     * loads. Returns OPENRAC_HOOK_OK, OPENRAC_HOOK_TOO_LATE after the load, or OPENRAC_HOOK_UNKNOWN.
+     * Since 1.124. */
+    int (*on_gadget)(openrac_mod* mod, openrac_gadget_fn fn, void* user);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

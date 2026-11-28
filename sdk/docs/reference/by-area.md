@@ -178,6 +178,13 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `rac1_ammo_panel_offset` | 1.33 | experimental | yes | yes | yes |
 | `rac1_weapon_register` | 1.33 | experimental | yes | yes | yes |
 | `rac1_weapon_grant` | 1.33 | experimental | yes | yes | yes |
+| `gadget_register` | 1.124 | experimental | no | yes | no |
+| `gadget_give` | 1.124 | experimental | no | yes | no |
+| `gadget_equip` | 1.124 | experimental | part | yes | part |
+| `gadget_count` | 1.124 | experimental | yes | yes | yes |
+| `gadget_info` | 1.124 | experimental | no | yes | no |
+| `gadget_held` | 1.124 | experimental | no | yes | no |
+| `on_gadget` | 1.124 | experimental | yes | yes | yes |
 
 ## figures
 

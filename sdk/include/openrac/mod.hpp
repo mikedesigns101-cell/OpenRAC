@@ -2172,6 +2172,60 @@ public:
       return m_api->moby_skin_at(m_handle, address, &s);
     }
 
+    // Since 1.124: whether the port has gadgets of the mods' as items of the game's (gadget_register).
+    bool has_gadgets() const {
+      return m_api->api_minor >= 124 &&
+             m_api->size >= offsetof(openrac_api, on_gadget) + sizeof(void *);
+    }
+
+    // Since 1.124: makes `gadget` a gadget of the mod's (only while it loads): its number, or
+    // OPENRAC_HOOK_FULL, _TOO_LATE or _UNKNOWN.
+    int gadget_register(const openrac_gadget &gadget) const {
+      if (!has_gadgets()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->gadget_register(m_handle, &gadget);
+    }
+
+    // Since 1.124: gives the hero the mod's gadget (`owned` true) or takes it away. Returns
+    // OPENRAC_HOOK_OK or _UNKNOWN.
+    int gadget_give(int gadget, bool owned = true) const {
+      if (!has_gadgets()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->gadget_give(m_handle, gadget, owned ? 1 : 0);
+    }
+
+    // Since 1.124: asks the mod's owned gadget into the hero's hand. Returns OPENRAC_HOOK_OK or
+    // _UNKNOWN.
+    int gadget_equip(int gadget) const {
+      if (!has_gadgets()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->gadget_equip(m_handle, gadget);
+    }
+
+    // Since 1.124: how many gadgets the mods registered (0 without them).
+    int gadget_count() const { return has_gadgets() ? m_api->gadget_count() : 0; }
+
+    // Since 1.124: gadget `gadget` (whose, its texts, icon, item and OPENRAC_GADGET_* flags); false
+    // for none.
+    bool gadget_info(int gadget, openrac_gadget_info &out) const {
+      out.size = sizeof out;
+      return has_gadgets() && m_api->gadget_info(gadget, &out) == OPENRAC_HOOK_OK;
+    }
+
+    // Since 1.124: the gadget in the hero's hand, -1 for none.
+    int gadget_held() const { return has_gadgets() ? m_api->gadget_held() : -1; }
+
+    // Since 1.124: `fn(user, event)` for each event of the mod's gadgets (only while it loads).
+    int on_gadget(openrac_gadget_fn fn, void *user = nullptr) const {
+      if (!has_gadgets()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->on_gadget(m_handle, fn, user);
+    }
+
     // Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own
     // joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the
     // mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or

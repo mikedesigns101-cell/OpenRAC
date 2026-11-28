@@ -146,6 +146,11 @@ gaddr func_00288FB8(int id) {
     if (label != 0) {
         return (gaddr)label;
     }
+    /* The mods' gadgets' names and descriptions (mod_gadgets.c). */
+    const uint32_t gadget = rac2_gadget_text(id);
+    if (gadget != 0) {
+        return (gaddr)gadget;
+    }
     if (id == TEXT_VIDEO_HELP) {
         const gaddr help = page_buffers() + 3 * TEXT_BYTES;
         snprintf((char*)G(help), TEXT_BYTES, "Display, picture and frame rate settings.");
