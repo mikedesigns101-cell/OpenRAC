@@ -15,9 +15,10 @@
  * four bits, which the decompressor func_002A1130 masks off), given its table entry and relocated.
  * The class's header (its skeleton) is the same in every level.
  *
- * When. Each frame (rac2_play_frame) once the hero's class is there: an entry still 0 for a seq
- * asked for is filled. A new load of the level makes a new class (its table zeroed again), so the
- * copies start again from the room's start; an entry the level's own seq fills is never touched. */
+ * When. Each frame (rac2_play_frame) once the hero's class is there, once a load: each seq asked
+ * for that the level's own table on the disc lacks is copied again from the room's start and its
+ * entry set (whatever it holds: the loader leaves a missing seq's entry as the last level left
+ * it); a seq the level has is never touched. */
 #include <stdio.h>
 #include <string.h>
 
@@ -103,31 +104,32 @@ void rac2_hero_seqs_tick(void) {
         return;
     }
     static uint32_t loads = UINT32_MAX;
+    static int level = -1;
     if (cls != s_class || loads != rac2_program_loads()) {
-        /* Another class or load: unless one of this port's copies is still in its table (a load
-         * after a death keeps the class), its table is the level's own and the room starts again. */
+        /* Another class or load: every copy is made again. The loader writes only the entries of
+         * the seqs the level has (LoadLevelArchiveResources skips a 0 offset), so an entry the level
+         * lacks may still hold the last level's address (its core, gone now: Tabora's 128-136 after
+         * Tabora), never to be trusted; whether the level has a seq is read from its own table on
+         * the disc. */
         loads = rac2_program_loads();
-        int ours = 0;
-        for (int s = 0; s < 256 && cls == s_class; ++s) {
-            ours |= s_copied[s] != 0 && GREF(gaddr, cls + CLASS_SEQS + 4u * (gaddr)s) == s_copied[s];
-        }
-        if (!ours) {
-            s_class = cls;
-            s_next = SEQ_ROOM;
-            memset(s_copied, 0, sizeof s_copied);
-            memset(s_failed, 0, sizeof s_failed);
-        }
+        level = openrac_game_loaded_overlay();
+        s_class = cls;
+        s_next = SEQ_ROOM;
+        memset(s_copied, 0, sizeof s_copied);
+        memset(s_failed, 0, sizeof s_failed);
     }
     const int count = GREF(uint8_t, cls + CLASS_SEQ_COUNT);
     for (int i = 0; i < s_want_count; ++i) {
         const int seq = s_want[i].seq;
-        if (seq >= count || s_failed[seq]) {
+        if (seq >= count || s_failed[seq] || s_copied[seq] != 0) {
             continue;
         }
         const gaddr slot = cls + CLASS_SEQS + 4u * (gaddr)seq;
-        const gaddr entry = GREF(gaddr, slot);
-        if (entry != 0) {
-            continue; /* the level's own, or a copy already in */
+        const uint8_t* own = NULL;
+        uint32_t own_size = 0;
+        if (level < 0 || openrac_game_level_hero_seq(level, seq, &own, &own_size) == 0) {
+            s_failed[seq] = 1; /* the level's own seq (or no level): left to the game */
+            continue;
         }
         const uint8_t* bytes = NULL;
         uint32_t size = 0;
