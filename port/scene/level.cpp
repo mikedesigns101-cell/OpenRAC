@@ -32,6 +32,11 @@
 #include "scene/joint_name.h"
 #include "scene/material_overrides.h"
 
+// The classes of other levels a game's runtime registers for itself in level `level` (Going
+// Commando's Glider, rac2/host/foreign_class.c sets it; openrac/game_host.h): (from level, class)
+// pairs into `pairs`, at most `max`, their count. Null for a game without them.
+extern "C" int (*openrac_game_level_imports)(int level, std::int32_t* pairs, int max) = nullptr;
+
 namespace openrac::scene {
 
 namespace fs = std::filesystem;
@@ -1219,9 +1224,23 @@ bool load_level(
 
     // Going Commando's classes of other levels the runtime registers in every level
     // (OPENRAC_FOREIGN_CLASSES, "level:class" pairs; rac2/host/foreign_class.c): each class's model
-    // as its own level's manifest has it.
+    // as its own level's manifest has it. The ones the port registers for itself in this level
+    // (openrac_game_level_imports: the Glider's, interface 1.127) are added to the list.
+    std::string foreign_list;
     if (const auto foreign = env::value(env::Var::ForeignClasses)) {
-        const std::string list(*foreign);
+        foreign_list = std::string(*foreign);
+    }
+    int this_level = -1;
+    if (openrac_game_level_imports != nullptr
+        && std::sscanf(dir.filename().string().c_str(), "level_%d", &this_level) == 1) {
+        std::int32_t pairs[32];
+        const int n = openrac_game_level_imports(this_level, pairs, 16);
+        for (int i = 0; i < n && i < 16; ++i) {
+            foreign_list += std::format("{}{}:{}", foreign_list.empty() ? "" : ",", pairs[2 * i], pairs[2 * i + 1]);
+        }
+    }
+    if (!foreign_list.empty()) {
+        const std::string list(foreign_list);
         for (std::size_t at = 0; at < list.size();) {
             int from = -1, id = -1, used = 0;
             if (std::sscanf(list.c_str() + at, "%d:%d%n", &from, &id, &used) != 2 || used <= 0) {

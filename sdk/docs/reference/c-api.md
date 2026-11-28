@@ -361,6 +361,7 @@ checks api->api_minor before it uses anything newer than the minor it was built 
 | `OPENRAC_GLIDER_CRASH` | `6` |  |
 | `OPENRAC_GLIDER_KILLED` | `7` |  |
 | `OPENRAC_GLIDER_ABORT` | `8` |  |
+| `OPENRAC_GLIDER_LEVELED` | `9` | The take-off's dive over: the glide starts level at the event's position, and keeps that height unless the stick dives (it never climbs past the pad's height). With the stick left alone it comes about 35 units ahead of the pad and 17 below it. Since 1.127. |
 | `OPENRAC_MOD_QUERY` | `"openrac_mod_query"` | The names the entry points are exported under, for the port's lookup. Since 1.0. |
 | `OPENRAC_MOD_LOAD` | `"openrac_mod_load"` |  |
 | `OPENRAC_MOD_UNLOAD` | `"openrac_mod_unload"` |  |

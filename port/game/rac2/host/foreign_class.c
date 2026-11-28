@@ -458,6 +458,21 @@ static gaddr spawn_one(int k, const float to[3]) {
     return spawn_class(k, to, 0, 1);
 }
 
+/* The port's own classes of level `level` for the scene's models (openrac_game_level_imports): the
+ * ones rac2_foreign_want asked for there (OPENRAC_FOREIGN_CLASSES's the scene reads itself). */
+static int level_imports(int level, int32_t* pairs, int max) {
+    int n = 0;
+    for (int k = 0; k < s_count && n < max; ++k) {
+        const Foreign* f = &s_foreign[k];
+        if (f->levels != 0 && level >= 0 && level < 32 && (f->levels & (1u << level)) != 0 && f->level != level) {
+            pairs[2 * n] = f->level;
+            pairs[2 * n + 1] = f->oclass;
+            ++n;
+        }
+    }
+    return n;
+}
+
 /* Another part of the port's own use of a class of another level (glider.c): class `oclass` of
  * level `level` registered at each load of level `in` too (-1: of every level). Returns its index,
  * or -1 (no room in the list). */
@@ -465,6 +480,7 @@ int rac2_foreign_want(int level, int oclass, int in) {
     if (s_count < 0) {
         read_config();
     }
+    openrac_game_level_imports = level_imports;
     for (int k = 0; k < s_count; ++k) {
         if (s_foreign[k].level == level && s_foreign[k].oclass == oclass) {
             if (in < 0) {

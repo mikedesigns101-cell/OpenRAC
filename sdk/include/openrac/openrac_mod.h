@@ -2361,6 +2361,10 @@ typedef struct openrac_glider_pad {
 #define OPENRAC_GLIDER_CRASH 6
 #define OPENRAC_GLIDER_KILLED 7
 #define OPENRAC_GLIDER_ABORT 8
+/* The take-off's dive over: the glide starts level at the event's position, and keeps that height
+ * unless the stick dives (it never climbs past the pad's height). With the stick left alone it
+ * comes about 35 units ahead of the pad and 17 below it. Since 1.127. */
+#define OPENRAC_GLIDER_LEVELED 9
 
 /* What happened at one of the mod's pads (openrac_api.on_glider): which, and where the hero (or the
  * glider) was. Since 1.127. */

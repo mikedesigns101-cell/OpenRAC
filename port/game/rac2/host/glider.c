@@ -665,6 +665,8 @@ static void glider_update(gaddr obj) {
                 DF(0x48) = 0.0f;
                 DF(0x44) = -(K_TURN_RATE * 0.00029088825f);
                 set_state(obj, 6);
+                float at[3] = {DF(0), DF(4), DF(8)};
+                event(OPENRAC_GAME_GLIDER_LEVELED, index, at);
             }
         }
         if (OB(MOBY_STATE) == 1) {

@@ -71,14 +71,22 @@ mod.on_glider([](void*, const openrac_glider_event* e) { /* e->kind, e->pad */ }
 - Not in Tabora, Dobbo or Grelbin (they have the game's own pads), nor in a level whose hero code
   has no ridden state (Maktar): `UNKNOWN`. Needs `"expanded_ram"` too.
 - Events (`on_glider`, before the frame callbacks): `ON_PAD`, `OFF_PAD`, `REFUSED`, `LAUNCH`,
-  `LAND`, `CRASH`, `KILLED`, `ABORT`, with where the hero was.
+  `LEVELED`, `LAND`, `CRASH`, `KILLED`, `ABORT`, with where the hero (or the glider) was.
 - Nothing is saved: the pads are the mod's calls, made again each run.
-- What is seen is what Tabora shows in the port: the hero's flying seqs and the glider's smoke
-  trail (the glider class itself draws nothing in flight there either).
+- What is seen is the game's: the glider's wings over the hero, his flying seqs and the smoke
+  trail. (The port drew no glider before 1.127, in Tabora either: the glider keeps mode bit 0x80,
+  which the port's moby drawing left out; the hero's vehicle is drawn now.)
 - Not yet: the glider's sounds (the class's sounds are Tabora's), Tabora's camera object (the
   follow camera is fed the game's aim values for the glider).
-- The take-off is the game's: a hop, then a dive of about 20 units before it levels out, then a
-  level glide (it does not climb). Put a pad at least 20-25 units above what lies ahead (in
-  Oozla, from a pad at 145 the glide levels at 128; from the ground at 115 by the water it dives
-  into it and crashes).
+- The flight's profile is the game's (measured in Oozla with the stick left alone):
+  1. a hop: about 10 units ahead, up to 4 above the pad, in 100 ticks;
+  2. a dive: it levels out about 35 units ahead of the pad and **17 below it**, in 120 ticks
+     (event `LEVELED`, with the place);
+  3. a level glide at that height, at 20 units a second (a third of a unit a tick), as far as it
+     meets nothing: it never sinks on its own and never climbs past the pad's height (the stick
+     pitches it; pulled up past the pad's height it stalls and dives again).
+  So: **put a pad 20-25 units above what lies ahead**, nothing on the line higher than the
+  glide, and the landing zone's ground between the glide's height minus `landing_height` and the
+  glide's height. From the ground by Oozla's water (115, water at 108) it dives into the water and
+  crashes; from a pad at 145 it glides at 128.
 - NTSC-U v1.01 only for now.

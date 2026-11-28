@@ -400,6 +400,15 @@ public:
     // the reason, in port/game/<game>/draw_distance.tsv (game/common/draw_distance_list.h).
     virtual bool keeps_game_draw_distance(int /*class_id*/) const { return false; }
 
+    // Whether the moby at `address`, with the mode bits the moby loop leaves undrawn (0x81), is
+    // drawn all the same because the game draws it another way: Going Commando's Glider (class
+    // 2309, mode 0x0490 in flight) is the hero's vehicle, drawn with him.
+    virtual bool drawn_though_hidden(
+        std::span<const std::uint8_t> /*ram*/, std::uint32_t /*address*/
+    ) const {
+        return false;
+    }
+
     // The value of the game's mode word (openrac_game_mode) while a real-time cutscene plays in a
     // level, which enhanced motion blur takes the cutscene's tuning for; none for a game without
     // one known.

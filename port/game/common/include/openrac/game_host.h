@@ -95,6 +95,11 @@ int openrac_game_level_record(int level, int oclass, uint8_t record[0x88], const
  * disc image, before the game relocates it (its pointers offsets from its start): its bytes (valid
  * until the next call) and their size. 0, or -1 (no image, the level has no such seq). */
 int openrac_game_level_hero_seq(int level, int seq, const uint8_t** bytes, uint32_t* size);
+/* Set by a game's runtime (Going Commando: rac2/host/foreign_class.c), read by the scene as it loads
+ * a level (scene/level.cpp): the moby classes of other levels it registers for itself in level
+ * `level`, as (from level, class) pairs, at most `max`; their count. The scene draws each with its
+ * own level's model. Null: none. */
+extern int (*openrac_game_level_imports)(int level, int32_t* pairs, int max);
 /* Portable presentation's own mechanical/chirp cues, mixed with game audio. */
 void openrac_game_infobot_sound(int opening);
 void openrac_game_special_sound(int item);
@@ -676,6 +681,8 @@ typedef struct openrac_game_glider_pad {
 #define OPENRAC_GAME_GLIDER_CRASH 6
 #define OPENRAC_GAME_GLIDER_KILLED 7
 #define OPENRAC_GAME_GLIDER_ABORT 8
+/* The dive after the take-off over: the glide starts level here (its height is the flight's). */
+#define OPENRAC_GAME_GLIDER_LEVELED 9
 
 typedef struct openrac_game_glider_event {
     int kind;

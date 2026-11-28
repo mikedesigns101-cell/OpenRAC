@@ -461,6 +461,14 @@ public:
         }
     }
 
+    // The Glider (class 2309) the hero rides: its mode keeps bit 0x80 in flight (0x0490), which
+    // the moby loop's draw leaves out, and the game shows it with him (Tabora, Dobbo, Grelbin, and a
+    // mod's pad: rac2/host/glider.c). The hero's record +0x1830 is the moby he rides.
+    bool drawn_though_hidden(std::span<const std::uint8_t> ram, std::uint32_t address) const override {
+        return address != 0 && at<std::uint32_t>(ram, release_.hero_state + 0x1830u) == address
+               && at<std::int16_t>(ram, address + kMobyClass) == 2309;
+    }
+
     // MobyProc leaves a moby past its draw distance (+0x32, at most the level's cap) undrawn and
     // fades it over the last 16 units, as Ratchet & Clank's does.
     std::optional<std::uint8_t> moby_distance_fade(
