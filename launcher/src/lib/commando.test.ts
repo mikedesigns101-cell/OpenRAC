@@ -11,6 +11,7 @@ function config(fields: Partial<Config>): Config {
     developer: false,
     installDir: "C:\\Games\\OpenRAC Commando",
     saveDir: null,
+    theme: "commando",
     ...fields,
   } as Config;
 }
@@ -24,6 +25,13 @@ describe("commandoConfig", () => {
     const old = config({ saveDir: "C:\\Games\\OpenRAC Commando\\memcard" });
 
     expect(commandoConfig(old)?.saveDir).toBe("C:\\Games\\OpenRAC Commando\\saves");
+  });
+
+  it("puts Commando Protocol's theme in place of OpenRAC's, and keeps another one", () => {
+    expect(commandoConfig(config({ theme: "openrac", saveDir: "D:\\Saves" }))?.theme).toBe(
+      "commando",
+    );
+    expect(commandoConfig(config({ theme: "nord", saveDir: "D:\\Saves" }))).toBeNull();
   });
 
   it("keeps a folder the player chose", () => {

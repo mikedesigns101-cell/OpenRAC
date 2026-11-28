@@ -22,7 +22,7 @@
     start,
     updateDiscordPresence,
   } from "$lib/app.svelte";
-  import { COMMANDO } from "$lib/commando";
+  import { accentFor, COMMANDO } from "$lib/commando";
   import { startDeepLinks } from "$lib/deepLink.svelte";
   import { startGameRequests } from "$lib/gameRequest";
   import { preloadArt } from "$lib/media";
@@ -91,7 +91,7 @@
     const game = shelf ? null : (app.version?.split("/")[0] ?? null);
 
     if (!app.config && !game) return;
-    applyAccent(game, app.config?.gameColors ?? true);
+    applyAccent(...accentFor(game, app.config?.gameColors ?? true));
     const root = document.documentElement;
 
     if ("starting" in root.dataset)

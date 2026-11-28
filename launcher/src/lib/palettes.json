@@ -122,6 +122,33 @@
         "--control-card-hi": "#313244"
       },
       "swatch": ["#181825", "#29293d", "#cdd6f4"]
+    },
+    {
+      "id": "commando",
+      "name": "Commando Protocol",
+      "colors": {
+        "--ink": "#0a1620",
+        "--ink-deep": "#050c12",
+        "--rail": "#07111a",
+        "--panel": "#0f2130",
+        "--panel-hi": "#15293a",
+        "--text": "#e6eef3",
+        "--body": "#c8d8e3",
+        "--lav": "#b5e2fa",
+        "--soft": "#a9bccb",
+        "--dim": "#8095a7",
+        "--line": "rgb(181 226 250 / 0.13)",
+        "--line-strong": "rgb(181 226 250 / 0.26)",
+        "--line-field": "rgb(181 226 250 / 0.55)",
+        "--ok": "#8fd694",
+        "--warn": "#e8c860",
+        "--err": "#ff8a7a",
+        "--control": "#0f2130",
+        "--control-hi": "#183044",
+        "--control-card": "#15293a",
+        "--control-card-hi": "#1c3449"
+      },
+      "swatch": ["#0a1620", "#15293a", "#e6eef3"]
     }
   ],
   "accents": {
@@ -139,6 +166,9 @@
     },
     "rac6": {
       "--glow": "#5cc8fa"
+    },
+    "commando": {
+      "--glow": "#5ab4e5"
     }
   },
   "game_colors": {
@@ -226,6 +256,23 @@
       "--tint-control-hi": "#262d32",
       "--tint-control-card": "#262d32",
       "--tint-control-card-hi": "#2e353a"
+    },
+    "commando": {
+      "--bar-top": "#ff4d5e",
+      "--bar-bottom": "#d93a4b",
+      "--bar-stripe": "#f0475a",
+      "--bar-stripe-alt": "#d63e50",
+      "--bar-ink": "#2a0a0e",
+      "--bar-ink-deep": "#1a0508",
+      "--amber": "#ff4d5e",
+      "--gold": "#b5e2fa",
+      "--brand": "#5ab4e5",
+      "--tint-panel": "#0f2130",
+      "--tint-panel-hi": "#15293a",
+      "--tint-control": "#0f2130",
+      "--tint-control-hi": "#183044",
+      "--tint-control-card": "#15293a",
+      "--tint-control-card-hi": "#1c3449"
     }
   }
 }

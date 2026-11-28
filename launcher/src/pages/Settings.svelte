@@ -24,7 +24,7 @@
   } from "$lib/api";
   import { app, guardShown, lookForUpdate, saveConfig } from "$lib/app.svelte";
   import { supports } from "$lib/capabilities";
-  import { COMMANDO } from "$lib/commando";
+  import { accentFor, COMMANDO } from "$lib/commando";
   import { DISCORD_URL, PYTHON_URL, REPO_URL, SITE_URL } from "$lib/links";
   import { SETTINGS_TEXT } from "$lib/modsText";
   import { nameProblem } from "$lib/multiplayerName";
@@ -108,6 +108,15 @@
       saved().safeRendering,
   );
 
+  /** The themes offered: OpenRAC: Commando's first and OpenRAC's own left out there (its default is
+   *  Commando Protocol's, lib/commando.ts). */
+  const themes = COMMANDO.on
+    ? [
+        ...PALETTES.filter((p) => p.id === "commando"),
+        ...PALETTES.filter((p) => p.id !== "commando" && p.id !== "openrac"),
+      ]
+    : PALETTES;
+
   /** The update channel as this page has it, saved or not. */
   const channel = $derived<UpdateChannel>(app.info ? updateChannelOf(app.info, draft) : "stable");
   /** Where the launcher looks for updates as this page has it: the channel, and a fork's branch. */
@@ -188,10 +197,10 @@
   $effect(() => {
     const game = app.version?.split("/")[0] ?? null;
 
-    applyAccent(game, draft.gameColors);
+    applyAccent(...accentFor(game, draft.gameColors));
 
     return () => {
-      if (!kept()) applyAccent(game, app.config?.gameColors ?? true);
+      if (!kept()) applyAccent(...accentFor(game, app.config?.gameColors ?? true));
     };
   });
 
@@ -523,10 +532,14 @@
       <div class="setting theme">
         <span class="text">
           <strong id="theme-label">Theme</strong>
-          <small>The launcher's colours. Its accent is the game's.</small>
+          <small
+            >{COMMANDO.on
+              ? "The launcher's colours. Its accent is Commando Protocol's."
+              : "The launcher's colours. Its accent is the game's."}</small
+          >
         </span>
         <div class="themes" role="radiogroup" aria-labelledby="theme-label" use:tablist>
-          {#each PALETTES as p (p.id)}
+          {#each themes as p (p.id)}
             <button
               role="radio"
               aria-checked={draft.theme === p.id}
@@ -542,13 +555,17 @@
           {/each}
         </div>
       </div>
-      <label class="setting">
-        <span class="text">
-          <strong>Game colours</strong>
-          <small>The bar, buttons and panels in the picked game's own colour, not the gold.</small>
-        </span>
-        <input type="checkbox" role="switch" class="switch" bind:checked={draft.gameColors} />
-      </label>
+      <!-- OpenRAC: Commando always wears the mod's accent (themes.ts, accentProperties). -->
+      {#if !COMMANDO.on}
+        <label class="setting">
+          <span class="text">
+            <strong>Game colours</strong>
+            <small>The bar, buttons and panels in the picked game's own colour, not the gold.</small
+            >
+          </span>
+          <input type="checkbox" role="switch" class="switch" bind:checked={draft.gameColors} />
+        </label>
+      {/if}
       <!-- Android has neither: its Games tab is a shelf of discs, and no Discord app on the
            device reads a desktop's rich presence. -->
       <!-- OpenRAC: Commando has neither, nor online play: its Steam entry and its Discord status

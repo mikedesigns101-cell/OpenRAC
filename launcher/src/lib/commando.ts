@@ -35,6 +35,24 @@ export const COMMANDO = {
   upstreamSite: "https://openrac.dev",
 } as const;
 
+/** The launcher's own theme (palettes.json "commando": the mod's HUD hologram and its icon), the
+ *  default here in place of OpenRAC's, and the accent this launcher wears whatever the game
+ *  (palettes.json accents and game_colors, "commando"; themes.ts accentProperties). */
+export const COMMANDO_THEME = "commando";
+
+export const COMMANDO_ACCENT = "commando";
+
+/** The theme of a first start, before the settings have loaded: Commando Protocol's here. */
+export function defaultTheme(): string | null {
+  return COMMANDO.on ? COMMANDO_THEME : null;
+}
+
+/** The accent to put on (themes.ts applyAccent's game and Game colours): the mod's own, with its
+ *  bar and gold, whatever the game and the switch; OpenRAC's launcher, the game's as asked. */
+export function accentFor(game: string | null, colors: boolean): [string | null, boolean] {
+  return COMMANDO.on ? [COMMANDO_ACCENT, true] : [game, colors];
+}
+
 /** The step after the levels that builds the mod's models (bundle_standalone.py mod_models_action). */
 export const MOD_MODELS = "mod-models";
 
@@ -59,10 +77,20 @@ export function commandoConfig(config: Config): Config | null {
         ? joinPath(config.installDir, "saves")
         : null;
 
-  if (config.playWithMods && !config.discordRpc && !config.developer && saveDir === config.saveDir)
+  // The theme: Commando Protocol's in place of OpenRAC's own (the default the core writes); the
+  // other themes stay the player's choice (Settings does not offer OpenRAC's here).
+  const theme = !config.theme || config.theme === "openrac" ? COMMANDO_THEME : config.theme;
+
+  if (
+    config.playWithMods &&
+    !config.discordRpc &&
+    !config.developer &&
+    saveDir === config.saveDir &&
+    theme === config.theme
+  )
     return null;
 
-  return { ...config, playWithMods: true, discordRpc: false, developer: false, saveDir };
+  return { ...config, playWithMods: true, discordRpc: false, developer: false, saveDir, theme };
 }
 
 /** DIR/NAME with DIR's own separator. */
