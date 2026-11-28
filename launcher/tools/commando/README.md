@@ -27,6 +27,19 @@ release that changes the mod raises its version** in two places at once:
 
 `tools/bundle_standalone.py --mod` refuses a mod whose version is not `modVersion`.
 
+## One command (steps 2 to 5)
+
+With the versions raised and committed (step 1, and the mod's `version` on the project's main):
+
+    python -X utf8 launcher/tools/commando/release_commando.py --main <commit of the mod project's main> --clave <updater private key> --notas "<what changed>"
+
+It makes a worktree of the project at that commit, compiles the mod against the SDK of the game build's own
+commit, builds the beta download, the launcher's copy and the signed installer, and checks them (nothing from the
+disc, no user name or `C:\Users` path). The files land in `<project>/build/launcher-commando/<version>/` with a
+`RELEASE.txt` that says which main and which game build went in. `--exe-dir` picks the game build
+(default: the one validated for 0.2.1, `build/commando-port/arreglos-78195faa3`, commit 78195faa3 of
+`openrac-cmd-gadgets`, branch `commando/arreglos`). Then step 6.
+
 ## Steps
 
 1. Raise `version` in `launcher/src-tauri/tauri.conf.json` (the updater only offers a newer one)
