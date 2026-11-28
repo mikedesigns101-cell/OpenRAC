@@ -23,7 +23,7 @@ export const COMMANDO = {
   mod: {
     id: "commando-protocol",
     name: "RAC 2: Commando Protocol",
-    modVersion: "0.2.2",
+    modVersion: "0.2.3",
   },
   /** The fork this launcher and its game are built from (GPL-3.0-or-later: its source). */
   sourceUrl: "https://github.com/mikedesigns101-cell/OpenRAC",
