@@ -30,6 +30,7 @@ import {
   watchFirstDraw,
 } from "./api";
 import { type BakeFailure, bakeFailure } from "./bakeFailure";
+import { COMMANDO, commandoConfig, MOD_MODELS } from "./commando";
 import { withShownTitles } from "./labels";
 import { stopSlides } from "./motion";
 import { hidePaths } from "./paths";
@@ -370,6 +371,11 @@ export async function start() {
     // Android: the config names the carried tools' Python only once they are unpacked.
     if (onAndroid) await prepareTools();
     app.config = await firstRun(await api.getConfig());
+    // OpenRAC: Commando keeps mods on (the mod's own switch decides), Discord and developer tools
+    // off, and its saves apart from the OpenRAC Launcher's (lib/commando.ts).
+    const kept = commandoConfig(app.config);
+
+    if (kept) app.config = await api.saveConfig(kept).catch(() => kept);
   } catch (e) {
     // The launcher could not read what it needs to start: it says so, and the player may
     // try again. Without this the window waits for a spinner that never goes away.
@@ -382,8 +388,10 @@ export async function start() {
   // preview's ?version=) is kept.
   if (!app.version && app.config.lastVersion) app.version = app.config.lastVersion;
   await refresh();
-  void syncProgressWeb();
-  void readEditor();
+  if (!COMMANDO.on) {
+    void syncProgressWeb();
+    void readEditor();
+  }
 
   // A new launcher is looked for at start unless the player turned that off (Settings). One
   // found opens its window, unless it was put off lately (updates.ts) or a game is running; a
@@ -438,7 +446,13 @@ function handleExit(job: Job) {
     const failure = bakeFailure(job);
 
     toast(failure.title, "error", { failure, version, jobKey: job.key });
-  } else if (job.state === "failed" && !job.actionId.startsWith("install:"))
+  } else if (
+    job.state === "failed" &&
+    !job.actionId.startsWith("install:") &&
+    job.actionId !== MOD_MODELS
+  )
+    // (The mod's models, OpenRAC: Commando's step: what failed falls back to the game's models, and
+    // Play says so itself, player.svelte.ts prepareCommando.)
     // What the task printed last says why: without it the player only reads that it failed.
     toast(`${job.title} failed`, "error", undefined, toolFailure(job.lines).details || undefined);
 

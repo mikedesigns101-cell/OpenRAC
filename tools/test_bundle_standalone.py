@@ -496,5 +496,51 @@ class Bundle(unittest.TestCase):
             self.assertIn("Android", (out / "STANDALONE").read_text())
 
 
+class Commando(unittest.TestCase):
+    """OpenRAC: Commando's copy: one version, its mod and the mod's model builder."""
+
+    def test_one_version_and_the_builder_after_its_levels(self):
+        actions = bundle.player_actions(only=["rac2/ntsc"], mod_models="commando-protocol")
+        self.assertEqual(list(actions["versions"]), ["rac2/ntsc"])
+        ids = [a["id"] for a in actions["versions"]["rac2/ntsc"]]
+        self.assertEqual(ids[ids.index("port-levels") + 1], "mod-models")
+        models = actions["versions"]["rac2/ntsc"][ids.index("mod-models")]
+        self.assertEqual(models["makes"], "{data}/plugins/commando-protocol/modelos_construidos.json")
+        self.assertIn(f"{{data}}/port/ntsc/{bundle.LEVELS_STAMP}", [n["path"] for n in models["needs"]])
+        self.assertIn("builder/construir.py", models["args"])
+        # Without a builder, no step for it.
+        plain = bundle.player_actions(only=["rac2/ntsc"])
+        self.assertNotIn("mod-models", [a["id"] for a in plain["versions"]["rac2/ntsc"]])
+
+    def test_the_game_json_keeps_that_version_alone(self):
+        rac2 = json.loads(bundle.trimmed_manifest(bundle.ROOT / "games/rac2/game.json", ["rac2/ntsc"]))
+        self.assertEqual(list(rac2["versions"]), ["ntsc"])
+        self.assertEqual(rac2["versions"]["ntsc"]["disc"]["version"], "1.01")
+        self.assertIsNone(bundle.trimmed_manifest(bundle.ROOT / "games/rac1/game.json", ["rac2/ntsc"]))
+        whole = bundle.ROOT / "games/rac1/game.json"
+        self.assertEqual(bundle.trimmed_manifest(whole, None), whole.read_text(encoding="utf-8"))
+
+    def test_the_mod_is_carried_without_models_from_a_disc(self):
+        version = bundle.commando_mod_version("commando-protocol")
+        self.assertTrue(version)
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp) / "package"
+            for rel in ("lib/windows-x86_64/mod.dll", "armas/lancer_mega/model.json", "forja/forja.json"):
+                (package / rel).parent.mkdir(parents=True, exist_ok=True)
+                (package / rel).write_text("x")
+            manifest = {"format": 2, "id": "commando-protocol", "version": version}
+            (package / "openrac-mod.json").write_text(json.dumps(manifest))
+            out = Path(tmp) / "out"
+            self.assertEqual(bundle.copy_mod(package, out), "commando-protocol")
+            carried = out / "mods/commando-protocol"
+            self.assertTrue((carried / "lib/windows-x86_64/mod.dll").is_file())
+            self.assertTrue((carried / "forja/forja.json").is_file())
+            self.assertFalse((carried / "armas").exists())
+            # Another version than commando.ts names: refused.
+            (package / "openrac-mod.json").write_text(json.dumps({**manifest, "version": "0.0.0-other"}))
+            with self.assertRaises(SystemExit):
+                bundle.copy_mod(package, Path(tmp) / "out2")
+
+
 if __name__ == "__main__":
     unittest.main()

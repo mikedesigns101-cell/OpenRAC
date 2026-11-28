@@ -21,6 +21,7 @@ import {
   showLaunch,
   toast,
 } from "./app.svelte";
+import { COMMANDO, ensureCommandoMod, MOD_MODELS } from "./commando";
 import { choiceFor, pickVersion } from "./discChoice";
 import { onIOS } from "./ios";
 import { phaseLabel } from "./progress";
@@ -387,6 +388,7 @@ export function playerState(game: GameView, v: VersionView): PlayerState {
     "port-part",
     "port-levels",
     "port-levels-check",
+    MOD_MODELS,
   ]);
 
   if (building) {
@@ -603,7 +605,49 @@ export async function prepare(v: VersionView): Promise<boolean> {
     return false;
   }
 
+  await prepareCommando(v);
+
   return !!action(freshVersion(v), "play")?.runnable;
+}
+
+/** The versions whose mod's models failed to build in this run of the launcher: tried once, not at
+ *  every Play (the builder that cannot start, a Python without numpy, would fail the same way). */
+// Not shown, so not reactive.
+// eslint-disable-next-line svelte/prefer-svelte-reactivity
+const modelsFailed = new Set<string>();
+
+/**
+ * OpenRAC: Commando, after the levels: the mod it carries installed in the game's set-up folder
+ * (lib/commando.ts), then its models built from the levels (the mod-models step). Neither ever
+ * stops Play: a mod that cannot be installed is said, and models that cannot be built are the
+ * game's own.
+ */
+async function prepareCommando(v: VersionView): Promise<void> {
+  if (!COMMANDO.on || v.key !== COMMANDO.versionKey || !app.config?.root) return;
+
+  try {
+    await ensureCommandoMod(app.config.root);
+  } catch (e) {
+    toast(`${COMMANDO.mod.name} could not be installed: ${String(e)}`, "error");
+
+    return;
+  }
+
+  await refresh();
+  const models = action(freshVersion(v), MOD_MODELS);
+
+  if (!models?.runnable || models.done || modelsFailed.has(v.key)) return;
+  const scope = { kind: "version" as const, key: v.key };
+
+  if (!(await runChain(scope, [models]))) {
+    modelsFailed.add(v.key);
+    toast(
+      "Some of the mod's models could not be built: the game's own models are used for those. Activity has the builder's log.",
+      "info",
+    );
+  }
+
+  await refresh();
 }
 
 /**
@@ -717,6 +761,7 @@ async function act(v: VersionView, state: PlayerState): Promise<void> {
 
   if (state.kind !== "play") return;
   await addVisibility(v);
+  await prepareCommando(v);
   await play(v);
 }
 

@@ -31,6 +31,19 @@ OUT (launcher/src-tauri/resources/openrac for an installer) gets:
                              python-build-standalone "install_only" archive),
                              without what they never use (copy_python)
 
+OpenRAC: Commando (the fork's launcher) carries one game and one mod:
+
+  python3 tools/bundle_standalone.py OUT --only rac2/ntsc --game-build DIR --python DIR \\
+      --mod build/mod/package/commando_protocol --builder DIR
+
+--only KEY keeps that version alone: its actions, its game.json (with that version only, so the
+extractor refuses any other disc) and its program, which is then the one required. --mod DIR
+carries the mod package in mods/<id>/ (only what MOD_KEEP lists: nothing derived from a disc);
+the launcher installs it from there into the game's set-up folder (src/lib/commando.ts), and the
+manifest's version must be the one commando.ts names. --builder DIR carries the mod's model
+builder in builder/ and adds its step, "Build the mod's models" (mod-models), after the levels.
+A Python for the builder needs numpy and Pillow in its site-packages.
+
 --android makes the copy the Android launcher carries in its APK
 (tools/build_android.py; docs/port/ANDROID.md). The games and the Python
 program are libraries of the APK there, which the launcher links into place
@@ -106,6 +119,12 @@ WINDOWS_RUNTIME = ("msvcp140.dll", "msvcp140_2.dll", "vcruntime140.dll", "vcrunt
 # Authored settings travel with the exporter, rather than depending on a source checkout.
 PROBE_PROFILES = "port/enhanced/lighting/profiles"
 WATER_PROFILES = "port/enhanced/water/profiles"
+# OpenRAC: Commando (--mod): of the mod package, only this. Its own code and art; never the models
+# made from a disc (armas/, escuadrones/, amalgamas/), which the builder makes on the player's PC.
+MOD_KEEP = ("openrac-mod.json", "README.md", "LICENSE", "LICENSE-OFL-Inter.txt", "LICENSE-OFL-Orbitron.txt",
+            "lib", "efectos", "forja", "assets/misiones")
+# Where the launcher's page keeps the mod's id and version (--mod checks the package against it).
+COMMANDO_TS = "launcher/src/lib/commando.ts"
 
 
 def levels_folder(key: str) -> str:
@@ -141,14 +160,48 @@ def point_at(args: list[str], levels: str) -> list[str]:
     return args[:at + 1] + [levels] + args[at + 2:]
 
 
-def player_actions(android: bool = False, android_games: set[str] | None = None) -> dict:
+def mod_models_action(key: str, mod_id: str) -> dict:
+    """OpenRAC: Commando's step after the levels: the mod's model builder (builder/construir.py),
+    from the data folder's levels into the installed mod's folder. It leaves modelos_construidos.json
+    there (also when some models failed: those use the game's own), which marks it done; installing
+    the mod again (a new version) takes that file away, so the models are built again for it."""
+    levels = levels_folder(key)
+    mod = f"{{data}}/plugins/{mod_id}"
+    return {
+        "id": "mod-models",
+        "label": "Build the mod's models",
+        "description": "Builds Commando Protocol's new weapon and enemy models from the game's own models on "
+                       "your disc, with the mod's recipes. A minute or two, once; a model that cannot be built "
+                       "falls back to the game's.",
+        "kind": "build",
+        "area": "port",
+        "state": "unverified",
+        "program": "{python}",
+        "args": ["-X", "utf8", "-B", "builder/construir.py", "--datos", levels, "--extractor", "{root}/extractor",
+                 "--mod", mod, "--registro", "{data}/builder_log"],
+        "cwd": ".",
+        "requires": ["python"],
+        "makes": f"{mod}/modelos_construidos.json",
+        "needs": [{"path": f"{levels}/{LEVELS_STAMP}", "from": "the levels (Get the levels ready)"},
+                  {"path": f"{mod}/openrac-mod.json", "from": "the mod, which the launcher installs"}],
+        "output": "{data}/builder_log",
+        "platforms": ["linux", "macos", "windows"],
+    }
+
+
+def player_actions(android: bool = False, android_games: set[str] | None = None,
+                   only: list[str] | None = None, mod_models: str | None = None) -> dict:
     """launcher/actions.json cut down to what works from a carried copy. ANDROID_GAMES: the
-    games an APK carries (rac1-pal, ...); a Play for any other is not Android's there."""
+    games an APK carries (rac1-pal, ...); a Play for any other is not Android's there. ONLY: the
+    versions kept (all when None). MOD_MODELS: a mod's id, whose model builder's step
+    (mod_models_action) each kept version gets after its levels."""
     source = json.loads((ROOT / "launcher/actions.json").read_text())
     out = {key: value for key, value in source.items() if key not in ("repository", "versions")}
     out["repository"] = []
     out["versions"] = {}
     for key, actions in source["versions"].items():
+        if only is not None and key not in only:
+            continue
         levels = levels_folder(key)
         kept = []
         for action in actions:
@@ -212,8 +265,62 @@ def player_actions(android: bool = False, android_games: set[str] | None = None)
                     action["cwd"] = "{data}"
                 action.pop("todo", None)
             kept.append(action)
+            if mod_models and action["id"] == "port-levels":
+                kept.append(mod_models_action(key, mod_models))
         out["versions"][key] = kept
     return out
+
+
+def trimmed_manifest(manifest: Path, only: list[str] | None) -> str | None:
+    """games/<game>/game.json as the copy carries it: whole, or with ONLY's versions of it alone;
+    None when ONLY keeps none of its versions (the game is left out)."""
+    text = manifest.read_text(encoding="utf-8")
+    if only is None:
+        return text
+    data = json.loads(text)
+    game = manifest.parent.name
+    versions = {name: v for name, v in data.get("versions", {}).items() if f"{game}/{name}" in only}
+    if not versions:
+        return None
+    data["versions"] = versions
+    return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+
+
+def commando_mod_version(mod_id: str) -> str | None:
+    """The mod version COMMANDO_TS names for MOD_ID (`modVersion: "0.2.1"`), if it names it."""
+    text = (ROOT / COMMANDO_TS).read_text(encoding="utf-8")
+    if f'"{mod_id}"' not in text:
+        return None
+    found = re.search(r'modVersion:\s*"([^"]+)"', text)
+    return found.group(1) if found else None
+
+
+def copy_mod(package: Path, dest_root: Path) -> str:
+    """The mod package PACKAGE (MOD_KEEP of it) to DEST_ROOT/mods/<id>; its id. Refused when its
+    version is not the one COMMANDO_TS names: the launcher would install it again at every start."""
+    manifest = json.loads((package / "openrac-mod.json").read_text(encoding="utf-8"))
+    mod_id, version = manifest["id"], manifest["version"]
+    wanted = commando_mod_version(mod_id)
+    if wanted != version:
+        sys.exit(f"{package} is {mod_id} {version}, but {COMMANDO_TS} names {wanted}: change one of them")
+    dest = dest_root / "mods" / mod_id
+    for part in MOD_KEEP:
+        source = package / part
+        if source.is_dir():
+            shutil.copytree(source, dest / part, ignore=shutil.ignore_patterns("__pycache__"))
+        elif source.is_file():
+            (dest / part).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, dest / part)
+        else:
+            print(f"the mod has no {part}", file=sys.stderr)
+    return mod_id
+
+
+def copy_builder(source: Path, dest: Path) -> None:
+    """The mod's model builder (construir.py and what it imports, its recipes) without tests."""
+    if not (source / "construir.py").is_file():
+        sys.exit(f"{source} has no construir.py: name the builder's folder (tools/beta/constructor)")
+    shutil.copytree(source, dest, ignore=shutil.ignore_patterns("__pycache__", "test_*", "*.pyc"))
 
 
 def extractor_file(rel: Path) -> bool:
@@ -238,12 +345,13 @@ def strip_debug(path: Path) -> bool:
     return True
 
 
-def copy_games(build: Path, dest: Path, extra: tuple[str, ...] = ()) -> list[str]:
-    """The game programs in BUILD, copied to DEST; their names. On macOS a game is an application
-    bundle named by its title in apps/openrac-<id>/ (port/cmake/MacApp.cmake), carried whole; the
-    build folder's link to its program is not."""
+def copy_games(build: Path, dest: Path, extra: tuple[str, ...] = (), games: tuple[str, ...] = GAMES) -> list[str]:
+    """The game programs in BUILD (GAMES, or the GAMES given, with their states programs), copied
+    to DEST; their names. On macOS a game is an application bundle named by its title in
+    apps/openrac-<id>/ (port/cmake/MacApp.cmake), carried whole; the build folder's link to its
+    program is not."""
     carried = []
-    for game in GAMES + extra + TOOLS + STATES:
+    for game in games + extra + TOOLS + tuple(f"{g}-states" for g in games):
         apps = build / "apps" / game
         if any(apps.glob("*.app")):
             shutil.copytree(apps, dest / "apps" / game, symlinks=True, dirs_exist_ok=True)
@@ -307,9 +415,21 @@ def main() -> int:
     parser.add_argument("--android", action="store_true", help="the Android launcher's copy (tools/build_android.py)")
     parser.add_argument("--android-games", metavar="ID,...",
                         help="with --android: the games the APK carries (rac1-pal,rac1-ntsc); Play is Android's for those only")
+    parser.add_argument("--only", action="append", metavar="GAME/VERSION",
+                        help="carry this version alone (repeatable): OpenRAC: Commando's rac2/ntsc")
+    parser.add_argument("--mod", type=Path, help="a built mod package to carry in mods/<id>/ (OpenRAC: Commando)")
+    parser.add_argument("--builder", type=Path, help="with --mod: the mod's model builder (tools/beta/constructor)")
     args = parser.parse_args()
     if args.android and args.game_build:
         sys.exit("--android carries no game build: the games are the APK's libraries")
+    if args.builder and not args.mod:
+        sys.exit("--builder builds a mod's models: name the mod with --mod")
+    only = args.only
+    if only is not None:
+        known = json.loads((ROOT / "launcher/actions.json").read_text())["versions"]
+        for key in only:
+            if key not in known:
+                sys.exit(f"--only {key}: launcher/actions.json has no such version")
     out = args.out.resolve()
     # The folder in the launcher's resources is kept in git with a note in it: the note stays.
     if out.exists() and any(p.name != "README.txt" for p in out.iterdir()):
@@ -336,24 +456,39 @@ def main() -> int:
                     lambda rel: rel.name in {"card.py", "routes.py", "runner.py", "routes.json", "routes_rac2.json"})
     # Players have no decompilation headers. Carry the same validated typed fields the
     # checkout uses, or edits such as Novalis's moveSpeed would be ignored when packed.
-    proc.run([sys.executable, ROOT / "extractor/pvar_layouts.py", "--export-layouts",
-              out / "extractor/pvar_layouts.json"])
+    # OpenRAC: Commando (--only) has no level editing (its launcher hides it), so a checkout without
+    # the decompilations, which this export reads, carries none: nothing else reads the file.
+    try:
+        proc.run([sys.executable, ROOT / "extractor/pvar_layouts.py", "--export-layouts",
+                  out / "extractor/pvar_layouts.json"])
+    except (Exception, SystemExit) as e:  # noqa: BLE001  (proc.run may exit with the tool's error)
+        if only is None:
+            raise
+        print(f"no pvar_layouts.json ({e}): packing edits of mobys' fields is not carried", file=sys.stderr)
     files.copy_tree(ROOT / PROBE_PROFILES, out / PROBE_PROFILES,
                     lambda rel: rel.suffix == ".json"
                     or (rel.suffix == ".png" and rel.parent.name == "emission-masks"))
     files.copy_tree(ROOT / WATER_PROFILES, out / WATER_PROFILES,
                     lambda rel: rel.name in {"water-boundaries.json", "ocean-profile.json"})
     for manifest in sorted((ROOT / "games").glob("*/game.json")):
+        text = trimmed_manifest(manifest, only)
+        if text is None:
+            continue
         dest = out / manifest.relative_to(ROOT)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(manifest, dest)
+        dest.write_text(text, encoding="utf-8")
     (out / "progress").mkdir(exist_ok=True)
     shutil.copy2(ROOT / "progress/summary.json", out / "progress/summary.json")
     (out / "launcher").mkdir(exist_ok=True)
     android_games = set(args.android_games.split(",")) if args.android and args.android_games else None
+    mod_id = copy_mod(args.mod, out) if args.mod else None
+    if args.builder:
+        copy_builder(args.builder, out / "builder")
     (out / "launcher/actions.json").write_text(
-        json.dumps(player_actions(args.android, android_games), indent=2) + "\n")
-    for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
+        json.dumps(player_actions(args.android, android_games, only, mod_id if args.builder else None),
+                   indent=2) + "\n")
+    # The licence's text and the notices (this checkout's are COPYING and LICENSE.md).
+    for name in ("LICENSE", "LICENSE.md", "COPYING", "THIRD_PARTY_NOTICES.md", "CREDITS.md"):
         if (ROOT / name).is_file():
             shutil.copy2(ROOT / name, out / name)
 
@@ -361,7 +496,8 @@ def main() -> int:
     if args.game_build:
         dest = out / "port/build/release"
         dest.mkdir(parents=True, exist_ok=True)
-        carried += copy_games(args.game_build, dest)
+        games = GAMES if only is None else tuple(f"openrac-{key.replace('/', '-')}" for key in only)
+        carried += copy_games(args.game_build, dest, games=games)
         # The libraries the game was linked against as files of their own (SDL3 when it is not
         # built into the program).
         for pattern in ("*.dll", "*.dylib", "*.so", "*.so.*"):
@@ -374,8 +510,9 @@ def main() -> int:
         if (args.game_build / "licenses").is_dir():
             shutil.copytree(args.game_build / "licenses", dest / "licenses", dirs_exist_ok=True)
             carried.append("licenses")
-        if not any(name.split("/")[-1].startswith(GAMES[0]) for name in carried):
-            sys.exit(f"{args.game_build} has no {GAMES[0]}: build it first (tools/build_port.py rac1-pal)")
+        if not any(name.split("/")[-1].startswith(games[0]) for name in carried):
+            sys.exit(f"{args.game_build} has no {games[0]}: build it first "
+                     f"(tools/build_port.py {games[0].removeprefix('openrac-')})")
     if args.python and args.android:
         if not any(args.python.glob("lib/python3.*/os.py")):
             sys.exit(f"{args.python} is not a PYTHONHOME for Android (no lib/python3.N/os.py)")
