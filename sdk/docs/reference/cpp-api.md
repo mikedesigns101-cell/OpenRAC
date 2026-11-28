@@ -354,6 +354,15 @@ One of the mod's pages of the game's own menus (Mod::ui_page): set what it shows
 | `int glider_pad_add(const openrac_glider_pad &pad) const` | Since 1.127: a launch pad for the game's Glider (openrac_glider_pad). Returns the pad's number or OPENRAC_HOOK_UNKNOWN. |
 | `int glider_pad_remove(int pad) const` | Since 1.127: takes the mod's pad `pad` away from the next load of its level. |
 | `int on_glider(openrac_glider_fn fn, void *user) const` | Since 1.127: `fn` called with each thing that happens at the mod's pads. Only while the mod loads. |
+| `bool has_game_ui() const` | Since 1.129: whether the port draws a mod's interface with the game's own 2D (gui_draw, gui_text_width, help_box_show, help_box_close, help_box_state). |
+| `bool has_game_sound() const` | Since 1.129: whether the port plays the game's loaded sounds by number (game_sound_play). |
+| `int gui_draw(const openrac_gui_element *elements, int count) const` | Since 1.129: what the mod draws in the game's 2D, all at once (openrac_gui_element; none takes it away). Returns OPENRAC_HOOK_OK or _UNKNOWN. |
+| `float gui_text_width(const char *text, std::uint32_t flags = 0, float scale = 1.0f) const` | Since 1.129: the width of `text` in the game's font, in its 2D pixels (-1 when it cannot). |
+| `int help_box_show(const openrac_help_box &box) const` | Since 1.129: the game's help box with the mod's text. Returns the box's number or OPENRAC_HOOK_UNKNOWN. |
+| `int help_box_show(const char *text, int y = -1, int ticks = -1, std::uint32_t flags = 0) const` | Since 1.129: the same with only a text, at height `y` (-1 the game's) for `ticks` (-1 the game's). |
+| `int help_box_close(int box) const` | Since 1.129: closes one of the mod's help boxes as the game closes its own. |
+| `int help_box_state(int box) const` | Since 1.129: OPENRAC_HELP_GONE, _WAITING or _SHOWN. |
+| `int game_sound_play(int bank, int index, float volume = 1.0f) const` | Since 1.129: a sound the game has loaded (OPENRAC_SOUND_GLOBAL or a moby class), at `volume` (1 the game's). Returns the game's voice or OPENRAC_HOOK_UNKNOWN. |
 | `int moby_layer_off(std::uint32_t address, int index) const` | Since 1.126: takes off the mod's layer `index` of the moby at `address`. |
 | `int moby_model_at_posed(std::uint32_t address, int model) const` | Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or _UNKNOWN. |
 | `bool has_particle_texture_register() const` | Since 1.33: whether the port registers particle textures (particle_texture_register). |

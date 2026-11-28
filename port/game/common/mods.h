@@ -595,6 +595,10 @@ void gadgets_reset();
 // to the mods' callbacks, and the pads and callbacks forgotten at the mods' unload.
 void glider_frame();
 void glider_reset();
+// A mod's interface with the game's own 2D (interface 1.129, mod_api/game_ui.cpp): what the mods
+// draw and their help boxes forgotten at the mods' unload; a text in the game's bytes.
+void ui_reset();
+std::string ui_game_text(const char* text, std::size_t max);
 // Whether a mod of the list asks for the game's RAM past 32 MiB ("expanded_ram", 1.127), read
 // before the game's memory is made.
 bool wants_expanded_ram(const std::filesystem::path& list, bool purist);

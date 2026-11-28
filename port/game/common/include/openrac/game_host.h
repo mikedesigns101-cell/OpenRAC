@@ -690,6 +690,36 @@ typedef struct openrac_game_glider_event {
     float position[3];
 } openrac_game_glider_event;
 
+/* What a mod draws in the game's 2D (interface 1.129, openrac_api.gui_draw; Going Commando:
+ * rac2/host/game_ui.c): openrac_gui_element with its text already in the game's bytes (accented
+ * letters as its font's) and its colours as 0xAABBGGRR words, 0 to 255 each. */
+typedef struct openrac_game_gui_element {
+    uint32_t kind;
+    uint32_t flags;
+    int32_t layer;
+    float x;
+    float y;
+    float w;
+    float h;
+    float scale_x;
+    float scale_y;
+    float frame;
+    uint32_t rgba;
+    uint32_t rgba2;
+    int32_t id;
+    char text[256];
+} openrac_game_gui_element;
+
+/* A help box a mod opens (openrac_api.help_box_show): its text in the game's bytes, its centre y
+ * (-1 the game's), its text's time up (-1 the game's 7 ticks a letter), flags (1 silent, 2 not closed
+ * by Triangle). */
+typedef struct openrac_game_help_box {
+    uint32_t flags;
+    int32_t y;
+    int32_t ticks;
+    char text[256];
+} openrac_game_help_box;
+
 /* openrac_game_gadget_event.kind. */
 #define OPENRAC_GAME_GADGET_EQUIPPED 1
 #define OPENRAC_GAME_GADGET_PUT_AWAY 2
@@ -1040,6 +1070,18 @@ typedef struct openrac_game_play {
     int (*glider_pad_add)(const openrac_game_glider_pad* pad);
     int (*glider_pad_remove)(int id);
     int (*glider_events)(openrac_game_glider_event* out, int max);
+    /* A mod's interface with the game's own 2D (interface 1.129; Going Commando: rac2/host/game_ui.c).
+     * help_box_show opens the game's help box with a text (the game's bytes): its id, or -1;
+     * help_box_close closes one (0, or -1 for one gone); help_box_state 0 gone, 1 waiting, 2 up.
+     * gui_text_width the width of a text (the game's bytes) in the font OPENRAC_GUI_SMALL picks, at
+     * `scale`, in the 2D's pixels (-1 outside a level). game_sound_play entry `index` of the global
+     * bank (bank -1) or of moby class `bank`'s at `volume` (1 the game's): the voice, or -1. NULLs
+     * for a game without them. */
+    int (*help_box_show)(const openrac_game_help_box* box);
+    int (*help_box_close)(int id);
+    int (*help_box_state)(int id);
+    float (*gui_text_width)(const char* text, uint32_t flags, float scale);
+    int (*game_sound_play)(int bank, int index, float volume);
 } openrac_game_play;
 
 /* Set by the mods' layer (interface 1.125), called by the game each time the hero's state starts an
@@ -1336,6 +1378,10 @@ typedef struct openrac_game_hud_text {
 /* The mods' HUD lines of this level load, up to `max` into `out`; returns how many there are. The
  * game draws them after its own HUD's elements. */
 int openrac_game_hud_texts(openrac_game_hud_text* out, int max);
+/* What the mods draw in the game's 2D this level load (interface 1.129, openrac_api.gui_draw), in
+ * the order to draw it (by layer, then as each mod gave it), up to `max` into `out`; returns how
+ * many there are (0 at once when no mod draws anything). */
+int openrac_game_gui_elements(struct openrac_game_gui_element* out, int max);
 int openrac_game_ammo_panel_offset(int handle, int* x, int* y);
 int openrac_game_rac1_weapon_hud_icon(int native_icon);
 /* Whether a mod hides the game's own HUD now (openrac_api.hud_hide): 1, else 0. */

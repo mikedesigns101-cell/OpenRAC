@@ -277,6 +277,11 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `moby_textures_class` | 1.120 | experimental | yes | yes | yes |
 | `moby_skin_at` | 1.122 | experimental | yes | yes | part |
 | `moby_layer_at` | 1.126 | experimental | yes | yes | part |
+| `gui_draw` | 1.129 | experimental | part | yes | part |
+| `gui_text_width` | 1.129 | experimental | part | yes | part |
+| `help_box_show` | 1.129 | experimental | part | yes | part |
+| `help_box_close` | 1.129 | experimental | no | yes | no |
+| `help_box_state` | 1.129 | experimental | no | yes | no |
 
 ## camera
 
@@ -306,6 +311,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `music_volume` | 1.35 | experimental | yes | part | part |
 | `moby_sound_play` | 1.35 | experimental | yes | part | part |
 | `moby_sound_stop` | 1.35 | experimental | yes | no | no |
+| `game_sound_play` | 1.129 | experimental | part | yes | part |
 
 ## touch
 

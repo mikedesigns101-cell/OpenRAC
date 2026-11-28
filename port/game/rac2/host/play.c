@@ -1076,6 +1076,7 @@ void rac2_play_frame(void) {
     hero_anim_frame();
     follow_motion();
     play_trace();
+    rac2_game_ui_tick();
 }
 
 static openrac_game_play play = {
@@ -1148,6 +1149,11 @@ static openrac_game_play play = {
     .glider_pad_add = rac2_glider_pad_add,
     .glider_pad_remove = rac2_glider_pad_remove,
     .glider_events = rac2_glider_events,
+    .help_box_show = rac2_help_box_show,
+    .help_box_close = rac2_help_box_close,
+    .help_box_state = rac2_help_box_state,
+    .gui_text_width = rac2_ui_text_width,
+    .game_sound_play = rac2_game_sound_play,
 };
 
 void rac2_install_play(void) {

@@ -102,6 +102,7 @@ enum class Var : std::uint16_t {
     FxDump,
     GadgetProbe,
     GamesRoot,
+    GameUiLog,
     Give,
     GliderLog,
     GlApi,

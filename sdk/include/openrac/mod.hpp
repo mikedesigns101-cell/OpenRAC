@@ -400,7 +400,7 @@ struct UiItem {
 
     static UiItem text(std::string label) {
         UiItem item;
-        item.kind = OPENRAC_UI_TEXT;
+        item.kind = OPENRAC_GUI_TEXT;
         item.label = std::move(label);
         return item;
     }
@@ -2330,6 +2330,83 @@ public:
         return OPENRAC_HOOK_UNKNOWN;
       }
       return m_api->on_glider(m_handle, fn, user);
+    }
+
+    // Since 1.129: whether the port draws a mod's interface with the game's own 2D (gui_draw,
+    // gui_text_width, help_box_show, help_box_close, help_box_state).
+    bool has_game_ui() const {
+      return m_api->api_minor >= 129 &&
+             m_api->size >= offsetof(openrac_api, help_box_state) + sizeof(void *);
+    }
+
+    // Since 1.129: whether the port plays the game's loaded sounds by number (game_sound_play).
+    bool has_game_sound() const {
+      return m_api->api_minor >= 129 &&
+             m_api->size >= offsetof(openrac_api, game_sound_play) + sizeof(void *);
+    }
+
+    // Since 1.129: what the mod draws in the game's 2D, all at once (openrac_gui_element; none takes
+    // it away). Returns OPENRAC_HOOK_OK or _UNKNOWN.
+    int gui_draw(const openrac_gui_element *elements, int count) const {
+      if (!has_game_ui()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->gui_draw(m_handle, elements, count);
+    }
+
+    // Since 1.129: the width of `text` in the game's font, in its 2D pixels (-1 when it cannot).
+    float gui_text_width(const char *text, std::uint32_t flags = 0, float scale = 1.0f) const {
+      if (!has_game_ui()) {
+        return -1.0f;
+      }
+      return m_api->gui_text_width(m_handle, text, flags, scale);
+    }
+
+    // Since 1.129: the game's help box with the mod's text. Returns the box's number or
+    // OPENRAC_HOOK_UNKNOWN.
+    int help_box_show(const openrac_help_box &box) const {
+      if (!has_game_ui()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->help_box_show(m_handle, &box);
+    }
+
+    // Since 1.129: the same with only a text, at height `y` (-1 the game's) for `ticks` (-1 the game's).
+    int help_box_show(const char *text, int y = -1, int ticks = -1, std::uint32_t flags = 0) const {
+      openrac_help_box box{};
+      box.size = sizeof(box);
+      box.flags = flags;
+      box.y = y;
+      box.ticks = ticks;
+      if (text != nullptr) {
+        std::strncpy(box.text, text, sizeof(box.text) - 1);
+      }
+      return help_box_show(box);
+    }
+
+    // Since 1.129: closes one of the mod's help boxes as the game closes its own.
+    int help_box_close(int box) const {
+      if (!has_game_ui()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->help_box_close(m_handle, box);
+    }
+
+    // Since 1.129: OPENRAC_HELP_GONE, _WAITING or _SHOWN.
+    int help_box_state(int box) const {
+      if (!has_game_ui()) {
+        return OPENRAC_HELP_GONE;
+      }
+      return m_api->help_box_state(m_handle, box);
+    }
+
+    // Since 1.129: a sound the game has loaded (OPENRAC_SOUND_GLOBAL or a moby class), at `volume`
+    // (1 the game's). Returns the game's voice or OPENRAC_HOOK_UNKNOWN.
+    int game_sound_play(int bank, int index, float volume = 1.0f) const {
+      if (!has_game_sound()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->game_sound_play(m_handle, bank, index, volume);
     }
 
     // Since 1.126: takes off the mod's layer `index` of the moby at `address`.

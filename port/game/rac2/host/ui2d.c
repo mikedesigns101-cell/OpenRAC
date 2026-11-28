@@ -179,6 +179,7 @@ void func_00336320(gaddr o) {
         r->element = o;
         r->frame = GREF(float, (gaddr)GREF(int32_t, o + 0x38));
     }
+    rac2_game_ui_probe_sprite(o); /* game_ui.c: OPENRAC_GAME_UI_LOG=sprites */
     func_00336320__hooked(o);
 }
 
@@ -334,6 +335,7 @@ void func_0027E1A0(
 void func_0028E868(int tex, int x, int y, int w, int h, int alpha) {
     int tw, th;
     openrac_game_ui_rect q;
+    rac2_game_ui_probe_hud(tex, x, y, w, h); /* game_ui.c: OPENRAC_GAME_UI_LOG=sprites */
     hud_size(tex, &tw, &th);
     hud_common(&q, func_0028E640(tex), alpha);
     hud_rect(&q, x * 16, y * 16, (x + w) * 16, (y + h) * 16, 0, 0, tw * 16, th * 16);
@@ -441,6 +443,7 @@ static void corners_from_xyz(openrac_game_ui_rect* q, const gaddr xyz) {
 void func_0028EA58(int tex, int x, int y, int w, int h, gaddr colours) {
     int tw, th;
     openrac_game_ui_rect q;
+    rac2_game_ui_probe_hud(tex, x, y, w, h); /* game_ui.c: OPENRAC_GAME_UI_LOG=sprites */
     hud_size(tex, &tw, &th);
     hud_common(&q, func_0028E640(tex), 0x80);
     q.flags = 4u | 32u;

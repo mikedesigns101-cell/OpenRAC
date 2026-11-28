@@ -131,4 +131,18 @@ int rac2_camera_shake(int channel, float amplitude, int frames);
 /* The level's collision triangles in a box (collision_triangles.c, openrac_api.collision_triangles). */
 int rac2_collision_triangles(const float lo[3], const float hi[3], void* out, int max);
 
+/* A mod's interface with the game's own 2D (game_ui.c, interface 1.129): openrac_game_play's calls,
+ * the help boxes' tick (rac2_play_frame), and the probe's lines (OPENRAC_GAME_UI_LOG=sprites) from
+ * GuiSpriteElementDraw (ui2d.c), GetIconFrame (mod_gadgets.c) and the HUD's sprites (ui2d.c). */
+struct openrac_game_help_box;
+int rac2_help_box_show(const struct openrac_game_help_box* box);
+int rac2_help_box_close(int id);
+int rac2_help_box_state(int id);
+float rac2_ui_text_width(const char* text, uint32_t flags, float scale);
+int rac2_game_sound_play(int bank, int index, float volume);
+void rac2_game_ui_tick(void);
+void rac2_game_ui_probe_sprite(uint32_t element);
+void rac2_game_ui_probe_icon(int key, int index, int tex);
+void rac2_game_ui_probe_hud(int tex, int x, int y, int w, int h);
+
 #endif /* OPENRAC_RAC2_H */

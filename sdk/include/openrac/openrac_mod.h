@@ -171,9 +171,13 @@ extern "C" {
  * hidden (moby_layer_at, openrac_moby_layer), and 1.127 the hero's seqs of
  * another level where his class lacks them, and the game's Glider from a launch
  * pad in any level (hero_seq_import, glider_pad_add, glider_pad_remove,
- * on_glider; the manifest's "expanded_ram").
+ * on_glider; the manifest's "expanded_ram"), and 1.129 a mod's interface
+ * drawn with the game's own 2D: its font with its colour bytes, its help box
+ * opened with a mod's text, the sprites of its menus, its HUD icons, and its
+ * loaded sounds by number (gui_draw, gui_text_width, help_box_show,
+ * help_box_close, help_box_state, game_sound_play).
  */
-#define OPENRAC_MOD_API_MINOR 127
+#define OPENRAC_MOD_API_MINOR 129
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2377,6 +2381,129 @@ typedef struct openrac_glider_event {
 
 typedef void (*openrac_glider_fn)(void* user, const openrac_glider_event* event);
 
+/* ------------------------------------------------------------------------------------------ *
+ * The game's own 2D for a mod's interface (Going Commando; sdk/docs/game-ui.md)
+ *
+ * What a mod draws with gui_draw is drawn by the game's own routines, from what the game already
+ * has loaded: its font (the colour bytes, the accented letters and the button icons in it), its
+ * help box (the rounded fill and the two-line frame with its brackets), the sprites of its menus
+ * (the pause menu's plates, the vendor's) and its HUD icons (weapons, bolts). Nothing is read from
+ * the mod: nothing of the game's goes in a mod's package. The places are the game's 2D, 512 x 416
+ * (the 4:3 column; the game centres on x 256). Since 1.129.
+ * ------------------------------------------------------------------------------------------ */
+
+/* openrac_gui_element.kind: a line of text in the game's font; the help box's look (fill and frame)
+ * around a rectangle; a sprite of the game's menus (OPENRAC_GUI_SPRITE_*); a HUD texture by its
+ * number; the HUD icon of an item (a weapon's, a gadget's); a HUD icon by its key. Since 1.129. */
+#define OPENRAC_GUI_TEXT 1
+#define OPENRAC_GUI_BOX 2
+#define OPENRAC_GUI_SPRITE 3
+#define OPENRAC_GUI_ICON 4
+#define OPENRAC_GUI_ITEM_ICON 5
+#define OPENRAC_GUI_ICON_KEY 6
+
+/* openrac_gui_element.flags. Text: the small font (else the large one, the HUD's and the help
+ * box's), a shadow under it, centred on x or ending at x (else starting at x). Box: no fill, no
+ * frame. Since 1.129. */
+#define OPENRAC_GUI_SMALL 0x1u
+#define OPENRAC_GUI_SHADOW 0x2u
+#define OPENRAC_GUI_CENTER 0x4u
+#define OPENRAC_GUI_RIGHT 0x8u
+#define OPENRAC_GUI_NO_FILL 0x10u
+#define OPENRAC_GUI_NO_FRAME 0x20u
+
+/* The font's control bytes a text may hold as they are: the colours (OPENRAC_GUI_COLOUR_TEXT the
+ * colour the element gives, then the font's own: OPENRAC_GUI_COLOUR_ORANGE is the help box's for
+ * names). UTF-8 accented letters are turned into the font's own (á é í ó ú ñ ü ¿ ¡ ...). The button
+ * icons are OPENRAC_UI_CROSS ... OPENRAC_UI_RIGHT_STICK. Since 1.129. */
+#define OPENRAC_GUI_COLOUR_TEXT "\x08"
+#define OPENRAC_GUI_COLOUR_1 "\x09"
+#define OPENRAC_GUI_COLOUR_2 "\x0A"
+#define OPENRAC_GUI_COLOUR_3 "\x0B"
+#define OPENRAC_GUI_COLOUR_ORANGE "\x0C"
+#define OPENRAC_GUI_COLOUR_5 "\x0D"
+#define OPENRAC_GUI_COLOUR_6 "\x0E"
+#define OPENRAC_GUI_COLOUR_7 "\x0F"
+
+/* The game's sprites by name, for an OPENRAC_GUI_SPRITE element's `id` (sdk/docs/game-ui.md has a
+ * picture of each). Since 1.129. */
+#define OPENRAC_GUI_SPRITE_FRAME_END 1     /* the help box frame's end bracket (left; mirrored right) */
+#define OPENRAC_GUI_SPRITE_FRAME_CORNER 2  /* the help box frame's corner line */
+
+/* The most elements a mod draws at once, and the mods together; the most bytes of a text (with its
+ * end). Since 1.129. */
+#define OPENRAC_GUI_ELEMENTS_MAX 64
+#define OPENRAC_GUI_ELEMENTS_ALL 256
+#define OPENRAC_GUI_TEXT_BYTES 256
+
+/* One thing a mod draws in the game's 2D (openrac_api.gui_draw), after the game's HUD and its help
+ * box, in the order of `layer` (0 first) and then of the array. Places in the game's 512 x 416.
+ * - OPENRAC_GUI_TEXT: `text` (UTF-8, its end within OPENRAC_GUI_TEXT_BYTES) at (x, y), y the line's
+ *   top, x its start, middle or end by the flags; `scale_x` its size (1: the font's 16 pixels a
+ *   line, 0.25 to 4); `rgba` its colour (128 a channel is the font's own shade, as the game gives
+ *   its colours; alpha 0 to 255).
+ * - OPENRAC_GUI_BOX: the help box's fill and frame around the rectangle of centre (x, y), w x h;
+ *   `rgba` the fill (0: the game's, #002D44 at 96 of 128), `rgba2` the frame (0: the game's).
+ * - OPENRAC_GUI_SPRITE: sprite `id` (OPENRAC_GUI_SPRITE_*) at (x, y), scaled by scale_x, scale_y (a
+ *   negative scale mirrors it), at `frame` of its own animation (0 to 1; how far a bracket
+ *   reaches), in `rgba` (0: the game's 128 grey, opaque).
+ * - OPENRAC_GUI_ICON: HUD texture `id` (the number the game's HUD draws it by; the docs list
+ *   the bolt's and others) in the box x, y, w x h (top left, size), tinted `rgba` (0: as it is).
+ * - OPENRAC_GUI_ITEM_ICON: the icon of item `id` (the game's item number), as OPENRAC_GUI_ICON.
+ * - OPENRAC_GUI_ICON_KEY: the icon of key `id` (picture `frame` of it), as OPENRAC_GUI_ICON.
+ * Since 1.129. */
+typedef struct openrac_gui_element {
+    /* sizeof(openrac_gui_element), set by the mod. */
+    uint32_t size;
+    uint32_t kind;
+    uint32_t flags;
+    int32_t layer;
+    float x;
+    float y;
+    float w;
+    float h;
+    float scale_x;
+    float scale_y;
+    float frame;
+    uint8_t rgba[4];
+    uint8_t rgba2[4];
+    int32_t id;
+    char text[OPENRAC_GUI_TEXT_BYTES];
+} openrac_gui_element;
+
+/* openrac_help_box.flags: no sound when it opens (else the game's global sound 0, as its own help
+ * does); Triangle does not close it (else it does, as the game's). Since 1.129. */
+#define OPENRAC_HELP_SILENT 0x1u
+#define OPENRAC_HELP_KEEP 0x2u
+
+/* The game's help box ("For a map press SELECT") opened by a mod with a text of its own
+ * (openrac_api.help_box_show): `text` (UTF-8, as an OPENRAC_GUI_TEXT's: colour bytes, accented
+ * letters, button icons; the font wraps it inside the box, 0x01 breaks a line) centred on y
+ * `y` of 416 (-1: where the game puts its own, the screen's foot), its text up for `ticks` (-1: the
+ * game's 7 a letter). It opens as the game's does: the frame grows 8 ticks, the text comes in 4,
+ * goes out in 4 and the frame shrinks 8. Since 1.129. */
+typedef struct openrac_help_box {
+    /* sizeof(openrac_help_box), set by the mod. */
+    uint32_t size;
+    uint32_t flags;
+    int32_t y;
+    int32_t ticks;
+    char text[OPENRAC_GUI_TEXT_BYTES];
+} openrac_help_box;
+
+/* What help_box_state answers: gone (closed, or never one of the mod's), waiting its turn, up.
+ * Since 1.129. */
+#define OPENRAC_HELP_GONE 0
+#define OPENRAC_HELP_WAITING 1
+#define OPENRAC_HELP_SHOWN 2
+
+/* The most help boxes the mods have waiting or up together. Since 1.129. */
+#define OPENRAC_HELP_BOXES_MAX 8
+
+/* game_sound_play's bank for the game's global sounds (the menus': 0 notice, 3 confirm, 4 move,
+ * 5 error; 20 of them). Any other bank is a moby class of the level, its own sounds. Since 1.129. */
+#define OPENRAC_SOUND_GLOBAL (-1)
+
 typedef struct openrac_api {
     /* sizeof(openrac_api) as the port was built: a newer port's is larger. Since 1.0. */
     uint32_t size;
@@ -4026,6 +4153,33 @@ typedef struct openrac_api {
      * pads (openrac_glider_event). Only while the mod loads. Returns OPENRAC_HOOK_OK,
      * OPENRAC_HOOK_TOO_LATE or OPENRAC_HOOK_UNKNOWN. Since 1.127. */
     int (*on_glider)(openrac_mod* mod, openrac_glider_fn fn, void* user);
+
+    /* Sets what the mod draws in the game's 2D (openrac_gui_element), all of it at once, in place of
+     * what it drew before (count 0 takes it all away). It stays, drawn every frame, until the mod
+     * sets it again or the level loads; it is hidden with the game's 2D (in a scene, under a menu
+     * that covers it). Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN (outside a level, past
+     * OPENRAC_GUI_ELEMENTS_MAX or _ALL, an element of an unknown kind, a text with no end, a place
+     * not a number, a game without it). Since 1.129. */
+    int (*gui_draw)(openrac_mod* mod, const openrac_gui_element* elements, int count);
+    /* The width, in the game's 2D pixels, of `text` (as an OPENRAC_GUI_TEXT's) in the font `flags`
+     * says (OPENRAC_GUI_SMALL) at `scale`; -1 outside a level or for a game without it. Since 1.129. */
+    float (*gui_text_width)(openrac_mod* mod, const char* text, uint32_t flags, float scale);
+    /* Opens the game's help box with the mod's text (openrac_help_box): at once, or after the boxes
+     * already up or waiting at its height (the game's own included). Returns the box's number (0
+     * or more), or OPENRAC_HOOK_UNKNOWN (outside a level, OPENRAC_HELP_BOXES_MAX waiting, a text
+     * with no end, a game without it). Since 1.129. */
+    int (*help_box_show)(openrac_mod* mod, const openrac_help_box* box);
+    /* Closes one of the mod's boxes as the game closes its own (text out, frame shrinks), or takes
+     * it out of the queue. Returns OPENRAC_HOOK_OK or OPENRAC_HOOK_UNKNOWN. Since 1.129. */
+    int (*help_box_close)(openrac_mod* mod, int box);
+    /* Where one of the mod's boxes is: OPENRAC_HELP_GONE, _WAITING or _SHOWN. Since 1.129. */
+    int (*help_box_state)(openrac_mod* mod, int box);
+    /* Plays a sound the game has loaded: of its global bank (OPENRAC_SOUND_GLOBAL; the menus'
+     * sounds) or of moby class `bank`'s own (a class of the loaded level), entry `index`, at
+     * `volume` (1 the game's own loudness, 0 to 2), not placed in the world. Returns the game's
+     * voice (0 or more), or OPENRAC_HOOK_UNKNOWN (no such bank or entry, no free voice, outside a
+     * level, a game without it). Since 1.129. */
+    int (*game_sound_play)(openrac_mod* mod, int bank, int index, float volume);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

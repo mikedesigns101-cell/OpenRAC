@@ -63,6 +63,7 @@ asks for ticks.
 | `camera` | `eye` and `look_at`, or `release` | |
 | `line` | `from`, `to` | `blocked` |
 | `ground` | `position`, `above`, `depth` | `found`, `position`, `normal`, `surface`, `moby` |
+| `peek`, `poke` | `address` (a number or a string such as `"0x1A7AF8"`: the game's RAM), `type` (`u8`, `s8`, `u16`, `s16`, `u32`, `s32`, `f32`; `u32` by default), and for `poke` the `value` | `value` (after the write). For tests: `poke` writes the game's memory as no player could |
 | `quit` | | the program ends |
 
 It reads the game through the play host table (`game_host.h`) and asks only for what a player or

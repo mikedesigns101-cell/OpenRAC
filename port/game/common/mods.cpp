@@ -1181,6 +1181,12 @@ void fill_api(const Host& host) {
     g_api.glider_pad_add = api_glider_pad_add;
     g_api.glider_pad_remove = api_glider_pad_remove;
     g_api.on_glider = api_on_glider;
+    g_api.gui_draw = api_gui_draw;
+    g_api.gui_text_width = api_gui_text_width;
+    g_api.help_box_show = api_help_box_show;
+    g_api.help_box_close = api_help_box_close;
+    g_api.help_box_state = api_help_box_state;
+    g_api.game_sound_play = api_game_sound_play;
     g_api.moby_skin_at = api_moby_skin_at;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
@@ -2031,7 +2037,7 @@ bool run_menu_page(int index, const openrac_menu_frame& frame) {
 }
 
 bool takes_cursor(const UiItem& item) {
-    return item.kind != OPENRAC_UI_TEXT && (item.flags & OPENRAC_UI_DISABLED) == 0;
+    return item.kind != OPENRAC_GUI_TEXT && (item.flags & OPENRAC_UI_DISABLED) == 0;
 }
 
 int ui_page_count() {
@@ -2241,6 +2247,7 @@ void reset() {
     g_list_seen.reset();
     gadgets_reset();
     glider_reset();
+    ui_reset();
     detail::hero_anim_reset();
     reset_save_data();
     g_list_wait = 0;

@@ -183,6 +183,11 @@ constexpr std::array<Variable, kVariableCount> kVariables = {{
     {Var::GamesRoot, "OPENRAC_GAMES_ROOT",
      Kind::Path, Truth::NotAFlag, "<install>/active",
      "the folder the installed games sit in (<game>/data each), for the mods' game_data_dir; beside --data when not given"},
+    {Var::GameUiLog, "OPENRAC_GAME_UI_LOG",
+     Kind::Text, Truth::NotAFlag, "none",
+     "Going Commando: 1: what the mods draw with the game's 2D, their help boxes and the game's sounds they "
+     "play, in the log; sprites: also each GUI sprite, HUD texture and icon key the game draws, once "
+     "(rac2/host/game_ui.c; a test)"},
     {Var::Give, "OPENRAC_GIVE",
      Kind::Text, Truth::NotAFlag, "none",
      "WHAT[@FRAME],...: gives the hero all, weapons, gadgets, bolts:N, xp (rac3: owned guns to their next level) or an item, FRAME frames after control"},

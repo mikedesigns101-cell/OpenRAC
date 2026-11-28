@@ -95,6 +95,22 @@ openrac_graphics	vk_queue	40	void *
 openrac_graphics	vk_queue_family	48	uint32_t
 openrac_graphics	vk_queue_index	52	uint32_t
 openrac_graphics	vk_get_instance_proc_addr	56	void *
+openrac_gui_element	(size)	312	-
+openrac_gui_element	size	0	uint32_t
+openrac_gui_element	kind	4	uint32_t
+openrac_gui_element	flags	8	uint32_t
+openrac_gui_element	layer	12	int32_t
+openrac_gui_element	x	16	float
+openrac_gui_element	y	20	float
+openrac_gui_element	w	24	float
+openrac_gui_element	h	28	float
+openrac_gui_element	scale_x	32	float
+openrac_gui_element	scale_y	36	float
+openrac_gui_element	frame	40	float
+openrac_gui_element	rgba	44	uint8_t[4]
+openrac_gui_element	rgba2	48	uint8_t[4]
+openrac_gui_element	id	52	int32_t
+openrac_gui_element	text	56	char[256]
 openrac_haze	(size)	20	-
 openrac_haze	position	0	float[3]
 openrac_haze	radius	12	float
@@ -117,6 +133,12 @@ openrac_held_piece	frame	52	uint32_t
 openrac_held_piece	next_frame	56	uint32_t
 openrac_held_piece	anim_time	60	float
 openrac_held_piece	anim_speed	64	float
+openrac_help_box	(size)	272	-
+openrac_help_box	size	0	uint32_t
+openrac_help_box	flags	4	uint32_t
+openrac_help_box	y	8	int32_t
+openrac_help_box	ticks	12	int32_t
+openrac_help_box	text	16	char[256]
 openrac_hero_anim_request	(size)	20	-
 openrac_hero_anim_request	size	0	uint32_t
 openrac_hero_anim_request	seq	4	int32_t

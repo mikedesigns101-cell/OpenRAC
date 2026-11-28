@@ -669,7 +669,9 @@ int func_0028E588(int key, int index) {
             key = rac2_gadget_host_icon(slot);
         }
     }
-    return func_0028E588__game(key, index);
+    const int tex = func_0028E588__game(key, index);
+    rac2_game_ui_probe_icon(key, index, tex); /* game_ui.c: OPENRAC_GAME_UI_LOG=sprites */
+    return tex;
 }
 
 void rac2_gadgets_save_restore(void) {

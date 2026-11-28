@@ -4,6 +4,14 @@
 
 Newest first. A mod built for a minor loads on every port with that minor or a newer one.
 
+## 1.129
+
+Members: `gui_draw`, `gui_text_width`, `help_box_show`, `help_box_close`, `help_box_state`, `game_sound_play`.
+
+## 1.128
+
+No new members (the table is unchanged).
+
 ## 1.127
 
 Members: `hero_seq_import`, `glider_pad_add`, `glider_pad_remove`, `on_glider`.
@@ -82,7 +90,7 @@ No new members (the table is unchanged).
 
 ## 1.108
 
-A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model), and 1.121 a live moby moved to another place of its level with its sphere, cells and homes, set on the floor (moby_relocate), and 1.122 a moby drawn as another model with that model's own animations, its own class still running (moby_skin_at, openrac_moby_skin), and 1.123 moby_relocate's NEAREST flag: a point with no floor moved to the nearest one with a floor (OPENRAC_RELOCATE_NEAREST; the table is unchanged), and 1.124 a mod's own gadgets as items of the game's: in its menus and the hand, used, kept with the save (gadget_register, gadget_give, gadget_equip, gadget_count, gadget_info, gadget_held, on_gadget), and 1.125 the hero's animations from a mod with his state untouched, and the seq his state asks for swapped (hero_anim_frames, hero_play_anim, hero_anim_filter), and 1.126 layers of meshes a moby wears over its own model, put on and taken off one by one, the parts they cover hidden (moby_layer_at, openrac_moby_layer), and 1.127 the hero's seqs of another level where his class lacks them, and the game's Glider from a launch pad in any level (hero_seq_import, glider_pad_add, glider_pad_remove, on_glider; the manifest's "expanded_ram").
+A moby's glow faces alone drawn in a colour of the mod's (OPENRAC_MOBY_MATERIAL_GLOW; the table is unchanged), and 1.120 a moby drawn with its class's own model and animation but with textures of the mod's (moby_textures_at, moby_textures_class), and a mod's skinned mesh posed by the moby's own joints (OPENRAC_MODEL_GAME_POSE, a flag of openrac_moby_model), and 1.121 a live moby moved to another place of its level with its sphere, cells and homes, set on the floor (moby_relocate), and 1.122 a moby drawn as another model with that model's own animations, its own class still running (moby_skin_at, openrac_moby_skin), and 1.123 moby_relocate's NEAREST flag: a point with no floor moved to the nearest one with a floor (OPENRAC_RELOCATE_NEAREST; the table is unchanged), and 1.124 a mod's own gadgets as items of the game's: in its menus and the hand, used, kept with the save (gadget_register, gadget_give, gadget_equip, gadget_count, gadget_info, gadget_held, on_gadget), and 1.125 the hero's animations from a mod with his state untouched, and the seq his state asks for swapped (hero_anim_frames, hero_play_anim, hero_anim_filter), and 1.126 layers of meshes a moby wears over its own model, put on and taken off one by one, the parts they cover hidden (moby_layer_at, openrac_moby_layer), and 1.127 the hero's seqs of another level where his class lacks them, and the game's Glider from a launch pad in any level (hero_seq_import, glider_pad_add, glider_pad_remove, on_glider; the manifest's "expanded_ram"), and 1.129 a mod's interface drawn with the game's own 2D: its font with its colour bytes, its help box opened with a mod's text, the sprites of its menus, its HUD icons, and its loaded sounds by number (gui_draw, gui_text_width, help_box_show, help_box_close, help_box_state, game_sound_play).
 
 No new members (the table is unchanged).
 

@@ -857,5 +857,12 @@ int api_hero_seq_import(openrac_mod* mod, int level, int seq);
 int api_glider_pad_add(openrac_mod* mod, const openrac_glider_pad* pad);
 int api_glider_pad_remove(openrac_mod* mod, int pad);
 int api_on_glider(openrac_mod* mod, openrac_glider_fn fn, void* user);
+// A mod's interface with the game's own 2D and its loaded sounds (1.129, game_ui.cpp).
+int api_gui_draw(openrac_mod* mod, const openrac_gui_element* elements, int count);
+float api_gui_text_width(openrac_mod* mod, const char* text, std::uint32_t flags, float scale);
+int api_help_box_show(openrac_mod* mod, const openrac_help_box* box);
+int api_help_box_close(openrac_mod* mod, int box);
+int api_help_box_state(openrac_mod* mod, int box);
+int api_game_sound_play(openrac_mod* mod, int bank, int index, float volume);
 
 }  // namespace openrac::mods::detail

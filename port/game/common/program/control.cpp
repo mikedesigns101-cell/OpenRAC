@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "openrac/game_host.h"
+#include "openrac/guest.h"
 
 namespace openrac::program::control {
 namespace {
@@ -485,6 +486,62 @@ std::string mobys(const Value& c) {
     return out + "]";
 }
 
+// peek and poke (for tests): a value of `type` (u8, s8, u16, s16, u32, s32, f32; u32 when not
+// given) at game address `address` (a number, or a string such as "0x1A7AF8"), read, or written
+// with `value` first. The game's RAM only; the address aligned for its type.
+std::string peek_poke(const Value& c, bool write) {
+    std::uint32_t at = 0;
+    const Value& a = c["address"];
+    if (a.kind == Value::String) {
+        at = static_cast<std::uint32_t>(std::strtoul(a.text.c_str(), nullptr, 0));
+    } else {
+        at = static_cast<std::uint32_t>(a.num(0.0));
+    }
+    const std::string type = c["type"].kind == Value::String ? c["type"].text : "u32";
+    const std::uint32_t bytes = type == "u8" || type == "s8" ? 1u : type == "u16" || type == "s16" ? 2u : 4u;
+    const bool known = type == "u8" || type == "s8" || type == "u16" || type == "s16" || type == "u32"
+                       || type == "s32" || type == "f32";
+    at &= 0x1FFFFFFFu;
+    if (!known || at == 0 || at % bytes != 0 || at + bytes > openrac_guest_ram_size) {
+        return "\"ok\": false, \"error\": \"address is a game address in its RAM, aligned for type "
+               "(u8, s8, u16, s16, u32, s32, f32)\"";
+    }
+    if (write) {
+        if (c["value"].kind != Value::Number) {
+            return "\"ok\": false, \"error\": \"value is a number\"";
+        }
+        const double v = c["value"].number;
+        if (type == "f32") {
+            GREF(float, at) = static_cast<float>(v);
+        } else if (bytes == 1) {
+            GREF(std::uint8_t, at) = static_cast<std::uint8_t>(static_cast<long long>(v));
+        } else if (bytes == 2) {
+            GREF(std::uint16_t, at) = static_cast<std::uint16_t>(static_cast<long long>(v));
+        } else {
+            GREF(std::uint32_t, at) = static_cast<std::uint32_t>(static_cast<long long>(v));
+        }
+    }
+    double now = 0.0;
+    if (type == "f32") {
+        now = GREF(float, at);
+    } else if (type == "u8") {
+        now = GREF(std::uint8_t, at);
+    } else if (type == "s8") {
+        now = GREF(std::int8_t, at);
+    } else if (type == "u16") {
+        now = GREF(std::uint16_t, at);
+    } else if (type == "s16") {
+        now = GREF(std::int16_t, at);
+    } else if (type == "s32") {
+        now = GREF(std::int32_t, at);
+    } else {
+        now = GREF(std::uint32_t, at);
+    }
+    char text[64];
+    std::snprintf(text, sizeof text, "%.9g", now);
+    return std::string("\"ok\": true, \"value\": ") + text;
+}
+
 // The floor under a point: the highest collision triangle one can stand on below it.
 std::string ground(const Value& c) {
     float at[3];
@@ -755,6 +812,8 @@ bool handle(const std::string& line) {
         }
     } else if (cmd == "ground") {
         answer(id, ground(c));
+    } else if (cmd == "peek" || cmd == "poke") {
+        answer(id, peek_poke(c, cmd == "poke"));
     } else if (cmd == "quit") {
         answer(id, "\"ok\": true");
         g_quit = true;
@@ -763,7 +822,7 @@ bool handle(const std::string& line) {
             id,
             "unknown command " + cmd
                 + " (status, step, wait, shot, mobys, hero_place, travel, scene, camera, line, "
-                  "ground, quit)"
+                  "ground, peek, poke, quit)"
         );
     }
 

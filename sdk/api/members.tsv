@@ -255,3 +255,9 @@ hero_seq_import	hero	1.127	experimental
 glider_pad_add	world	1.127	experimental
 glider_pad_remove	world	1.127	experimental
 on_glider	world	1.127	experimental
+gui_draw	visuals	1.129	experimental
+gui_text_width	visuals	1.129	experimental
+help_box_show	visuals	1.129	experimental
+help_box_close	visuals	1.129	experimental
+help_box_state	visuals	1.129	experimental
+game_sound_play	sound	1.129	experimental
