@@ -26,6 +26,8 @@ export const COMMANDO = {
   },
   /** The fork this launcher and its game are built from (GPL-3.0-or-later: its source). */
   sourceUrl: "https://github.com/mikedesigns101-cell/OpenRAC",
+  /** The branch this launcher is built from, in that repository. */
+  sourceTreeUrl: "https://github.com/mikedesigns101-cell/OpenRAC/tree/commando/launcher",
   issuesUrl: "https://github.com/mikedesigns101-cell/OpenRAC/issues",
   /** The project it derives from. */
   upstreamUrl: "https://github.com/OpenRAC/OpenRAC",
@@ -82,7 +84,20 @@ export function needsInstall(mods: PluginView[]): boolean {
  * models built into its folder, and with them modelos_construidos.json: Play builds them again
  * (MOD_MODELS). Rejects with the core's reason.
  */
-export async function ensureCommandoMod(root: string): Promise<PluginView[]> {
+export function ensureCommandoMod(root: string): Promise<PluginView[]> {
+  // One at a time: the switch under Play, the Mod tab and Play may all ask at once after a set-up,
+  // and two installs into the same plugins/ folder would collide (Windows refuses the swap).
+  ensuring ??= installCommandoMod(root).finally(() => {
+    ensuring = null;
+  });
+
+  return ensuring;
+}
+
+/** The install in flight, which every caller of ensureCommandoMod shares. */
+let ensuring: Promise<PluginView[]> | null = null;
+
+async function installCommandoMod(root: string): Promise<PluginView[]> {
   const { game, version } = COMMANDO;
   let mods = await api.pluginsList(game, version);
 

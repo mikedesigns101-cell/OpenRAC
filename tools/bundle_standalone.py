@@ -115,7 +115,8 @@ STATES = tuple(f"{game}-states" for game in GAMES)
 # What a Windows program built against MSVC's libraries imports and Windows does not always have:
 # without them it does not start ("MSVCP140.dll was not found"). Only the Visual C++ Redistributable
 # or Visual Studio installs them, and a player needs neither when they are beside the program.
-WINDOWS_RUNTIME = ("msvcp140.dll", "msvcp140_2.dll", "vcruntime140.dll", "vcruntime140_1.dll")
+# (msvcp140_1.dll: Going Commando's program, built with MSVC 14.44, imports it too.)
+WINDOWS_RUNTIME = ("msvcp140.dll", "msvcp140_1.dll", "msvcp140_2.dll", "vcruntime140.dll", "vcruntime140_1.dll")
 # Authored settings travel with the exporter, rather than depending on a source checkout.
 PROBE_PROFILES = "port/enhanced/lighting/profiles"
 WATER_PROFILES = "port/enhanced/water/profiles"

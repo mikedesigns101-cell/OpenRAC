@@ -789,7 +789,8 @@ async function play(v: VersionView): Promise<void> {
   if (!start?.runnable) return;
 
   // Mods load: they are brought up to date first (lib/modAutoUpdate), never holding Play long.
-  if (app.config?.playWithMods) {
+  // (Not OpenRAC: Commando's: its one mod comes with it, and no mod index is asked.)
+  if (app.config?.playWithMods && !COMMANDO.on) {
     const { beforePlay } = await import("./modAutoUpdate.svelte");
 
     await beforePlay(v.key);

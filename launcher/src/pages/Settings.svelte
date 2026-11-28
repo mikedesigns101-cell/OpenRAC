@@ -940,7 +940,7 @@
           Nothing from the game's disc comes with this launcher: it reads your disc on your computer.
         </p>
         <p class="links">
-          <button class="link" onclick={() => void api.openUrl(COMMANDO.sourceUrl)}
+          <button class="link" onclick={() => void api.openUrl(COMMANDO.sourceTreeUrl)}
             >Source code of this version</button
           >
           · <button class="link" onclick={() => void api.openUrl(COMMANDO.issuesUrl)}
