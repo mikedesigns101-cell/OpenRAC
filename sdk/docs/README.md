@@ -37,6 +37,7 @@ Mods of textures, models and levels are made with the level editor instead
 11. [Props](props.md): a mod's own models in the level, on a moby's joint (a weapon in the hero's hand), and the limits to know (native mods, interfaces 1.12 and 1.18).
 12. [Developer menus](developer-menus.md): a mod's own tab in OpenRAC's menu, with rows, switches and choices, and why it pauses the game (native mods, interfaces 1.10 and 1.19).
 13. [Menu options](menu-options.md): grey out an option of OpenRAC's menu, or make it usable again, by name (native mods, interface 1.37).
+14. [Gadgets](gadgets.md): a mod's own items in the hero's inventory, menus and hand, used and kept with the save (native mods, OpenRAC Commando's interface 1.124, Going Commando).
 
 ## Reference
 
