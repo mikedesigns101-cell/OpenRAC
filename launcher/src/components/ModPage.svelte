@@ -236,17 +236,17 @@
 
 <div class="mod-page">
   {#if !standalone}<nav class="crumbs" aria-label={T.MOD_PAGE.crumbsLabel}>
-    <button
-      class="back"
-      aria-label={T.MOD_PAGE.back}
-      title={T.MOD_PAGE.back}
-      onclick={() => void back()}><Icon name="arrow" size={18} /></button
-    >
-    <ol>
-      <li><button class="crumb" onclick={() => void back()}>{T.MOD_PAGE.crumbRoot}</button></li>
-      <li aria-current="page"><Icon name="next" size={14} /><span>{mod.name}</span></li>
-    </ol>
-  </nav>{/if}
+      <button
+        class="back"
+        aria-label={T.MOD_PAGE.back}
+        title={T.MOD_PAGE.back}
+        onclick={() => void back()}><Icon name="arrow" size={18} /></button
+      >
+      <ol>
+        <li><button class="crumb" onclick={() => void back()}>{T.MOD_PAGE.crumbRoot}</button></li>
+        <li aria-current="page"><Icon name="next" size={14} /><span>{mod.name}</span></li>
+      </ol>
+    </nav>{/if}
 
   <section class="panel head" class:off={!mod.enabled && mod.kind !== "tool"}>
     <div class="title">

@@ -388,6 +388,7 @@ export async function start() {
   // preview's ?version=) is kept.
   if (!app.version && app.config.lastVersion) app.version = app.config.lastVersion;
   await refresh();
+
   if (!COMMANDO.on) {
     void syncProgressWeb();
     void readEditor();

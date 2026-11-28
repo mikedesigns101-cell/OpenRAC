@@ -930,26 +930,30 @@
           own disc, with the mod {COMMANDO.mod.name}.
         </p>
         <p>
-          It is a derived version of OpenRAC and of its launcher, made by the mod's author; it is not
-          made or supported by the OpenRAC project. Please report problems with it to its own page, not
-          to OpenRAC.
+          It is a derived version of OpenRAC and of its launcher, made by the mod's author; it is
+          not made or supported by the OpenRAC project. Please report problems with it to its own
+          page, not to OpenRAC.
         </p>
         <p>
           OpenRAC, this launcher and the game program are free software under the GNU General Public
           License, version 3 or later; the notices of the software they include travel with them.
-          Nothing from the game's disc comes with this launcher: it reads your disc on your computer.
+          Nothing from the game's disc comes with this launcher: it reads your disc on your
+          computer.
         </p>
         <p class="links">
           <button class="link" onclick={() => void api.openUrl(COMMANDO.sourceTreeUrl)}
             >Source code of this version</button
           >
-          · <button class="link" onclick={() => void api.openUrl(COMMANDO.issuesUrl)}
+          ·
+          <button class="link" onclick={() => void api.openUrl(COMMANDO.issuesUrl)}
             >Report a problem</button
           >
-          · <button class="link" onclick={() => void api.openUrl(COMMANDO.upstreamUrl)}
+          ·
+          <button class="link" onclick={() => void api.openUrl(COMMANDO.upstreamUrl)}
             >The original OpenRAC</button
           >
-          · <button class="link" onclick={() => void api.openUrl(COMMANDO.upstreamSite)}
+          ·
+          <button class="link" onclick={() => void api.openUrl(COMMANDO.upstreamSite)}
             >openrac.dev</button
           >
         </p>

@@ -48,9 +48,11 @@ export function commandoConfig(config: Config): Config | null {
   // The saves: a folder of this launcher's own, in its install folder, unless the player chose one
   // (Settings): the game's default, <data home>/memcard, is the OpenRAC Launcher's too, and a
   // modded game's saves are kept apart from the unmodded game's.
-  const saveDir = config.saveDir ?? (config.installDir ? joinPath(config.installDir, "memcard") : null);
+  const saveDir =
+    config.saveDir ?? (config.installDir ? joinPath(config.installDir, "memcard") : null);
 
-  if (config.playWithMods && !config.discordRpc && !config.developer && saveDir === config.saveDir) return null;
+  if (config.playWithMods && !config.discordRpc && !config.developer && saveDir === config.saveDir)
+    return null;
 
   return { ...config, playWithMods: true, discordRpc: false, developer: false, saveDir };
 }
@@ -72,9 +74,7 @@ export function commandoMod(mods: PluginView[]): PluginView | undefined {
  * version than the one this launcher carries (a launcher update brought a new one).
  */
 export function needsInstall(mods: PluginView[]): boolean {
-  const mod = commandoMod(mods);
-
-  return !mod || mod.version !== COMMANDO.mod.modVersion;
+  return commandoMod(mods)?.version !== COMMANDO.mod.modVersion;
 }
 
 /**
