@@ -1827,8 +1827,8 @@ mod tests {
         assert!(m.runs_on("rac2", "ntsc", Some(here())).unwrap_err().contains("not for rac2"));
         assert!(m.runs_on("rac1", "pal", Some("windows-arm64")).unwrap_err().contains("Not built"));
         assert!(m.runs_on("rac1", "pal", None).unwrap_err().contains("do not run"));
-        let newer: Manifest = serde_json::from_value(manifest("a", json!({"api": "1.99"}))).unwrap();
-        assert!(newer.runs_on("rac1", "pal", Some(here())).unwrap_err().contains("interface 1.99"));
+        let newer: Manifest = serde_json::from_value(manifest("a", json!({"api": "1.999"}))).unwrap();
+        assert!(newer.runs_on("rac1", "pal", Some(here())).unwrap_err().contains("interface 1.999"));
         let other: Manifest = serde_json::from_value(manifest("a", json!({"api": "2.0"}))).unwrap();
         assert!(other.runs_on("rac1", "pal", Some(here())).is_err());
         let data: Manifest = serde_json::from_value(manifest("a", json!({"plugin": {}, "api": null}))).unwrap();
@@ -1921,8 +1921,8 @@ mod tests {
         assert!(m.runs_on("rac1", "pal", None).is_ok());
         assert!(m.runs_on("rac1", "pal", Some("windows-arm64")).is_ok());
         assert!(m.runs_on("rac1", "ntsc", None).unwrap_err().contains("Not for this disc"));
-        let newer: Manifest = serde_json::from_value(script("swap", json!({"api": "1.99"}))).unwrap();
-        assert!(newer.runs_on("rac1", "pal", None).unwrap_err().contains("interface 1.99"));
+        let newer: Manifest = serde_json::from_value(script("swap", json!({"api": "1.999"}))).unwrap();
+        assert!(newer.runs_on("rac1", "pal", None).unwrap_err().contains("interface 1.999"));
     }
 
     #[test]
@@ -2181,7 +2181,7 @@ mod tests {
         let dir = tmp.path();
         installed_mod(dir, "pal-only", json!({"games": {"rac1": ["pal"]}}));
         installed_mod(dir, "fine", json!({"version": "1.1.0"}));
-        installed_mod(dir, "newer-api", json!({"api": "1.99"}));
+        installed_mod(dir, "newer-api", json!({"api": "1.999"}));
         std::fs::create_dir_all(dir.join("broken")).unwrap();
         std::fs::write(dir.join("broken").join(MANIFEST), "{ nope").unwrap();
         std::fs::write(
@@ -2194,7 +2194,7 @@ mod tests {
         assert_eq!(view(&views, "pal-only").state, "refused");
         assert!(view(&views, "pal-only").reason.contains("Not for this disc"));
         assert_eq!(view(&views, "fine").state, "ready");
-        assert!(view(&views, "newer-api").reason.contains("interface 1.99"));
+        assert!(view(&views, "newer-api").reason.contains("interface 1.999"));
         assert!(view(&views, "broken").reason.contains("Cannot be read"));
         assert_eq!(view(&views, "broken").name, "broken");
 
