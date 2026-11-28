@@ -30,7 +30,7 @@ import {
   watchFirstDraw,
 } from "./api";
 import { type BakeFailure, bakeFailure } from "./bakeFailure";
-import { COMMANDO, commandoConfig, MOD_MODELS } from "./commando";
+import { COMMANDO, commandoConfig, MOD_MODELS, onlyCommandoGame } from "./commando";
 import { withShownTitles } from "./labels";
 import { stopSlides } from "./motion";
 import { hidePaths } from "./paths";
@@ -628,7 +628,10 @@ function same(key: keyof typeof seen, value: unknown): boolean {
 }
 
 function setLibrary(library: Library | null) {
-  if (!same("library", library)) app.library = library && withShownTitles(library);
+  // OpenRAC: Commando lists its one game (its copy carries every game.json, which the tools read).
+  const shown = library && COMMANDO.on ? onlyCommandoGame(library) : library;
+
+  if (!same("library", shown)) app.library = shown && withShownTitles(shown);
 }
 
 export async function refresh() {

@@ -36,8 +36,9 @@ OpenRAC: Commando (the fork's launcher) carries one game and one mod:
   python3 tools/bundle_standalone.py OUT --only rac2/ntsc --game-build DIR --python DIR \\
       --mod build/mod/package/commando_protocol --builder DIR
 
---only KEY keeps that version alone: its actions, its game.json (with that version only, so the
-extractor refuses any other disc) and its program, which is then the one required. --mod DIR
+--only KEY keeps that version alone: its actions and its program, which is then the one required
+(every game.json is still carried: the extractor reads them all; the launcher's page shows the one
+version, src/lib/commando.ts). --mod DIR
 carries the mod package in mods/<id>/ (only what MOD_KEEP lists: nothing derived from a disc);
 the launcher installs it from there into the game's set-up folder (src/lib/commando.ts), and the
 manifest's version must be the one commando.ts names. --builder DIR carries the mod's model
@@ -272,21 +273,6 @@ def player_actions(android: bool = False, android_games: set[str] | None = None,
     return out
 
 
-def trimmed_manifest(manifest: Path, only: list[str] | None) -> str | None:
-    """games/<game>/game.json as the copy carries it: whole, or with ONLY's versions of it alone;
-    None when ONLY keeps none of its versions (the game is left out)."""
-    text = manifest.read_text(encoding="utf-8")
-    if only is None:
-        return text
-    data = json.loads(text)
-    game = manifest.parent.name
-    versions = {name: v for name, v in data.get("versions", {}).items() if f"{game}/{name}" in only}
-    if not versions:
-        return None
-    data["versions"] = versions
-    return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-
-
 def commando_mod_version(mod_id: str) -> str | None:
     """The mod version COMMANDO_TS names for MOD_ID (`modVersion: "0.2.1"`), if it names it."""
     text = (ROOT / COMMANDO_TS).read_text(encoding="utf-8")
@@ -471,13 +457,12 @@ def main() -> int:
                     or (rel.suffix == ".png" and rel.parent.name == "emission-masks"))
     files.copy_tree(ROOT / WATER_PROFILES, out / WATER_PROFILES,
                     lambda rel: rel.name in {"water-boundaries.json", "ocean-profile.json"})
+    # Every game.json, also with --only: the extractor reads other games' at import (its version
+    # tables). OpenRAC: Commando's page lists its one version alone (src/lib/commando.ts).
     for manifest in sorted((ROOT / "games").glob("*/game.json")):
-        text = trimmed_manifest(manifest, only)
-        if text is None:
-            continue
         dest = out / manifest.relative_to(ROOT)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(text, encoding="utf-8")
+        shutil.copy2(manifest, dest)
     (out / "progress").mkdir(exist_ok=True)
     shutil.copy2(ROOT / "progress/summary.json", out / "progress/summary.json")
     (out / "launcher").mkdir(exist_ok=True)

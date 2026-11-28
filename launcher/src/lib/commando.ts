@@ -9,6 +9,7 @@
 
 import { api } from "./api";
 import type { Config } from "./generated/Config";
+import type { Library } from "./generated/Library";
 import type { PluginView } from "./generated/PluginView";
 
 export const COMMANDO = {
@@ -62,6 +63,12 @@ function joinPath(dir: string, name: string): string {
   const sep = dir.includes("\\") && !dir.includes("/") ? "\\" : "/";
 
   return `${dir.replace(/[\\/]+$/, "")}${sep}${name}`;
+}
+
+/** The library with this launcher's one game alone (its other versions stay: a disc of another
+ *  version is then said to be the wrong one, on the game's page). */
+export function onlyCommandoGame(library: Library): Library {
+  return { ...library, games: library.games.filter((g) => g.id === COMMANDO.game) };
 }
 
 /** The mod as installed in the game's set-up folder, if it is. */

@@ -367,7 +367,10 @@
         {/if}
         {#if portReady && !onAndroid}
           <!-- Start this game without the launcher's window: Steam's own entry, a desktop shortcut. -->
-          <div in:fly|global={arrive(100)}><GameShortcuts version={v.key} /></div>
+          <!-- (Not OpenRAC: Commando's: its Steam entry would take the OpenRAC Launcher's place.) -->
+          {#if !COMMANDO.on}<div in:fly|global={arrive(100)}>
+              <GameShortcuts version={v.key} />
+            </div>{/if}
         {/if}
         {#if portReady}
           <!-- What the port does otherwise than the PS2 game; the game fixes switch back. Folded on

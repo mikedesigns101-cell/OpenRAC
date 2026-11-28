@@ -512,14 +512,6 @@ class Commando(unittest.TestCase):
         plain = bundle.player_actions(only=["rac2/ntsc"])
         self.assertNotIn("mod-models", [a["id"] for a in plain["versions"]["rac2/ntsc"]])
 
-    def test_the_game_json_keeps_that_version_alone(self):
-        rac2 = json.loads(bundle.trimmed_manifest(bundle.ROOT / "games/rac2/game.json", ["rac2/ntsc"]))
-        self.assertEqual(list(rac2["versions"]), ["ntsc"])
-        self.assertEqual(rac2["versions"]["ntsc"]["disc"]["version"], "1.01")
-        self.assertIsNone(bundle.trimmed_manifest(bundle.ROOT / "games/rac1/game.json", ["rac2/ntsc"]))
-        whole = bundle.ROOT / "games/rac1/game.json"
-        self.assertEqual(bundle.trimmed_manifest(whole, None), whole.read_text(encoding="utf-8"))
-
     def test_the_mod_is_carried_without_models_from_a_disc(self):
         version = bundle.commando_mod_version("commando-protocol")
         self.assertTrue(version)
