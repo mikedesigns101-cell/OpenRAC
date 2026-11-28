@@ -12,7 +12,8 @@ import type { Config } from "./generated/Config";
 import type { PluginView } from "./generated/PluginView";
 
 export const COMMANDO = {
-  on: true,
+  /** A boolean, not `true`, so that the OpenRAC branches beside it still type-check and lint. */
+  on: true as boolean,
   name: "OpenRAC: Commando",
   /** The game and the disc this launcher plays. */
   game: "rac2",

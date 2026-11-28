@@ -9,6 +9,7 @@
   import { cubicOut } from "svelte/easing";
   import { fly, slide } from "svelte/transition";
 
+  import CommandoSwitch from "$components/CommandoSwitch.svelte";
   import CountUp from "$components/CountUp.svelte";
   import CrashNotice from "$components/CrashNotice.svelte";
   import DifferencesBlock from "$components/DifferencesBlock.svelte";
@@ -25,6 +26,7 @@
   import SaveManagerBlock from "$components/SaveManagerBlock.svelte";
   import { type ActionView, api, onAndroid, type ReportEntry } from "$lib/api";
   import { app, clock, currentVersion, guard, jobs, openDevelop, run } from "$lib/app.svelte";
+  import { COMMANDO } from "$lib/commando";
   import { choiceFor, programOf } from "$lib/discChoice";
   import { pct } from "$lib/format";
   import { gameMenu, pageAsks, startsPlay } from "$lib/gameMenu.svelte";
@@ -276,7 +278,11 @@
                    opens out, so the band grows smoothly rather than jumping. -->
               {#if startsGame}
                 <div transition:slide={GROW}>
-                  <ModsSwitch version={v} setUp={!!setUp} onopen={() => (app.page = "mods")} />
+                  {#if COMMANDO.on}
+                    <CommandoSwitch setUp={!!setUp} onopen={() => (app.page = "mods")} />
+                  {:else}
+                    <ModsSwitch version={v} setUp={!!setUp} onopen={() => (app.page = "mods")} />
+                  {/if}
                 </div>
               {/if}
               {#if next.hint && !next.job}<p class="line" transition:slide={GROW}>

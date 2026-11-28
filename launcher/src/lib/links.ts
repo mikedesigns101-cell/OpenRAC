@@ -11,7 +11,8 @@ export const EDITOR_REPO_URL = "https://github.com/OpenRAC/OpenRAC-Editor";
 
 export const EDITOR_DOCS_URL = `${EDITOR_REPO_URL}/blob/main/docs/LEVEL_EDITOR.md`;
 
-/** Where players report a crash or a bug. */
-export const ISSUES_URL = "https://github.com/OpenRAC/OpenRAC/issues";
+/** Where players report a crash or a bug. OpenRAC: Commando's are its own fork's (a modded game's
+ *  crash is not OpenRAC's to look into first). */
+export const ISSUES_URL = "https://github.com/mikedesigns101-cell/OpenRAC/issues";
 
 export const PYTHON_URL = "https://www.python.org/downloads/";

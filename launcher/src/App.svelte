@@ -22,6 +22,7 @@
     start,
     updateDiscordPresence,
   } from "$lib/app.svelte";
+  import { COMMANDO } from "$lib/commando";
   import { startDeepLinks } from "$lib/deepLink.svelte";
   import { startGameRequests } from "$lib/gameRequest";
   import { preloadArt } from "$lib/media";
@@ -46,7 +47,10 @@
 
     return () => (loaded ??= load());
   };
-  const modsPage = once(() => import("./pages/Mods.svelte"));
+  // OpenRAC: Commando's Mod tab is its one mod's page (lib/commando.ts).
+  const modsPage = once(() =>
+    COMMANDO.on ? import("./pages/CommandoMod.svelte") : import("./pages/Mods.svelte"),
+  );
   const tasksPage = once(() => import("./pages/Tasks.svelte"));
   const developPage = once(() => import("./pages/Develop.svelte"));
   const lazyPages: Partial<Record<Page, () => Promise<unknown>>> = {
@@ -69,7 +73,7 @@
   // A mod code's link: listened for once the library knows the games it can apply to.
   let linksFollowed = false;
   $effect(() => {
-    if (linksFollowed || !app.library || !app.config?.setupComplete) return;
+    if (COMMANDO.on || linksFollowed || !app.library || !app.config?.setupComplete) return;
     linksFollowed = true;
     void followCodeLinks();
   });
@@ -191,13 +195,16 @@
         if (params.get("modal") === "update") app.showUpdateModal = true;
         // The installed mods are looked at once a day, where they came from a link: what is found
         // is offered in one window and read by the Mods tab, so GitHub is not asked twice.
-        if (app.config?.checkModUpdates) void lookForModUpdates().catch(() => undefined);
+        // OpenRAC: Commando has none of the mod hub's (its one mod comes with it): no looks for
+        // updates of installed mods, no openrac:// links, no index (lib/commando.ts).
+        if (app.config?.checkModUpdates && !COMMANDO.on)
+          void lookForModUpdates().catch(() => undefined);
         // openrac:// links (the website's Install buttons): the start's own, then each one sent.
-        void startDeepLinks().catch(() => undefined);
+        if (!COMMANDO.on) void startDeepLinks().catch(() => undefined);
         // A shortcut's game that could not start: the page for it (gameRequest.ts).
         void startGameRequests(openVersion).catch(() => undefined);
         // Mods from the index kept current: now, then every 6 hours (lib/modAutoUpdate).
-        stopAutoUpdates = startAutoUpdates();
+        if (!COMMANDO.on) stopAutoUpdates = startAutoUpdates();
 
         // ?launch: the version's start (Android's spinning disc), as Play shows it.
         if (params.has("launch") && version) {

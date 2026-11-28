@@ -24,6 +24,7 @@
   } from "$lib/api";
   import { app, guardShown, lookForUpdate, saveConfig } from "$lib/app.svelte";
   import { supports } from "$lib/capabilities";
+  import { COMMANDO } from "$lib/commando";
   import { DISCORD_URL, PYTHON_URL, REPO_URL, SITE_URL } from "$lib/links";
   import { SETTINGS_TEXT } from "$lib/modsText";
   import { nameProblem } from "$lib/multiplayerName";
@@ -537,7 +538,9 @@
       </label>
       <!-- Android has neither: its Games tab is a shelf of discs, and no Discord app on the
            device reads a desktop's rich presence. -->
-      {#if !onAndroid}
+      <!-- OpenRAC: Commando has neither, nor online play: its Steam entry and its Discord status
+           would be OpenRAC's (lib/commando.ts). -->
+      {#if !onAndroid && !COMMANDO.on}
         <AddToSteam />
         <label class="setting">
           <span class="text">
@@ -548,7 +551,7 @@
         </label>
       {/if}
       <!-- The name online mods show the other players; the game gets it as OPENRAC_PLAYER_NAME. -->
-      {#if nameUsed}
+      {#if nameUsed && !COMMANDO.on}
         <div class="field">
           <label for="multiplayer-name">Multiplayer name</label>
           <input
@@ -569,7 +572,7 @@
         </div>
       {/if}
       <!-- Where every game's online play goes; the game gets it as OPENRAC_SERVER. -->
-      {#if !isIos}
+      {#if !isIos && !COMMANDO.on}
         <MultiplayerServer
           bind:host={draft.multiplayerServerHost}
           bind:port={draft.multiplayerServerPort}
@@ -809,16 +812,19 @@
             bind:checked={draft.saveEditorAdvanced}
           />
         </label>
-        <label class="setting">
-          <span class="text">
-            <strong>Developer tools</strong>
-            <small
-              >The Develop tab (builds, checks, decompilation, the console), disc serials and file
-              names.</small
-            >
-          </span>
-          <input type="checkbox" role="switch" class="switch" bind:checked={draft.developer} />
-        </label>
+        <!-- OpenRAC: Commando has no checkout to develop on: no developer tools. -->
+        {#if !COMMANDO.on}
+          <label class="setting">
+            <span class="text">
+              <strong>Developer tools</strong>
+              <small
+                >The Develop tab (builds, checks, decompilation, the console), disc serials and file
+                names.</small
+              >
+            </span>
+            <input type="checkbox" role="switch" class="switch" bind:checked={draft.developer} />
+          </label>
+        {/if}
         {#if draft.developer}
           <!-- What developer tools add: under the switch, set in from it. -->
           <div class="dev">
@@ -914,8 +920,45 @@
       </details>
     </section>
 
+    {#if COMMANDO.on}
+      <!-- About: what this launcher is and where it comes from (GPL-3.0-or-later: the source). -->
+      <section class="panel commando-about">
+        <h2>About</h2>
+        <p>
+          <strong>{COMMANDO.name}</strong>
+          {app.info?.version ?? ""} plays Ratchet &amp; Clank: Going Commando (NTSC-U v1.01) from your
+          own disc, with the mod {COMMANDO.mod.name}.
+        </p>
+        <p>
+          It is a derived version of OpenRAC and of its launcher, made by the mod's author; it is not
+          made or supported by the OpenRAC project. Please report problems with it to its own page, not
+          to OpenRAC.
+        </p>
+        <p>
+          OpenRAC, this launcher and the game program are free software under the GNU General Public
+          License, version 3 or later; the notices of the software they include travel with them.
+          Nothing from the game's disc comes with this launcher: it reads your disc on your computer.
+        </p>
+        <p class="links">
+          <button class="link" onclick={() => void api.openUrl(COMMANDO.sourceUrl)}
+            >Source code of this version</button
+          >
+          · <button class="link" onclick={() => void api.openUrl(COMMANDO.issuesUrl)}
+            >Report a problem</button
+          >
+          · <button class="link" onclick={() => void api.openUrl(COMMANDO.upstreamUrl)}
+            >The original OpenRAC</button
+          >
+          · <button class="link" onclick={() => void api.openUrl(COMMANDO.upstreamSite)}
+            >openrac.dev</button
+          >
+        </p>
+      </section>
+    {/if}
+
     <p class="dim about">
-      OpenRAC Launcher {app.info?.version ?? ""}
+      {COMMANDO.on ? COMMANDO.name : "OpenRAC Launcher"}
+      {app.info?.version ?? ""}
       <!-- The header's links, which Android's navigation has no room for. -->
       {#if onAndroid}
         · <button class="link" onclick={() => void api.openUrl(SITE_URL)}>openrac.dev</button>
@@ -1126,6 +1169,14 @@
 
   .about {
     font-size: 0.75rem;
+  }
+
+  .commando-about p {
+    margin: 0 0 8px;
+  }
+
+  .commando-about .links {
+    margin: 0;
   }
 
   /* Stays in view while there is something to save. */

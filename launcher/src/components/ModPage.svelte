@@ -50,6 +50,7 @@
     onremove,
     ontool = () => undefined,
     builtIn = null,
+    standalone = false,
   }: {
     mod: PluginView;
     source?: ModSources["mods"][string] | null;
@@ -74,6 +75,9 @@
       onbake: () => void;
       ondelete: () => void;
     } | null;
+    /** The page is the whole tab (OpenRAC: Commando's one mod, pages/CommandoMod.svelte): no way
+     *  back to a list, and the mod cannot be removed from it. */
+    standalone?: boolean;
   } = $props();
 
   const bakeProgress = $derived(
@@ -181,7 +185,9 @@
             ? [{ label: T.PANEL.homepage, icon: "external" as const, run: onhomepage }]
             : []),
           { label: T.PANEL.openFolder, icon: "folder" as const, run: onfolder },
-          { label: T.PANEL.remove, icon: "trash" as const, danger: true, run: onremove },
+          ...(standalone
+            ? []
+            : [{ label: T.PANEL.remove, icon: "trash" as const, danger: true, run: onremove }]),
         ],
   );
 
@@ -198,7 +204,7 @@
     // Escape goes back, unless something on the page takes it first: an open menu (a popover), a
     // key cap waiting (it takes every key), a field being typed in (Escape leaves the field).
     const key = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (standalone || e.key !== "Escape" || e.defaultPrevented) return;
       if (document.querySelector(":popover-open")) return;
       const at = e.target as HTMLElement | null;
 
@@ -229,7 +235,7 @@
 </script>
 
 <div class="mod-page">
-  <nav class="crumbs" aria-label={T.MOD_PAGE.crumbsLabel}>
+  {#if !standalone}<nav class="crumbs" aria-label={T.MOD_PAGE.crumbsLabel}>
     <button
       class="back"
       aria-label={T.MOD_PAGE.back}
@@ -240,7 +246,7 @@
       <li><button class="crumb" onclick={() => void back()}>{T.MOD_PAGE.crumbRoot}</button></li>
       <li aria-current="page"><Icon name="next" size={14} /><span>{mod.name}</span></li>
     </ol>
-  </nav>
+  </nav>{/if}
 
   <section class="panel head" class:off={!mod.enabled && mod.kind !== "tool"}>
     <div class="title">

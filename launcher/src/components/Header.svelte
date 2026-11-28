@@ -8,11 +8,15 @@
   import { api, inTauri, onAndroid } from "$lib/api";
   import { app, jobs, openDevelop, type Page, pendingJobs, runningJob } from "$lib/app.svelte";
   import { supports } from "$lib/capabilities";
+  import { COMMANDO } from "$lib/commando";
   import { DISCORD_URL, SITE_URL } from "$lib/links";
   import { channelName, updateLabel } from "$lib/updates";
 
+  import commandoIcon from "../assets/commando-icon.png";
   import Icon, { type IconName } from "./Icon.svelte";
   import Logo from "./Logo.svelte";
+
+  const brandName = COMMANDO.on ? COMMANDO.name : "OpenRAC Launcher";
 
   /** The first run: the bar with the name only, nothing to go to yet. */
   /** `shown`: the page on screen, which follows app.page inside a page's slide (App.svelte), so that
@@ -23,12 +27,12 @@
   // ran (Activity) opens from the running job here and from a game's menu. With
   // developer tools on, Develop is a tab of its own: the checkout, each version and the jobs.
   const tabs = $derived<{ page: Page; label: string; icon: IconName }[]>([
-    { page: "library", label: "Games", icon: "library" },
+    { page: "library", label: COMMANDO.on ? "Game" : "Games", icon: "library" },
     // Every launcher, installed or on a checkout (an installed one mods in its data folder,
     // tools/bundle_standalone.py). Android's has the mods, Enhanced graphics and the packs, without
     // the level editor (no OpenRAC Editor there: Mods.svelte).
-    { page: "mods", label: "Mods", icon: "edit" },
-    ...(app.config?.developer
+    { page: "mods", label: COMMANDO.on ? "Mod" : "Mods", icon: "edit" },
+    ...(app.config?.developer && !COMMANDO.on
       ? [{ page: "develop" as Page, label: "Develop", icon: "terminal" as IconName }]
       : []),
     { page: "settings", label: "Settings", icon: "gear" },
@@ -145,23 +149,30 @@
 <header class="site-header" class:under>
   <!-- The first run: the name, not yet a way back to the games. -->
   {#if setup}
-    <div
-      class="brand"
-      title={app.info?.version ? `OpenRAC Launcher ${app.info.version}` : undefined}
-    >
-      <Logo height={34} />
-      <span class="brand-mark"><Logo mark height={37} label="" /></span>
+    <div class="brand" title={app.info?.version ? `${brandName} ${app.info.version}` : undefined}>
+      {#if COMMANDO.on}
+        <img class="commando-icon" src={commandoIcon} alt="" width="34" height="34" />
+        <span class="commando-name">{COMMANDO.name}</span>
+      {:else}
+        <Logo height={34} />
+        <span class="brand-mark"><Logo mark height={37} label="" /></span>
+      {/if}
       {#if app.info?.version}<small class="ver">{app.info.version}</small>{/if}
     </div>
   {:else}
     <button
       class="brand"
       onclick={() => (app.page = "library")}
-      aria-label="OpenRAC: your games"
-      title={app.info?.version ? `OpenRAC Launcher ${app.info.version}` : undefined}
+      aria-label={COMMANDO.on ? `${COMMANDO.name}: your game` : "OpenRAC: your games"}
+      title={app.info?.version ? `${brandName} ${app.info.version}` : undefined}
     >
-      <Logo height={34} />
-      <span class="brand-mark"><Logo mark height={37} label="" /></span>
+      {#if COMMANDO.on}
+        <img class="commando-icon" src={commandoIcon} alt="" width="34" height="34" />
+        <span class="commando-name">{COMMANDO.name}</span>
+      {:else}
+        <Logo height={34} />
+        <span class="brand-mark"><Logo mark height={37} label="" /></span>
+      {/if}
       <!-- The launcher's version beside the logo, on every page (also in the tooltip, for a phone's
            width, which shows the mark alone). -->
       {#if app.info?.version}<small class="ver">{app.info.version}</small>{/if}
@@ -249,7 +260,17 @@
           </button>
         {/if}
         {#if !inTauri}<span class="preview">Browser preview</span>{/if}
-        {#if !onAndroid}
+        {#if COMMANDO.on}
+          <!-- OpenRAC: Commando links to its own source (the site and Discord are OpenRAC's). -->
+          <div class="links">
+            <button
+              class="site"
+              onclick={() => void api.openUrl(COMMANDO.sourceUrl)}
+              aria-label="Source code"
+              title="Source code (GitHub)"><Icon name="globe" size={18} /></button
+            >
+          </div>
+        {:else if !onAndroid}
           <!-- Where OpenRAC lives: the site and the community, two marks in one capsule of the selected
            tab's dark brown. -->
           <div class="links">
@@ -394,6 +415,22 @@
   /* Its mark alone, for a window too narrow for the name (below). */
   .brand .brand-mark {
     display: none;
+  }
+
+  /* OpenRAC: Commando: its icon and its name in place of OpenRAC's logo (lib/commando.ts). */
+  .commando-icon {
+    display: block;
+    flex: none;
+    border-radius: 8px;
+    animation: logo-in 0.7s var(--ease) both;
+  }
+
+  .commando-name {
+    font-family: var(--font-head);
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
   }
 
   /* The logo comes in when the launcher opens (not on Android, below), and then holds still: its
@@ -732,6 +769,7 @@
      links and the running task give way, and the tabs scroll if they still do not fit. */
   @media (max-width: 560px) {
     .brand > :global(.logo),
+    .commando-name,
     .brand .ver,
     .links,
     .job {
