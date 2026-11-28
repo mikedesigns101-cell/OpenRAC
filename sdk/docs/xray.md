@@ -19,7 +19,8 @@ mod.moby_xray_off(brute);
 // A mark over its head on the HUD.
 openrac_screen_point p{};
 const float head[3] = {pos[0], pos[1], pos[2] + 3.4f};
-if (mod.world_to_screen(head, p) == OPENRAC_HOOK_OK && p.in_front) {
+if (mod.world_to_screen(head, p) == OPENRAC_HOOK_OK && p.in_front && p.x >= 0 && p.x <= 512
+    && p.y >= 0 && p.y <= 416) {
     openrac_hud_text t{};
     std::snprintf(t.text, sizeof t.text, "V");
     t.x = p.x / 512.0f;   // hud_text_set takes 0 to 1 of the game's 4:3 picture
@@ -64,8 +65,10 @@ frame was drawn with (a mod's `camera_set`, the player's field of view and a wid
 included): `x`, `y` in the game's 2D picture (0 to 512 across, 0 to 416 down: the 4:3 column of
 the middle of the frame the HUD is drawn in; past it on a wider window), `px`, `py` in the frame's
 pixels from its top left (`width` x `height`), and `in_front`. Divide `x` by 512 and `y` by 416 for
-`hud_text_set`. The camera is the last frame's: called from a frame callback it is the frame
-before the tick's.
+`hud_text_set`. `hud_text_set` refuses a line whose `x` or `y` is outside 0 to 1 (the whole call),
+so a point past the 4:3 column on a wide window has no HUD line: leave it out (as the example
+does only with `in_front`, test `x` too) or clamp it to the column's edge as an arrow. The camera
+is the last frame's: called from a frame callback it is the frame before the tick's.
 
 `camera_lens(out)` gives that camera: eye, forward, left and up (the game's axes), the tangents of
 half the field of view across (the whole frame's width) and down, the view and projection
