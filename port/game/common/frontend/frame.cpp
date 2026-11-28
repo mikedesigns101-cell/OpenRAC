@@ -2010,6 +2010,47 @@ TickMobys pose_mobys(
             }
         }
     }
+    // The mobys the mods marked for their silhouette (interface 1.128), by address: the mark and its
+    // number among this tick's. A marked moby the game left out of its list (behind a wall, past its
+    // zone's sight) is read from its address too while it is in the camera's sight and within the
+    // mark's distance: posed for its silhouette alone, never drawn as itself (taken out of `live`
+    // below, into xray_extra).
+    const std::vector<mods::MobyXrayDraw> xray_marks =
+        world_ran && !under_menu && !only_own_camera ? mods::moby_xrays_drawn()
+                                                     : std::vector<mods::MobyXrayDraw>{};
+    std::unordered_map<std::uint32_t, std::pair<const mods::MobyXrayDraw*, std::uint32_t>> xray_of;
+    for (std::size_t i = 0; i < xray_marks.size(); ++i) {
+        xray_of.emplace(xray_marks[i].address, std::make_pair(&xray_marks[i], std::uint32_t(i + 1)));
+    }
+    const std::size_t xray_forced_from = state.mobys.size();
+    for (const mods::MobyXrayDraw& mark : xray_marks) {
+        if (std::any_of(state.mobys.begin(), state.mobys.end(), [&](const host::LiveMoby& m) {
+                return m.address == mark.address;
+            })) {
+            continue;
+        }
+        const std::size_t before = state.mobys.size();
+        g->render.profile->add_moby(ram, mark.address, state.mobys);
+        if (state.mobys.size() == before) {
+            continue;
+        }
+        const host::LiveMoby& m = state.mobys[before];
+        float v[3], d = 0.0f, len2 = 0.0f;
+        for (int a = 0; a < 3; ++a) {
+            v[a] = m.matrix[12 + a] - state.camera_position[a];
+            d += v[a] * state.forward[a];
+            len2 += v[a] * v[a];
+        }
+        const float r = std::max(m.world_sphere[3], 4.0f);
+        const float side = std::sqrt(std::max(len2 - d * d, 0.0f));
+        // In sight as the poses' cull has it (a half angle of 61 degrees), and near enough.
+        const bool in_sight = d >= -r && side <= d * 1.8f + r * 1.5f;
+        if (!in_sight || std::sqrt(len2) > mark.max_distance + r) {
+            state.mobys.resize(before);
+        }
+    }
+    std::vector<XrayRange> xray_ranges;
+    std::size_t xray_forced_live = static_cast<std::size_t>(-1);
     openrac_infobot_presentation infobot_presentation{};
     const bool presenting_infobot =
         openrac_game_play_host && openrac_game_play_host->infobot_presentation
@@ -2069,6 +2110,10 @@ TickMobys pose_mobys(
     for (std::size_t index = 0; index < state.mobys.size(); ++index) {
         bool light_only = false;
         const host::LiveMoby& m = state.mobys[index];
+        // The marked mobys the game did not draw come last: their instances from here on.
+        if (index >= xray_forced_from && xray_forced_live == static_cast<std::size_t>(-1)) {
+            xray_forced_live = live.size();
+        }
         if (presenting_infobot && (hero_rig.owns(m.address) || m.class_id == 0)) {
             continue;
         }
@@ -3018,6 +3063,16 @@ TickMobys pose_mobys(
             live_views.resize(live.size(), kEveryView);
             live_views.push_back(drawn_views);
         }
+        // A marked moby (interface 1.128): its instance and its layers' for its silhouette.
+        if (const auto marked = xray_of.find(m.address); marked != xray_of.end() && !light_only) {
+            xray_ranges.push_back(
+                {live.size(),
+                 1 + worn_count,
+                 marked->second.first->rgba,
+                 marked->second.first->flags,
+                 marked->second.second}
+            );
+        }
         live.push_back(instance);
         live_addresses.push_back(m.address);
         // Its layers (interface 1.126), right after it: posed below with its pose.
@@ -3032,6 +3087,11 @@ TickMobys pose_mobys(
             );
             live_joints.push_back(0);
         }
+    }
+    // The block of `live` the marked mobys the game did not draw took (interface 1.128).
+    const std::size_t xray_forced_end = live.size();
+    if (xray_forced_live == static_cast<std::size_t>(-1)) {
+        xray_forced_live = xray_forced_end;
     }
     if (!only_own_camera && !under_menu && presenting_infobot
         && infobot_presentation.special_item) {
@@ -3394,6 +3454,48 @@ TickMobys pose_mobys(
     if (per_view) {
         live_views.resize(live.size(), kEveryView);
     }
+    // The marked mobys the game did not draw (interface 1.128): posed above with the others, they
+    // leave `live` for their silhouette alone. What the loop's end put after them moves down.
+    std::vector<scene::XrayDraw> xray_extra;
+    if (xray_forced_end > xray_forced_live) {
+        std::vector<XrayRange> kept;
+        for (const XrayRange& r : xray_ranges) {
+            if (r.first >= xray_forced_live) {
+                for (std::size_t i = r.first; i < r.first + r.count && i < xray_forced_end; ++i) {
+                    xray_extra.push_back({live[i], r.rgba, r.flags, r.number});
+                }
+            } else {
+                kept.push_back(r);
+            }
+        }
+        xray_ranges = std::move(kept);
+        const auto cut = [&](auto& v) {
+            if (v.size() >= xray_forced_end) {
+                v.erase(
+                    v.begin() + static_cast<std::ptrdiff_t>(xray_forced_live),
+                    v.begin() + static_cast<std::ptrdiff_t>(xray_forced_end)
+                );
+            }
+        };
+        cut(live);
+        cut(live_addresses);
+        cut(live_joints);
+        cut(live_views);
+    }
+    // OPENRAC_XRAY_LOG=1: once a second, the marks and how many the game drew or the port added.
+    static const bool xray_log = [] {
+        const char* v = std::getenv("OPENRAC_XRAY_LOG");
+        return v != nullptr && v[0] == '1';
+    }();
+    if (xray_log && g->index % 60 == 0 && world_ran) {
+        log::info(
+            "[xray] frame {}: {} marks, {} instances drawn by the game, {} posed for the silhouette alone",
+            g->index,
+            xray_marks.size(),
+            xray_ranges.size(),
+            xray_extra.size()
+        );
+    }
     return {
         std::move(live),
         std::move(live_addresses),
@@ -3408,7 +3510,9 @@ TickMobys pose_mobys(
         std::move(point_lit),
         shrub_draws(ram, world_ran && !under_menu),
         scenery_matrices(ram, world_ran && !under_menu, state),
-        std::move(live_views)
+        std::move(live_views),
+        std::move(xray_ranges),
+        std::move(xray_extra)
     };
 }
 
@@ -3575,6 +3679,8 @@ void keep_tick(
     k.has_state = true;
     k.live = std::move(mobys.live);
     k.live_views = std::move(mobys.live_views);
+    k.xray = std::move(mobys.xray);
+    k.xray_extra = std::move(mobys.xray_extra);
     k.target_mobys = std::move(mobys.target_mobys);
     k.texture_variant = g->render.profile->texture_variant(ram);
     k.addresses = std::move(mobys.addresses);

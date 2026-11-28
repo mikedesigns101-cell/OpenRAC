@@ -77,8 +77,28 @@ struct GameScenery {
     std::vector<int> mod_hidden_ties;
 };
 
+// One instance of a moby a mod marked for its silhouette (OpenRAC Commando's interface 1.128,
+// openrac_api.moby_xray): the instance as this frame draws it (its class's model, a mod's mesh or one
+// of its layers, its palette in this frame's), its colour (0 to 1), OPENRAC_XRAY_* flags (1 the rim
+// only, 2 the whole moby over everything) and its moby's number among the frame's marked (1 to 255,
+// the instances of one moby share it).
+inline constexpr std::uint32_t kXrayOutline = 0x1;  // OPENRAC_XRAY_OUTLINE
+inline constexpr std::uint32_t kXrayAlways = 0x2;   // OPENRAC_XRAY_ALWAYS
+struct XrayDraw {
+    Instance instance;
+    std::array<float, 4> rgba{};
+    std::uint32_t flags = 0;
+    std::uint32_t number = 0;
+};
+
 class LevelScene {
 public:
+    // The marked mobys' instances this frame draws in silhouette (XrayRenderer), each frame.
+    void set_xray(std::vector<XrayDraw> draws) { m_xray = std::move(draws); }
+    bool has_xray() const { return !m_xray.empty(); }
+    // Draws them over the frame's colour, tested against its depth (scene/xray.cpp).
+    void draw_xray(const renderer::FrameInput& input, renderer::RenderState& state);
+
     // Supplies optional visual deformation to external velocity passes without owning the provider.
     std::string deformation_vertex(std::string source) const;
     // Optional surface-layer alpha coverage for the object's velocity pass.
@@ -988,6 +1008,38 @@ private:
     std::unique_ptr<renderer::DebugLines>
         m_culling_lines;  // Allocated only for inspection; the scene retains move ownership.
     bool m_sun_enabled = false, m_sun_ready = false;
+    // The silhouettes (interface 1.128, scene/xray.cpp): this frame's instances, their program and
+    // one vertex array with its own instance buffer for each (remade when its model changes).
+    std::vector<XrayDraw> m_xray;
+    renderer::Shader m_xray_shader;
+    bool m_xray_failed = false;
+    std::vector<Group> m_xray_groups;
+    void release_xray();
+};
+
+// The mods' marked mobys in silhouette (interface 1.128), a bucket after the effects: nothing is
+// recorded on a frame without marks.
+class XrayRenderer : public renderer::BucketRenderer {
+public:
+    explicit XrayRenderer(LevelScene& scene)
+        : BucketRenderer("mod xray", renderer::Bucket::Particles),
+          m_scene(scene) {}
+
+    void render(const renderer::FrameInput& input, renderer::RenderState& state) override {
+        m_scene.draw_xray(input, state);
+    }
+
+    [[nodiscard]] Result<void> record_colour(
+        const renderer::FrameInput& input, renderer::RenderState& state
+    ) override;
+
+    bool prepares_colour_chain() const override { return true; }
+
+    // No timing scope of the renderer's around a frame without marks (as before the bucket).
+    bool owns_gpu_timing() const override { return true; }
+
+private:
+    LevelScene& m_scene;
 };
 
 // One layer of a LevelScene, as a bucket of the renderer.

@@ -96,6 +96,7 @@ inline constexpr GLenum GL_DEPTH_TEST = 0x0B71;
 inline constexpr GLenum GL_DEPTH_CLAMP = 0x864F;
 inline constexpr GLenum GL_STENCIL_TEST = 0x0B90;
 inline constexpr GLenum GL_KEEP = 0x1E00;
+inline constexpr GLenum GL_REPLACE = 0x1E01;
 inline constexpr GLenum GL_INCR_WRAP = 0x8507;
 inline constexpr GLenum GL_DECR_WRAP = 0x8508;
 inline constexpr GLenum GL_BLEND = 0x0BE2;

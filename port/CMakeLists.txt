@@ -325,6 +325,7 @@ add_library(openrac_mods STATIC
   game/common/mod_api/moby_relocate.cpp
   game/common/mod_api/gadgets.cpp
   game/common/mod_api/glider.cpp
+  game/common/mod_api/xray.cpp
   game/common/mod_api/moby_textures.cpp
   game/common/mod_api/party.cpp
   game/common/mod_api/play.cpp

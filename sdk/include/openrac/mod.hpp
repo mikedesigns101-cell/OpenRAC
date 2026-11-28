@@ -2332,6 +2332,65 @@ public:
       return m_api->on_glider(m_handle, fn, user);
     }
 
+    // Since 1.128: moby_xray, world_to_screen and camera_lens.
+    bool has_moby_xray() const {
+      return m_api->api_minor >= 128 &&
+             m_api->size >= offsetof(openrac_api, moby_xray) + sizeof(void *);
+    }
+    bool has_world_to_screen() const {
+      return m_api->api_minor >= 128 &&
+             m_api->size >= offsetof(openrac_api, camera_lens) + sizeof(void *);
+    }
+
+    // Since 1.128: the moby at `address` drawn in silhouette through what covers it
+    // (openrac_moby_xray). Returns OPENRAC_HOOK_OK, _TAKEN, _FULL or _UNKNOWN.
+    int moby_xray(std::uint32_t address, const openrac_moby_xray &xray) const {
+      if (!has_moby_xray()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->moby_xray(m_handle, address, &xray);
+    }
+
+    // Since 1.128: a silhouette of colour `rgba` (0xRRGGBBAA) for `ticks` ticks (0: until taken
+    // off), only where the moby is covered, filled (or its rim with `outline`).
+    int moby_xray(std::uint32_t address, std::uint32_t rgba, int ticks = 0,
+                  bool outline = false) const {
+      openrac_moby_xray xray{};
+      xray.size = sizeof xray;
+      xray.flags = outline ? OPENRAC_XRAY_OUTLINE : 0u;
+      for (int i = 0; i < 4; ++i) {
+        xray.rgba[i] = static_cast<float>((rgba >> (24 - 8 * i)) & 0xFFu) / 255.0f;
+      }
+      xray.ticks = ticks;
+      return moby_xray(address, xray);
+    }
+
+    // Since 1.128: takes the mod's mark off the moby at `address`.
+    int moby_xray_off(std::uint32_t address) const {
+      if (!has_moby_xray()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      return m_api->moby_xray(m_handle, address, nullptr);
+    }
+
+    // Since 1.128: where `position` is on the screen with the last frame's camera.
+    int world_to_screen(const float position[3], openrac_screen_point &out) const {
+      if (!has_world_to_screen()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      out.size = sizeof out;
+      return m_api->world_to_screen(position, &out);
+    }
+
+    // Since 1.128: the camera the last frame was drawn with, its lens included.
+    int camera_lens(openrac_camera_lens &out) const {
+      if (!has_world_to_screen()) {
+        return OPENRAC_HOOK_UNKNOWN;
+      }
+      out.size = sizeof out;
+      return m_api->camera_lens(&out);
+    }
+
     // Since 1.126: takes off the mod's layer `index` of the moby at `address`.
     int moby_layer_off(std::uint32_t address, int index) const {
       openrac_moby_layer layer{};

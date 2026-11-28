@@ -476,6 +476,34 @@ struct MobyLayerDraw {
 // The mods' layers of this level load, by address then layer. From any thread.
 std::vector<MobyLayerDraw> moby_layers_drawn();
 
+// A moby a mod marked to be seen through what covers it (openrac_api.moby_xray, interface 1.128):
+// its address and class, the colour (0 to 1), OPENRAC_XRAY_* flags and how far from the camera it is
+// drawn for its silhouette when the game leaves it out of its draw list.
+struct MobyXrayDraw {
+    std::uint32_t address = 0;
+    int oclass = -1;
+    std::array<float, 4> rgba{};
+    std::uint32_t flags = 0;
+    float max_distance = OPENRAC_MOBY_XRAY_DISTANCE;
+};
+
+// The mods' live marks of this level load, by address. From any thread.
+std::vector<MobyXrayDraw> moby_xrays_drawn();
+
+// The camera the last frame was drawn with (interface 1.128: world_to_screen, camera_lens): its
+// view and projection, the eye, the frame's size and the share of its width the game's 2D takes.
+struct DrawnCamera {
+    std::array<float, 16> view{};
+    std::array<float, 16> projection{};
+    std::array<float, 3> eye{};
+    int width = 0, height = 0;
+    float picture_scale = 1.0f;
+};
+
+// Kept by the frame that drew a level's world, read by the mods. From any thread.
+void set_drawn_camera(const DrawnCamera& camera);
+std::optional<DrawnCamera> drawn_camera();
+
 // The looks mods gave weapons' shots (openrac_api.weapon_look, interface 1.29) on the particle
 // records the game made for them (their mobys, blasts and guns), by record address (each look's
 // moby is the record's address), read once a tick. From the game's thread.
@@ -589,6 +617,10 @@ void gadgets_reset();
 // to the mods' callbacks, and the pads and callbacks forgotten at the mods' unload.
 void glider_frame();
 void glider_reset();
+// The mods' x-ray marks (interface 1.128, mod_api/xray.cpp): counted down and the gone ones dropped
+// once a tick, all forgotten at the mods' unload.
+void xray_frame();
+void xray_reset();
 // Whether a mod of the list asks for the game's RAM past 32 MiB ("expanded_ram", 1.127), read
 // before the game's memory is made.
 bool wants_expanded_ram(const std::filesystem::path& list, bool purist);

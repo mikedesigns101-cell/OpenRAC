@@ -253,3 +253,6 @@
 251	glider_pad_add	1992	int (*)(openrac_mod *, const openrac_glider_pad *)
 252	glider_pad_remove	2000	int (*)(openrac_mod *, int)
 253	on_glider	2008	int (*)(openrac_mod *, openrac_glider_fn, void *)
+254	moby_xray	2016	int (*)(openrac_mod *, uint32_t, const openrac_moby_xray *)
+255	world_to_screen	2024	int (*)(const float *, openrac_screen_point *)
+256	camera_lens	2032	int (*)(openrac_camera_lens *)

@@ -354,6 +354,13 @@ One of the mod's pages of the game's own menus (Mod::ui_page): set what it shows
 | `int glider_pad_add(const openrac_glider_pad &pad) const` | Since 1.127: a launch pad for the game's Glider (openrac_glider_pad). Returns the pad's number or OPENRAC_HOOK_UNKNOWN. |
 | `int glider_pad_remove(int pad) const` | Since 1.127: takes the mod's pad `pad` away from the next load of its level. |
 | `int on_glider(openrac_glider_fn fn, void *user) const` | Since 1.127: `fn` called with each thing that happens at the mod's pads. Only while the mod loads. |
+| `bool has_moby_xray() const` | Since 1.128: moby_xray, world_to_screen and camera_lens. |
+| `bool has_world_to_screen() const` |  |
+| `int moby_xray(std::uint32_t address, const openrac_moby_xray &xray) const` | Since 1.128: the moby at `address` drawn in silhouette through what covers it (openrac_moby_xray). Returns OPENRAC_HOOK_OK, _TAKEN, _FULL or _UNKNOWN. |
+| `int moby_xray(std::uint32_t address, std::uint32_t rgba, int ticks = 0, bool outline = false) const` | Since 1.128: a silhouette of colour `rgba` (0xRRGGBBAA) for `ticks` ticks (0: until taken off), only where the moby is covered, filled (or its rim with `outline`). |
+| `int moby_xray_off(std::uint32_t address) const` | Since 1.128: takes the mod's mark off the moby at `address`. |
+| `int world_to_screen(const float position[3], openrac_screen_point &out) const` | Since 1.128: where `position` is on the screen with the last frame's camera. |
+| `int camera_lens(openrac_camera_lens &out) const` | Since 1.128: the camera the last frame was drawn with, its lens included. |
 | `int moby_layer_off(std::uint32_t address, int index) const` | Since 1.126: takes off the mod's layer `index` of the moby at `address`. |
 | `int moby_model_at_posed(std::uint32_t address, int model) const` | Since 1.120: draws the moby at `address` with `model`, a skinned mesh posed by the moby's own joints (moby_model_at with OPENRAC_MODEL_GAME_POSE): the class's model with pieces of the mod's added and weighted to its joints, without seams. Returns OPENRAC_HOOK_OK, _TAKEN or _UNKNOWN. |
 | `bool has_particle_texture_register() const` | Since 1.33: whether the port registers particle textures (particle_texture_register). |

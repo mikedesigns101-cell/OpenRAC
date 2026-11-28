@@ -857,5 +857,9 @@ int api_hero_seq_import(openrac_mod* mod, int level, int seq);
 int api_glider_pad_add(openrac_mod* mod, const openrac_glider_pad* pad);
 int api_glider_pad_remove(openrac_mod* mod, int pad);
 int api_on_glider(openrac_mod* mod, openrac_glider_fn fn, void* user);
+// A moby's silhouette through cover, a point on the screen and the drawn camera (1.128, xray.cpp).
+int api_moby_xray(openrac_mod* mod, std::uint32_t address, const openrac_moby_xray* xray);
+int api_world_to_screen(const float position[3], openrac_screen_point* out);
+int api_camera_lens(openrac_camera_lens* out);
 
 }  // namespace openrac::mods::detail

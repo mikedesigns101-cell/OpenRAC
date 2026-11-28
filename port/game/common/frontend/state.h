@@ -75,6 +75,17 @@ constexpr std::uint64_t pose_key(std::uint32_t address, std::uint32_t model) {
     return (std::uint64_t{model} << 32) | address;
 }
 
+// A moby a mod marked for its silhouette (interface 1.128, mods::moby_xrays_drawn), as a tick drew
+// it: its instances in Kept::live (`first`, `count`: its own and its layers'), its colour and
+// OPENRAC_XRAY_* flags, and its number among the tick's marked mobys (the scene's stencil value).
+struct XrayRange {
+    std::size_t first = 0;
+    std::size_t count = 0;
+    std::array<float, 4> rgba{};
+    std::uint32_t flags = 0;
+    std::uint32_t number = 0;
+};
+
 // One tick's scene, as frame() read it from the game, for the frames drawn until the next tick
 // (between), and the last tick's camera and moby matrices to move them from.
 struct Kept {
@@ -88,6 +99,10 @@ struct Kept {
     // Split screen drawn in one capture: the views that draw each live instance (bit n: view n,
     // frontend/view_mobys.h); empty when every view draws every one.
     std::vector<std::uint8_t> live_views;
+    // The mods' marked mobys (interface 1.128): the ones in `live`, and those the game did not draw,
+    // posed for their silhouette alone (never drawn as themselves), with their marks.
+    std::vector<XrayRange> xray;
+    std::vector<scene::XrayDraw> xray_extra;
     std::unordered_map<std::uint32_t, renderer::Mat4> prev_matrices;
     // Each moby's move the tick before the last (from two ticks ago to prev_matrices), where both
     // ticks had it, and the eye's (prev_state's from the one before): a frame between ticks moves
@@ -200,6 +215,9 @@ struct TickMobys {
     std::optional<scene::GameScenery> scenery;
     // The views that draw each instance of `live` (Kept::live_views); empty: every view.
     std::vector<std::uint8_t> live_views;
+    // The mods' marked mobys (Kept::xray, Kept::xray_extra).
+    std::vector<XrayRange> xray;
+    std::vector<scene::XrayDraw> xray_extra;
 };
 
 // The producer's next scene while the worker owns the previous rendered snapshot.

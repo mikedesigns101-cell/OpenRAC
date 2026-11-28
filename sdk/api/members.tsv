@@ -255,3 +255,6 @@ hero_seq_import	hero	1.127	experimental
 glider_pad_add	world	1.127	experimental
 glider_pad_remove	world	1.127	experimental
 on_glider	world	1.127	experimental
+moby_xray	visuals	1.128	experimental
+world_to_screen	camera	1.128	experimental
+camera_lens	camera	1.128	experimental

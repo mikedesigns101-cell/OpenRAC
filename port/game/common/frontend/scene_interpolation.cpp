@@ -241,6 +241,15 @@ void upload_instances(SceneFrame& frame) {
 
     frame.owner.scene.set_variant(frame.scene.texture_variant);
     frame.owner.scene.set_instances(scene::Layer::Mobys, drawn);
+    // The mods' marked mobys (interface 1.128): their instances as this frame draws them (the
+    // drawn ones between ticks as the others), and the ones posed for their silhouette alone.
+    std::vector<scene::XrayDraw> xray = frame.scene.xray_extra;
+    for (const XrayRange& r : frame.scene.xray) {
+        for (std::size_t i = r.first; i < r.first + r.count && i < live.size(); ++i) {
+            xray.push_back({live[i], r.rgba, r.flags, r.number});
+        }
+    }
+    frame.owner.scene.set_xray(std::move(xray));
     if (!frame.scene.live_views.empty()) {
         frame.mobys = drawn;
     }

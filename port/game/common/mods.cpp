@@ -1146,6 +1146,9 @@ void fill_api(const Host& host) {
     g_api.glider_pad_add = api_glider_pad_add;
     g_api.glider_pad_remove = api_glider_pad_remove;
     g_api.on_glider = api_on_glider;
+    g_api.moby_xray = api_moby_xray;
+    g_api.world_to_screen = api_world_to_screen;
+    g_api.camera_lens = api_camera_lens;
     g_api.moby_skin_at = api_moby_skin_at;
     g_api_without_native_vulkan = g_api;
     g_api_without_native_vulkan.graphics = api_graphics_without_native_vulkan;
@@ -1907,6 +1910,8 @@ void run_frame_callbacks() {
     gadgets_frame();
     // The game's Glider of the mods' pads (1.127): its events.
     glider_frame();
+    // The mods' x-ray marks (1.128): their ticks, and the ones whose moby went.
+    xray_frame();
     update_native_weapons();
     for (const FrameCallback& c : g_frames) {
         c.fn(c.user);
@@ -2200,6 +2205,7 @@ void reset() {
     g_list_seen.reset();
     gadgets_reset();
     glider_reset();
+    xray_reset();
     detail::hero_anim_reset();
     reset_save_data();
     g_list_wait = 0;

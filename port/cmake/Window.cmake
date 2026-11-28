@@ -456,6 +456,7 @@ openrac_add_test(material_transport SOURCES enhanced/tests/material_transport_te
 # link without a graphics context) and this.
 add_library(openrac_scene_renderer STATIC
   scene/culling_debug.cpp
+  scene/xray.cpp
   scene/level_renderer.cpp
   scene/object_preview.cpp
   scene/depth_prepass.cpp

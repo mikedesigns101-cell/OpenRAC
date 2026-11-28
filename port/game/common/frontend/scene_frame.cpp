@@ -435,6 +435,25 @@ void set_camera(SceneFrame& frame) {
         frame.output.freecam = frame.output.camera_debug.settings.enabled;
         frame.output.camera_level = scene.level;
     }
+    // The camera this frame draws a level's world with, for the mods' world_to_screen and
+    // camera_lens (interface 1.128).
+    if (has_camera && (scene.draws & kLevelLayers) != 0 && frame.output.width > 0
+        && frame.output.height > 0) {
+        mods::DrawnCamera drawn_camera;
+        std::copy(input.camera.view.begin(), input.camera.view.end(), drawn_camera.view.begin());
+        std::copy(
+            input.camera.projection.begin(),
+            input.camera.projection.end(),
+            drawn_camera.projection.begin()
+        );
+        std::copy(
+            input.camera.position.begin(), input.camera.position.end(), drawn_camera.eye.begin()
+        );
+        drawn_camera.width = frame.output.width;
+        drawn_camera.height = frame.output.height;
+        drawn_camera.picture_scale = picture_scale;
+        mods::set_drawn_camera(drawn_camera);
+    }
     const auto& visibility_camera = input.culling_camera ? *input.culling_camera : input.camera;
     owner.scene.choose_scenery(
         frame.graphics.draw_distance_scale(),

@@ -277,6 +277,7 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `moby_textures_class` | 1.120 | experimental | yes | yes | yes |
 | `moby_skin_at` | 1.122 | experimental | yes | yes | part |
 | `moby_layer_at` | 1.126 | experimental | yes | yes | part |
+| `moby_xray` | 1.128 | experimental | yes | yes | part |
 
 ## camera
 
@@ -292,6 +293,8 @@ The members of `openrac_api` ([c-api.md](c-api.md)) grouped by what they do. The
 | `camera_shake` | 1.33 | experimental | yes | yes | no |
 | `camera_visibility_bypass` | 1.33 | experimental | yes | yes | yes |
 | `camera_fov` | 1.35 | experimental | yes | yes | yes |
+| `world_to_screen` | 1.128 | experimental | yes | yes | yes |
+| `camera_lens` | 1.128 | experimental | yes | yes | yes |
 
 ## sound
 

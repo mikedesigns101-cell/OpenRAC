@@ -171,9 +171,13 @@ extern "C" {
  * hidden (moby_layer_at, openrac_moby_layer), and 1.127 the hero's seqs of
  * another level where his class lacks them, and the game's Glider from a launch
  * pad in any level (hero_seq_import, glider_pad_add, glider_pad_remove,
- * on_glider; the manifest's "expanded_ram").
+ * on_glider; the manifest's "expanded_ram"), and 1.128 a moby's silhouette
+ * drawn through what covers it, as a weapon's sight shows it (moby_xray,
+ * openrac_moby_xray), a point of the world on the screen (world_to_screen,
+ * openrac_screen_point) and the camera the frame was drawn with, its lens
+ * included (camera_lens, openrac_camera_lens).
  */
-#define OPENRAC_MOD_API_MINOR 127
+#define OPENRAC_MOD_API_MINOR 128
 
 /* OpenRAC Commando's block of minors: the last minor it shares with OpenRAC's interface, and its
  * own first. OpenRAC Commando (the fork mikedesigns101-cell/OpenRAC) shares OpenRAC's interface up
@@ -2366,6 +2370,69 @@ typedef struct openrac_glider_pad {
  * comes about 35 units ahead of the pad and 17 below it. Since 1.127. */
 #define OPENRAC_GLIDER_LEVELED 9
 
+/* openrac_api.moby_xray: the mobys the mods together may mark at once, and how far from the camera
+ * (the game's units) a marked moby the game does not draw (out of its draw list behind a wall) is
+ * still drawn for its silhouette by default. Since 1.128. */
+#define OPENRAC_MOBY_XRAY_MAX 16
+#define OPENRAC_MOBY_XRAY_DISTANCE 30.0f
+
+/* openrac_moby_xray.flags. OUTLINE: only its edge, strongest where the surface turns away from the
+ * camera (a rim), the inside left clear; else filled with the colour. ALWAYS: the whole moby over
+ * everything; else (the default) the parts of it that are seen are drawn as they are and only the
+ * covered parts as the silhouette. Since 1.128. */
+#define OPENRAC_XRAY_OUTLINE 0x1u
+#define OPENRAC_XRAY_ALWAYS 0x2u
+
+/* A moby's silhouette drawn through what covers it (openrac_api.moby_xray), in a flat colour (`rgba`,
+ * each 0 to 1; alpha its opacity) over the level's geometry, posed as the moby is drawn (its class's
+ * model, moby_model_at's mesh and its layers alike). `ticks`: the game ticks it lasts (it goes by
+ * itself after them); 0 or less until the mod takes it off. `max_distance`: how far from the camera
+ * the moby is drawn for its silhouette when the game itself does not draw it (0:
+ * OPENRAC_MOBY_XRAY_DISTANCE); a moby the game draws is marked at any distance. Since 1.128. */
+typedef struct openrac_moby_xray {
+    /* sizeof(openrac_moby_xray), set by the mod. */
+    uint32_t size;
+    uint32_t flags;
+    float rgba[4];
+    int32_t ticks;
+    float max_distance;
+} openrac_moby_xray;
+
+/* A point of the world on the screen (openrac_api.world_to_screen), with the camera the last frame
+ * was drawn with (a mod's camera_set and the player's lens included): `x`, `y` in the game's 2D
+ * picture (0 to 512 across, 0 to 416 down, the 4:3 column the HUD and hud_text_set use; outside it
+ * on a wider window), `px`, `py` in the frame's pixels (`width` x `height`, from its top left), and
+ * `in_front` 1 when the point is ahead of the camera (else the other values are where it would be,
+ * mirrored). Since 1.128. */
+typedef struct openrac_screen_point {
+    /* sizeof(openrac_screen_point), set by the mod. */
+    uint32_t size;
+    float x, y;
+    float px, py;
+    int32_t width, height;
+    int32_t in_front;
+} openrac_screen_point;
+
+/* The camera the last frame was drawn with (openrac_api.camera_lens): the eye and its unit rows as
+ * openrac_camera's, the tangents of half its field of view across and down (the picture's width,
+ * a wider window included), its view and projection matrices (column-major, as OpenGL takes them;
+ * the projection is reversed depth), the frame's size in pixels and the share of its width the
+ * game's 2D column takes (1 on a 4:3 frame). Since 1.128. */
+typedef struct openrac_camera_lens {
+    /* sizeof(openrac_camera_lens), set by the mod. */
+    uint32_t size;
+    float eye[3];
+    float forward[3];
+    float left[3];
+    float up[3];
+    float tan_half_fov_x;
+    float tan_half_fov_y;
+    float view[16];
+    float projection[16];
+    int32_t width, height;
+    float picture_scale;
+} openrac_camera_lens;
+
 /* What happened at one of the mod's pads (openrac_api.on_glider): which, and where the hero (or the
  * glider) was. Since 1.127. */
 typedef struct openrac_glider_event {
@@ -4026,6 +4093,25 @@ typedef struct openrac_api {
      * pads (openrac_glider_event). Only while the mod loads. Returns OPENRAC_HOOK_OK,
      * OPENRAC_HOOK_TOO_LATE or OPENRAC_HOOK_UNKNOWN. Since 1.127. */
     int (*on_glider)(openrac_mod* mod, openrac_glider_fn fn, void* user);
+
+    /* Marks the moby at `address` (`xray`), or takes the mod's mark off (`xray` null): its
+     * silhouette is drawn over the level's geometry in a flat colour, by default only where
+     * something covers it (openrac_moby_xray). A marked moby the game leaves out of its draw list
+     * is still drawn for its silhouette while it is in the camera's sight within
+     * xray->max_distance. A mark goes by itself after its ticks, when the moby is freed or its slot
+     * made another class, and with the level load; marking again replaces the mod's own. Returns
+     * OPENRAC_HOOK_OK, OPENRAC_HOOK_TAKEN (another mod's mark), OPENRAC_HOOK_FULL with
+     * OPENRAC_MOBY_XRAY_MAX mobys marked, or OPENRAC_HOOK_UNKNOWN (no live moby there, bad numbers,
+     * a game without it). Since 1.128. */
+    int (*moby_xray)(openrac_mod* mod, uint32_t address, const openrac_moby_xray* xray);
+    /* Fills `out` (its size set by the mod) with where `position` (the game's units) is on the
+     * screen, with the camera the last frame was drawn with (openrac_screen_point). Returns
+     * OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN before a frame drew a level. Since 1.128. */
+    int (*world_to_screen)(const float position[3], openrac_screen_point* out);
+    /* Fills `out` (its size set by the mod) with the camera the last frame was drawn with, its lens
+     * included (openrac_camera_lens). Returns OPENRAC_HOOK_OK, or OPENRAC_HOOK_UNKNOWN before a
+     * frame drew a level. Since 1.128. */
+    int (*camera_lens)(openrac_camera_lens* out);
 } openrac_api;
 
 /* ------------------------------------------------------------------------------------------ *

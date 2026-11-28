@@ -39,6 +39,7 @@ Mods of textures, models and levels are made with the level editor instead
 13. [Menu options](menu-options.md): grey out an option of OpenRAC's menu, or make it usable again, by name (native mods, interface 1.37).
 14. [Gadgets](gadgets.md): a mod's own items in the hero's inventory, menus and hand, used and kept with the save (native mods, OpenRAC Commando's interface 1.124, Going Commando).
 15. [Layers](layers.md): meshes a moby wears over its own model (armour pieces), put on and taken off one by one, the parts they cover hidden (native mods, OpenRAC Commando's interface 1.126).
+16. [X-ray](xray.md): a moby's silhouette drawn through what covers it, and HUD marks pinned on a point of the world (world_to_screen, camera_lens) (native mods, OpenRAC Commando's interface 1.128).
 
 ## Reference
 

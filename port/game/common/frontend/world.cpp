@@ -736,6 +736,11 @@ void use_level(int number) {
             == nullptr) {
             log::error("effect renderer: {}", error);
         }
+        // The mods' marked mobys in silhouette (interface 1.128), over the effects.
+        if (g->render.renderer->add(std::make_unique<scene::XrayRenderer>(g->render.scene), error)
+            == nullptr) {
+            log::error("xray renderer: {}", error);
+        }
         g->render.renderer->add(std::move(hud), error);
         if (fresh) {
             init_level_renderer(wanted, error);
